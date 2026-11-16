@@ -9,7 +9,7 @@
 # DFLAGS = -g
 #
 #--------------------- Compiler Flags ---------------------------
-CFLAGS = -O2 -std=c89
+CFLAGS = -O2 -std=c89 -Wdeprecated-non-prototype
 #
 # Uncomment the following lines for the standard C compiler:
 CC = cc
@@ -29,6 +29,7 @@ make	:
 	@echo 'Make what?  You must tell which system to make SUE for:'
 	@echo ' make aix    - IBM AIX for RS/6000'
 	@echo ' make linux  - Linux with ncurses package'
+	@echo ' make macos  - macOS'
 	@echo ' make svr32  - Generic ATT System V Release 3.2'
 	@echo ' make svr4   - Generic USL System V Release 4.0.x'
 	@echo ' make ultrix - DEC ULTRIX for DECStation'
@@ -77,6 +78,9 @@ linuxd	:
 
 linuxdt	:
 	make sue "EFLAGS = -DLINUX -DDOCOLOR -DTRACE -I/local/home/ncurses/ncurses-1.9/src" "LFLAGS = -L/local/home/ncurses/ncurses-1.9/src -ldcurses"
+
+macos	:
+	make sue "EFLAGS = -DMACOS -DDOCOLOR" "LFLAGS = -lncurses"
 
 .c.o	:
 	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $<
