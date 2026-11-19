@@ -106,7 +106,7 @@ int findfunc()
 	if (promptst("Find text: ", "", sptr, s_strsiz) > 0)
 	{	repflag = FALSE;
 		txt_ptr = gap_end;
-		if (find() == NULL)
+		if (find() == 0)
 		{	notfound();
 			return (0);
 		}
@@ -311,7 +311,7 @@ int find()
  * Replace the text under the cursor with the null-terminated 
  * string pointed to by the global pointer rptr.  'repkey' is 
  * a global variable which holds the user's last response to the
- * "Change (Y/N/*)?" prompt.  If repkey == '*' then the prompt 
+ * "Change (Y / N / *)?" prompt.  If repkey == '*' then the prompt 
  * is skipped and the string replaced without asking.
  */
 int replace()
@@ -361,7 +361,7 @@ int replace()
 		txt_ptr = gap_end;
 		/* Keep track of line numbers: */
 		tmpptr = rptr;
-		while (tmpptr = (char *) strchr(tmpptr, '\n'))	/* Count newlines */
+		while ((tmpptr = (char *) strchr(tmpptr, '\n')))	/* Count newlines */
 		{	tmpptr++;
 			txt_x++;
 		}
@@ -927,7 +927,7 @@ void	togglehelp()
  */
 void	repfind()
 {
-	if (strlen(s_str) != NULL)
+	if (strlen(s_str) > 0)
 	{	repkey = 0;
 		if (repflag)			/* if we are replacing */
 			txt_ptr = gap_end;	/* start at cursor location */

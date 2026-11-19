@@ -53,10 +53,10 @@ Version:	@(#)$Id: sue.h,v 1.5 1996/12/17 01:01:03 carson Exp $
 
 #define NULLCHARPTR (char *) 0
 
-#define	TABDEF	8			/* default TAB width */
+#define	TABDEF	4			/* default TAB width */
 
 /* ASCII control characters: */
-#define CNTRL_@ 0x00
+#define CNTRL_AT 0x00
 #define	CNTRL_A	0x01
 #define	CNTRL_B	0x02
 #define	CNTRL_C	0x03

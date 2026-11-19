@@ -9,7 +9,7 @@
 # DFLAGS = -g
 #
 #--------------------- Compiler Flags ---------------------------
-CFLAGS = -O2 -std=c89 -Wdeprecated-non-prototype
+CFLAGS = -O2 -std=c89 -Wno-deprecated-declarations -Wno-deprecated-non-prototype
 #
 # Uncomment the following lines for the standard C compiler:
 CC = cc

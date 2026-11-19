@@ -129,23 +129,23 @@ void status_line()
 
 	/* Find last '/' */
 	if ((nameptr = strrchr(txtname, '/')) != NULLCHARPTR)
-		status(0, "...\"%s\"", nameptr + 1);
+		status(0, "...\"%s\"", nameptr + 1, NULL);
 	else
-		status(0, "\"%s\"",txtname);
+		status(0, "\"%s\"",txtname, NULL);
 
 	/* Show toggle status */
 	if (MRflag)
-		statprint(COLS - 27, "MR");			/* Margin Release */
+		statprint(COLS - 27, "MR", NULL, NULL);			/* Margin Release */
 	if (insflag)
-		statprint(COLS - 24, "INS");		/* INSert status */
+		statprint(COLS - 24, "INS", NULL, NULL);		/* INSert status */
 
 	if (helplines)		/* Don't show redundant msg */
 		return;
 	else
 	{	if (cmd_mode == CKey)
-			statprint(COLS - 11, "^J for help");
+			statprint(COLS - 11, "^J for help", NULL, NULL);
 		else
-			statprint(COLS - 11, "F3 for help");
+			statprint(COLS - 11, "F3 for help", NULL, NULL);
 	}
 }
 /* -----------------------------------------------------
@@ -173,7 +173,7 @@ char *st1, *st2, *st3, *st4;
 void warning(strptr)
 char *strptr;
 {
-	prompt(COLS - strlen(strptr) - 3, "  %s", strptr);
+	prompt(COLS - strlen(strptr) - 3, "  %s", strptr, NULL, NULL);
 }
 /* -------------------------------------------------------
  * Prompt for and return string
@@ -191,11 +191,11 @@ int inlen;
 	char	editing;
 
 	wattron(statuswin, A_BOLD);
-	status(0, "BS or DEL erase, ^P enters control codes");
-	statprint(COLS-18, "F1 or ^U to abort");
+	status(0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
+	statprint(COLS-18, "F1 or ^U to abort", NULL, NULL);
 	wattrset(statuswin, STATATTR);
 
-	prompt(0, st1, st2);			/* Prompt user */
+	prompt(0, st1, st2, NULL, NULL);			/* Prompt user */
 	wattrset(promptwin, 0);			/* Don't hilite user text */
 	editing   = 1;
 	scresult  = 0;
@@ -243,7 +243,7 @@ int inlen;
 				sleep(1);
 				break;
 			}
-			if (keyin == NULL)	/* Not compatible with */
+			if (keyin == 0)	/* Not compatible with */
 			{	beep();			/* standard C functions */
 				break;
 			}
@@ -490,6 +490,9 @@ void	display()
 		winsertln(editwin);
 		disp_page(scr_xbeg, scr_xbeg);
 		break;
+
+	case dnothing:
+		break;
 	}
 	idlok(editwin, FALSE);		/* Disable hardware scrolling for help, etc.*/
 
@@ -500,10 +503,12 @@ void	display()
 		else if ((cmd_mode == FKey) &&
 				 (helpstate != FKEYMENU) &&
 				 (helpstate != RFKEYMENU))
+		{
 			if (restrict)
 				dohelp(RFKEYMENU, helpwin);
 			else
 				dohelp(FKEYMENU, helpwin);
+		}
 	}
 	/* Restore cursor */
 	wmove(editwin, txt_x - scr_xbeg, txt_y - scr_ybeg);
@@ -736,32 +741,32 @@ WINDOW			*hwindow;
 	wmove(hwindow, 0, 0);
 	wclrtoeol(hwindow);
 	wmove(hwindow, 0, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-	xwprintw(hwindow, hline0);
+	xwprintw(hwindow, hline0, NULL, NULL, NULL);
 	wmove(hwindow, 1, 0);
 	wclrtoeol(hwindow);
 	wmove(hwindow, 1, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-	xwprintw(hwindow, hline1);
+	xwprintw(hwindow, hline1, NULL, NULL, NULL);
 	if (hline2 != NULL)
 	{	wmove(hwindow, 2, 0);
 		wclrtoeol(hwindow);
 		wmove(hwindow, 2, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline2);
+		xwprintw(hwindow, hline2, NULL, NULL, NULL);
 		wmove(hwindow, 3, 0);
 		wclrtoeol(hwindow);
 		wmove(hwindow, 3, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline3);
+		xwprintw(hwindow, hline3, NULL, NULL, NULL);
 		wmove(hwindow, 4, 0);
 		wclrtoeol(hwindow);
 		wmove(hwindow, 4, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline4);
+		xwprintw(hwindow, hline4, NULL, NULL, NULL);
 		wmove(hwindow, 5, 0);
 		wclrtoeol(hwindow);
 		wmove(hwindow, 5, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline5);
+		xwprintw(hwindow, hline5, NULL, NULL, NULL);
 		wmove(hwindow, 6, 0);
 		wclrtoeol(hwindow);
 		wmove(hwindow, 6, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline6);
+		xwprintw(hwindow, hline6, NULL, NULL, NULL);
 	}
 
 	helpstate = helprequest;	/* Global flag */

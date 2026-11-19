@@ -16,7 +16,9 @@ Notes:		Edit with hard tab stops set to 4.
 ToDo:	^^ key does not work under Linux/ncurses.
 
 */
+
 #define	suerev "0.7i"
+
 /*
 rcsid:      @(#)$Id: version.h,v 1.8 1996/12/17 01:01:11 carson Exp carson $
 changes:    Fixed control-z to work with Linux ncurses 1.9.4.
@@ -59,7 +61,6 @@ changes:	First SCCS version.
 			Fixed bug which occurred if $SHELL was undefined.
 			No longer eats initial keystroke after "New file" warning.
 
-/*
 #define suerev "0.7a"
 date:		02/14/93
 changes:	Fixed bug in promptst which was causing core 

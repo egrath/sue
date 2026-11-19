@@ -341,7 +341,7 @@ char	*str;
 	char	*s;
 
 	s = str;
-	while (*s != NULL )
+	while (*s != '\0' )
 	{	*s = toupper(*s);
 		s++;
 	}
