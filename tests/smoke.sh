@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# SUE smoke tests. Usage: sh tests/smoke.sh [path-to-sue-binary]
+# TextStar smoke tests. Usage: sh tests/smoke.sh [path-to-ts-binary]
 # Requires: expect, xxd. Each test drives the editor through a pty
 # and compares saved files byte for byte.
 
-SUE=${1:-./build/sue}
-T=/tmp/sue_smoke.$$
+TS=${1:-./build/ts}
+T=/tmp/ts_smoke.$$
 PASS=0
 FAIL=0
 
@@ -17,7 +17,7 @@ mkdir -p "$T"
 # 1: start and quit
 TERM=xterm expect -c "
 	set timeout 15
-	spawn $SUE
+	spawn $TS
 	sleep 1
 	send \"\\013q\"
 	expect { eof {} timeout { exit 1 } }
@@ -27,7 +27,7 @@ TERM=xterm expect -c "
 # 2: type and save (default line endings)
 TERM=xterm expect -c "
 	set timeout 15
-	spawn $SUE $T/2.txt
+	spawn $TS $T/2.txt
 	sleep 1
 	send \"hello world\"
 	sleep 1
@@ -43,7 +43,7 @@ TERM=xterm expect -c "
 # 3: -d saves CRLF
 TERM=xterm expect -c "
 	set timeout 15
-	spawn $SUE -d $T/3.txt
+	spawn $TS -d $T/3.txt
 	sleep 1
 	send \"hi\"
 	sleep 1
@@ -59,7 +59,7 @@ TERM=xterm expect -c "
 # 4: delete and undo round-trip
 TERM=xterm expect -c "
 	set timeout 15
-	spawn $SUE $T/4.txt
+	spawn $TS $T/4.txt
 	sleep 1
 	send \"hello world\"
 	sleep 1
@@ -79,7 +79,7 @@ TERM=xterm expect -c "
 # 5: F1 is ignored inside the filename prompt
 TERM=xterm expect -c "
 	set timeout 15
-	spawn $SUE
+	spawn $TS
 	sleep 1
 	send \"\\013s\"
 	sleep 1
@@ -102,7 +102,7 @@ printf 'abc\n' > "$T/6.txt"
 TERM=xterm expect -c "
 	log_file $T/6.log
 	set timeout 15
-	spawn $SUE $T/6.txt
+	spawn $TS $T/6.txt
 	sleep 1
 	send \"\\030\\030\\030\"	;# ^X ^X ^X  down to the marker line
 	sleep 1

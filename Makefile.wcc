@@ -15,28 +15,28 @@ LINK    = wlink
 CFLAGS  = -bt=dos4g -mf -dDOS -wx -zq -oneatx -i=$(PDCURSES) -i=$(SRCDIR)
 LDFLAGS = op q sys dos4g op stack=65536
 
-TARGET  = $(BUILDDIR)/sue.exe
+TARGET  = $(BUILDDIR)/ts.exe
 OBJS    = $(BUILDDIR)/command.obj $(BUILDDIR)/data.obj $(BUILDDIR)/display.obj &
-	$(BUILDDIR)/funcs.obj $(BUILDDIR)/sue.obj
+	$(BUILDDIR)/funcs.obj $(BUILDDIR)/ts.obj
 
 $(TARGET) : $(OBJS)
 	$(LINK) $(LDFLAGS) n $@ f {$(OBJS)} l $(PDCURSES)/dos/pdcurses.lib
 
 clean : .SYMBOLIC
-	-rm -f $(BUILDDIR)/*.obj $(BUILDDIR)/sue.exe
+	-rm -f $(BUILDDIR)/*.obj $(BUILDDIR)/ts.exe
 
-$(BUILDDIR)/command.obj : $(SRCDIR)/command.c $(SRCDIR)/sue.h
+$(BUILDDIR)/command.obj : $(SRCDIR)/command.c $(SRCDIR)/ts.h
 	@mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) $(SRCDIR)/command.c -fo=$@
-$(BUILDDIR)/data.obj : $(SRCDIR)/data.c $(SRCDIR)/sue.h
+$(BUILDDIR)/data.obj : $(SRCDIR)/data.c $(SRCDIR)/ts.h
 	@mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) $(SRCDIR)/data.c -fo=$@
-$(BUILDDIR)/display.obj : $(SRCDIR)/display.c $(SRCDIR)/sue.h
+$(BUILDDIR)/display.obj : $(SRCDIR)/display.c $(SRCDIR)/ts.h
 	@mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) $(SRCDIR)/display.c -fo=$@
-$(BUILDDIR)/funcs.obj : $(SRCDIR)/funcs.c $(SRCDIR)/sue.h $(SRCDIR)/version.h
+$(BUILDDIR)/funcs.obj : $(SRCDIR)/funcs.c $(SRCDIR)/ts.h $(SRCDIR)/version.h
 	@mkdir -p $(BUILDDIR)
 	$(CC) $(CFLAGS) $(SRCDIR)/funcs.c -fo=$@
-$(BUILDDIR)/sue.obj : $(SRCDIR)/sue.c $(SRCDIR)/sue.h $(SRCDIR)/version.h
+$(BUILDDIR)/ts.obj : $(SRCDIR)/ts.c $(SRCDIR)/ts.h $(SRCDIR)/version.h
 	@mkdir -p $(BUILDDIR)
-	$(CC) $(CFLAGS) $(SRCDIR)/sue.c -fo=$@
+	$(CC) $(CFLAGS) $(SRCDIR)/ts.c -fo=$@

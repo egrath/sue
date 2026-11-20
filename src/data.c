@@ -1,4 +1,4 @@
-#include "sue.h"
+#include "ts.h"
 
 /*------------------------------------------------------------
  * Return the first character in the line pointed to by line.

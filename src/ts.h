@@ -11,7 +11,7 @@
 #include <cursesX.h>
 /* ULTRIX cursesX.h declares almost nothing: initscr/newwin/subwin/newpad,
  * longname/erasechar/killchar, wgetch/newterm - plus macros. Everything
- * else SUE calls is prototyped here. */
+ * else TextStar calls is prototyped here. */
 extern int baudrate (void);
 extern int beep (void);
 extern int delwin (WINDOW *);
@@ -289,7 +289,7 @@ extern int find (void);
 extern int replace (void);
 extern void goto_line (void), tab_set (void), rm_set (void);
 extern void reform (void);
-extern void sabort (int sig);
+extern void ts_abort (int sig);
 extern void writeblk (void), readblk (void), new_file (void);
 extern int save (char *s_name, char *s_type);
 extern int load (char *l_name);
@@ -303,7 +303,7 @@ extern int text_ins (char *ins_beg, char *ins_end,
 	enum directions direction);
 extern void do_shell (void);
 
-/* sue.c */
+/* ts.c */
 extern void edit_init (char *v_name);
 extern void edit_exit (int exparm);
 extern void key_scan (void);

@@ -685,3 +685,47 @@ Session 14 addendum (project moved to "ts"):
 - AGENTS.md new hard rule: always push after committing.
 - Project rename SUE -> TextStar (binary "ts", sue.c -> ts.c, sue.h ->
   ts.h) planned; implementation pending.
+
+== 2026-11-20 - Session 15: project renamed SUE -> TextStar ==
+
+User request: rename the project to "TextStar"; binary "ts" in all
+Makefiles; sue.c and sue.h renamed in the same form.
+
+Moves (git mv):
+- src/sue.c -> src/ts.c (classic Unix form: the main() file is named
+  after the program), src/sue.h -> src/ts.h.
+
+Code:
+- #include "sue.h" -> "ts.h" in all five sources.
+- Identifiers: suerev -> tsrev (version.h + banner + status line),
+  sabort -> ts_abort (signal handler; no POSIX/term.h collision),
+  suestat -> filestat (local), crash-save prefix SUEsaved. ->
+  TSsaved. (old crash files go unfound - harmless).
+- User-visible strings: banner "TextStar - a WordStar-style text
+  editor, version %s"; "TextStar loading/writing ...", "TextStar
+  version %s Copyright 1995 Point to Point", "TextStar: work saved",
+  signal/shell prompts, the < 80 columns message.
+
+Build:
+- Makefile: TARGET build/ts, ts.o/ts.c, deps ts.h, alias target
+  "ts" (make ts), header comment. make install -> BINDIR/ts.
+- Makefile.wcc: build.dos/ts.exe, ts.obj/ts.c/ts.h.
+- tests/smoke.sh: TS=${1:-./build/ts}, /tmp/ts_smoke.$$.
+
+Docs: README title/intro/usage ("TextStar, formerly SUE"), AGENTS.md
+(title, What-this-is with the SUE heritage, source map, build paths,
+monochrome/getopt bullets, known-issues ts_abort, decisions-log entry
+with the moreutils-"ts" trade-off note). Historical session entries
+and the decisions log keep old names verbatim; _original/sue07i.tgz
+untouched.
+
+Verification:
+- [x] make + make ts: zero warnings; build/ts produced.
+- [x] wmake -f Makefile.wcc: zero warnings; build.dos/ts.exe (LE).
+- [x] smoke tests 6/6 against build/ts.
+- [x] pty sanity: banner "TextStar - a WordStar-style text editor",
+      "TextStar loading" status; -b now a usage error; make ts works.
+- [x] case-insensitive grep: "sue" only in _original/, session
+      history and the deliberate heritage mentions.
+- [x] Committed and PUSHED to https://github.com/egrath/ts (per the
+      new AGENTS.md rule).

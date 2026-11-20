@@ -1,4 +1,4 @@
-#include "sue.h"
+#include "ts.h"
 
 /* -------------------------------------------------
  * Main user input routine

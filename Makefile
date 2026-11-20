@@ -1,5 +1,5 @@
 #
-# Makefile for Simple Unix Editor (SUE)
+# Makefile for TextStar (binary "ts", formerly SUE)
 # Copyright 1992, Point to Point Communications, Inc.
 #
 #--------------------- Compiler Flags ---------------------------
@@ -22,23 +22,23 @@ BINDIR = /lbin/
 #--------------------- Directories ------------------------------
 SRCDIR = src
 BUILDDIR = build
-TARGET = ${BUILDDIR}/sue
+TARGET = ${BUILDDIR}/ts
 
 SOURCES = ${SRCDIR}/command.c ${SRCDIR}/data.c ${SRCDIR}/display.c \
-	${SRCDIR}/funcs.c ${SRCDIR}/sue.c
+	${SRCDIR}/funcs.c ${SRCDIR}/ts.c
 
 OBJS = ${BUILDDIR}/command.o ${BUILDDIR}/data.o ${BUILDDIR}/display.o \
-	${BUILDDIR}/funcs.o ${BUILDDIR}/sue.o
+	${BUILDDIR}/funcs.o ${BUILDDIR}/ts.o
 
 ################# Do not modify below this line #####################
 
-# One rule for all platforms: plain "make" builds SUE.
+# One rule for all platforms: plain "make" builds TextStar.
 # EFLAGS and LFLAGS are the override points for other targets,
 # e.g. make LFLAGS="-lpdcurses" for a DOS/Windows PDCurses port.
 
-.PHONY : sue clean install
+.PHONY : ts clean install
 
-sue	: ${TARGET}
+ts	: ${TARGET}
 
 ${TARGET}	: ${OBJS}
 	${CC} ${CFLAGS} -o ${TARGET} ${OBJS} ${LFLAGS}
@@ -55,17 +55,17 @@ build	:
 
 # Dependencies
 
-${BUILDDIR}/command.o : ${SRCDIR}/command.c ${SRCDIR}/sue.h build
+${BUILDDIR}/command.o : ${SRCDIR}/command.c ${SRCDIR}/ts.h build
 	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
-${BUILDDIR}/data.o : ${SRCDIR}/data.c ${SRCDIR}/sue.h build
+${BUILDDIR}/data.o : ${SRCDIR}/data.c ${SRCDIR}/ts.h build
 	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
-${BUILDDIR}/display.o : ${SRCDIR}/display.c ${SRCDIR}/sue.h build
+${BUILDDIR}/display.o : ${SRCDIR}/display.c ${SRCDIR}/ts.h build
 	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
-${BUILDDIR}/funcs.o : ${SRCDIR}/funcs.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
+${BUILDDIR}/funcs.o : ${SRCDIR}/funcs.c ${SRCDIR}/ts.h ${SRCDIR}/version.h build
 	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
-${BUILDDIR}/sue.o : ${SRCDIR}/sue.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
+${BUILDDIR}/ts.o : ${SRCDIR}/ts.c ${SRCDIR}/ts.h ${SRCDIR}/version.h build
 	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@

@@ -1,12 +1,13 @@
 # AGENTS.md
 
-Notes for AI agents (and humans) working on SUE. Keep this current: whenever a
+Notes for AI agents (and humans) working on TextStar. Keep this current: whenever a
 change introduces a new convention, decision, or known issue, record it here.
 
 ## What this is
 
-SUE ("Simple Unix Editor") — a curses text editor with WordStar-style
-keybindings, originally written 1992–1995 by Point to Point Communications for
+TextStar — a curses text editor with WordStar-style
+keybindings, originally written 1992–1995 by Point to Point Communications as
+SUE ("Simple Unix Editor") for
 old Unices (ULTRIX, AIX, SVR3/4). This fork modernizes it to build warning-free
 with modern compilers (macOS clang, Linux gcc) while keeping behavior identical.
 
@@ -17,12 +18,12 @@ configuration. Added: line/column indicator in the status line.
 
 | File | Contents |
 |---|---|
-| `src/sue.c` | Global variable definitions, `main()`, `do_alloc()` (buffer mgmt), `edit_init()`, `edit_exit()` |
+| `src/ts.c` | Global variable definitions, `main()`, `do_alloc()` (buffer mgmt), `edit_init()`, `edit_exit()` |
 | `src/data.c` | Text-buffer primitives over the gap: `start_line`, `next_line`, `new_line`, `column`, `text_move`, `line_y`, `move_x`, `move_y`, `move_ptr`, `strtoup`, `invert`, `undel`, `undel_save` |
 | `src/display.c` | All curses output: status/prompt windows, `dsp_line`/`disp_page`/`display()`, help screens (`do_help`), `xw_printw`, `prompt_st`/`prompt_key` input |
-| `src/funcs.c` | Editor commands: find/replace, reform, save/load (`save`/`load`), block ops (`block_funcs`), `add_text`, deletions, `do_shell`, `sabort` (signal handler) |
+| `src/funcs.c` | Editor commands: find/replace, reform, save/load (`save`/`load`), block ops (`block_funcs`), `add_text`, deletions, `do_shell`, `ts_abort` (signal handler) |
 | `src/command.c` | Input dispatch: `key_scan` and the ^Q/^K/^O menus (`q_key`/`k_key`/`o_key`), SIGALRM trampolines for the timed help screens |
-| `src/sue.h` | Shared types, globals (`extern`), full C89 prototypes |
+| `src/ts.h` | Shared types, globals (`extern`), full C89 prototypes |
 | `src/version.h` | Version string |
 | `Makefile.wcc` | OpenWatcom build for DOS (DOS/4GW + PDCurses) |
 | `_original/sue07i.tgz` | Pristine 0.7i sources, reference only |
@@ -45,10 +46,10 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Build
 
-- **UNIX/macOS/Linux**: plain `make` builds `build/sue`.
+- **UNIX/macOS/Linux**: plain `make` builds `build/ts`.
 - **DOS** (OpenWatcom, DOS/4GW 32-bit flat, PDCurses):
   `source ~/opt/openwatcom/env.txt && wmake -f Makefile.wcc`
-  builds `build.dos/sue.exe` (`wmake -f Makefile.wcc clean` cleans).
+  builds `build.dos/ts.exe` (`wmake -f Makefile.wcc clean` cleans).
 - Requirements: a C89 compiler and curses (ncurses on UNIX, PDCurses on DOS —
   `~/opt/pdcurses`, library `dos/pdcurses.lib`).
 - Flags: `-O2 -std=c89 -Wpedantic -Wall -Werror` — **zero warnings is a hard
@@ -64,7 +65,7 @@ cursor clamps at the marker start and nothing can be written behind it.
 - `make clean` empties `build/` but keeps the directory; `make install`
   strips + moves the binary to `BINDIR`.
 - Smoke tests: `sh tests/smoke.sh` (expect + xxd) — runs six pty-driven
-  round-trip tests against `build/sue`; run after every change.
+  round-trip tests against `build/ts`; run after every change.
 - **Future targets: Windows, Macintosh, Linux** — and Solaris should
   "come free" if it compiles cleanly on the others (UNIX, DOS and ULTRIX
   are done). Add no per-platform
@@ -79,15 +80,15 @@ cursor clamps at the marker start and nothing can be written behind it.
   the build then uses DEC's extended curses (`cursesX.h`), emulates the
   extended key codes ULTRIX curses lacks (those switch cases stay dead),
   runs monochrome (ULTRIX curses has no color API), and carries a full
-  block of curses prototypes in `sue.h` — ULTRIX cursesX.h declares
+  block of curses prototypes in `ts.h` — ULTRIX cursesX.h declares
   almost nothing (only `initscr`/`newwin`/`subwin`/`newpad`,
   `longname`/`erasechar`/`killchar`, `wgetch`/`newterm`, plus macros).
   Sets `CC = gcc`. Needs GNU make on ULTRIX. Build and runtime verified
   by the maintainer on real hardware. (ULTRIX unistd.h also does not
-  declare `getopt` or its variables — irrelevant now: SUE has no
+  declare `getopt` or its variables — irrelevant now: TextStar has no
   `getopt` dependency at all, see the decisions log.)
 - **Runtime verification**: the UNIX build is smoke-tested on macOS; the
-  DOS build (`build.dos/sue.exe`) is confirmed working on real DOS by the
+  DOS build (`build.dos/ts.exe`) is confirmed working on real DOS by the
   maintainer; the ULTRIX build is confirmed compiling and running on real
   ULTRIX hardware. Linux compiles clean but is untested.
 
@@ -112,7 +113,7 @@ cursor clamps at the marker start and nothing can be written behind it.
   unistd.h does not declare it.
 - **Strict C89, no GNU extensions.** Function definitions in prototype form;
   all declarations at the top of a block.
-- Single-file helpers are `static` and kept out of `sue.h` (currently:
+- Single-file helpers are `static` and kept out of `ts.h` (currently:
   `test`, `dsp_line`, `disp_page`, `status_linecol`, `do_alloc`).
 - Format-string helpers: `stat_print` and `status` have fixed argument lists
   (call sites pass `NULL` for unused trailing args); `xw_printw` and `prompt`
@@ -155,6 +156,16 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-20 — Project renamed SUE -> TextStar; the binary is `ts`
+  (classic Unix form: the file with main() is named after the program,
+  so sue.c -> ts.c and sue.h -> ts.h). User-visible strings carry the
+  new name ("TextStar - a WordStar-style text editor", loading/writing
+  status, shell-return prompts); identifiers containing the old name
+  swept: suerev -> tsrev, sabort -> ts_abort, suestat -> filestat,
+  crash-save prefix SUEsaved. -> TSsaved. (old crash files simply go
+  unfound). Historical decisions-log entries keep the old names
+  verbatim. Known trade-off: `ts` is also a moreutils utility on
+  Linux - BINDIR (/lbin) order decides which one wins.
 - 2026-11-20 — Overhaul: converted the entire codebase from K&R C to strict
   C89 (prototypes everywhere) so it builds warning-free with `-Wall -Wpedantic`;
   `-Werror` added to enforce it.
@@ -317,12 +328,12 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 - **ULTRIX build quirks** (compiles and links with gcc on real ULTRIX
   hardware): cursesX.h declares `wgetch`/`wmove`/etc. but NOT
-  `wrefresh`/`wattrset`/`wclrtoeol` — sue.h prototypes them under
+  `wrefresh`/`wattrset`/`wclrtoeol` — ts.h prototypes them under
   `#ifdef ULTRIX`. It also has no color API (mono build) and no
   `KEY_SLEFT`/`KEY_SRIGHT`/`KEY_SUSPEND`/`KEY_HELP`/`KEY_SFIND` codes
   (emulated, dead cases). More missing declarations may surface — same
   one-line fix pattern.
-- `sabort()` runs after `endwin()`, so its `beep()`/`prompt_key()` calls operate
+- `ts_abort()` runs after `endwin()`, so its `beep()`/`prompt_key()` calls operate
   on dead windows (original behavior, intentionally kept).
 - `load()` returns lines+1 — only truthiness is used by callers, so this is
   harmless; changing it would need care with the empty-file case.

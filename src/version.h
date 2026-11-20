@@ -1,1 +1,1 @@
-#define	suerev "0.8"
+#define	tsrev "0.8"

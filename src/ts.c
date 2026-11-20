@@ -1,5 +1,5 @@
 #include "version.h"
-#include "sue.h"
+#include "ts.h"
 
 #define EXTRAMEM 100000L		/* Extra memory to allocate at	*/
 								/*  startup time		*/
@@ -88,7 +88,7 @@ WINDOW	*editwin, *promptwin,	/* Curses windows */
 struct undelnode *undelptr;
 
 /*----------------------------------------
- * Exit SUE
+ * Exit TextStar
  */
 void edit_exit (int exparm)
 {
@@ -155,7 +155,7 @@ static int do_alloc (long allocsize)
  */
 void edit_init (char *v_name)
 {
-	struct stat suestat;
+	struct stat filestat;
 
 	mod = FALSE;
 	while (undel());		/* Free buffers and set pointer to NULL */
@@ -184,10 +184,10 @@ void edit_init (char *v_name)
 			strcpy (txtname, v_name);
 
 			/* File present? */
-			if (stat (txtname, &suestat) != -1)
+			if (stat (txtname, &filestat) != -1)
 			{
 				/* Yes. Have enough memory for file? */
-				if (do_alloc (suestat.st_size))
+				if (do_alloc (filestat.st_size))
 				{
 					/* Yes, attempt load */
 					if (load (txtname) == -1)	/* Load fails */
@@ -311,7 +311,7 @@ int main (int argc, char *argv[])
 	}
 	if (optresult)
 	{
-		fprintf (stderr, "\nSUE - a Simple Unix Editor, version %s", suerev);
+		fprintf (stderr, "\nTextStar - a WordStar-style text editor, version %s", tsrev);
 		fprintf (stderr, "\nCopyright 1995 by Point to Point Communications\n");
 		fprintf (stderr, "  Usage:\n");
 		fprintf (stderr, "    %s [-dmstu][-sn][-tn] [file]\n", argv[0]);
@@ -330,7 +330,7 @@ int main (int argc, char *argv[])
 	if (COLS < 80)
 	{
 		endwin ();
-		fprintf (stderr, "SUE: your terminal definition specifies %d columns.\n", COLS);
+		fprintf (stderr, "TextStar: your terminal definition specifies %d columns.\n", COLS);
 		fprintf (stderr, "I need at least 80 columns in order to operate properly.\n");
 		fprintf (stderr, "Current terminal definition is: %s\n", longname ());
 		fprintf (stderr,	"Press RETURN: ");
@@ -339,7 +339,7 @@ int main (int argc, char *argv[])
 	}
 
 	noecho ();	/* Do not echo characters typed at keyboard */
-	nonl ();		/* Pass ^M thru to SUE as-is */
+	nonl ();		/* Pass ^M thru to TextStar as-is */
 	raw ();
 
 	editlines = LINES - helplines - 1;
@@ -366,16 +366,16 @@ int main (int argc, char *argv[])
 	}
 
 	/* Trap signals to our exit routine that preserves user text */
-	signal (SIGINT,  sabort);
+	signal (SIGINT,  ts_abort);
 #ifdef UNIX
-	signal (SIGHUP,  sabort);
-	signal (SIGQUIT, sabort);
-	signal (SIGSYS,  sabort);
-	signal (SIGBUS,  sabort);
+	signal (SIGHUP,  ts_abort);
+	signal (SIGQUIT, ts_abort);
+	signal (SIGSYS,  ts_abort);
+	signal (SIGBUS,  ts_abort);
 #endif
-	signal (SIGTERM, sabort);
-	signal (SIGSEGV, sabort);
-	signal (SIGILL,  sabort);
+	signal (SIGTERM, ts_abort);
+	signal (SIGSEGV, ts_abort);
+	signal (SIGILL,  ts_abort);
 
 	bufptr = malloc (0);		/* Initialize pointer for do_alloc() */
 

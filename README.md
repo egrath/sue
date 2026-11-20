@@ -1,10 +1,10 @@
-# SUE text editor
+# TextStar text editor
 
-SUE the "Simple Unix Editor" is a small full-screen text editor with
-WordStar-style keybindings, originally written 1992-1995 by Point to Point
-Communications for old Unices (ULTRIX, AIX, SVR3/4). This fork modernizes the
-code (strict C89, warning-free) and brings it to modern systems and back
-to DOS.
+TextStar is a small full-screen text editor with WordStar-style keybindings,
+originally written 1992-1995 by Point to Point Communications as SUE, the
+"Simple Unix Editor", for old Unices (ULTRIX, AIX, SVR3/4). This fork
+modernizes the code (strict C89, warning-free) and brings it to modern
+systems and back to DOS.
 
 ## Features
 
@@ -26,19 +26,19 @@ to DOS.
 
     make
 
-produces `build/sue`.
+produces `build/ts`.
 
 ### DOS (OpenWatcom, DOS/4GW 32-bit, PDCurses)
 
     source ~/opt/openwatcom/env.txt
     wmake -f Makefile.wcc
 
-produces `build.dos/sue.exe`. Requires PDCurses built for DOS/4GW in
+produces `build.dos/ts.exe`. Requires PDCurses built for DOS/4GW in
 `~/opt/pdcurses` (library `dos/pdcurses.lib`).
 
 ## Usage
 
-    sue [-dmstu] [-sn] [-tn] [file]
+    ts [-dmstu] [-sn] [-tn] [file]
 
 - `-d` / `-m` / `-u` force DOS/Macintosh/Unix line endings
 - `-sn` set the right margin to n

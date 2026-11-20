@@ -1,4 +1,4 @@
-#include "sue.h"
+#include "ts.h"
 #include "version.h"
 
 /* -------------------------------------------
@@ -169,7 +169,7 @@ void info_func (void)
 		strcpy (modestr, "??????");
 		break;
 	}
-	status (0, "SUE version %s Copyright 1995 Point to Point", suerev, NULL);
+	status (0, "TextStar version %s Copyright 1995 Point to Point", tsrev, NULL);
 	stat_print (COLS - 23, "Author: carson@ppci.com", NULL, NULL);
 	wmove (editwin, 0, 0);
 	wp4 ("           Editing: `%s` at line `%u` column `%u`\n", txtname, txt_x, txt_y);		/* show full name */
@@ -619,7 +619,7 @@ void reform (void)
 /* ------------------------------------------------
  * Exit gracefully on receipt of Unix SIGNALs
  */
-void sabort (int sig)
+void ts_abort (int sig)
 {
 	char *homeptr;
 	char savname[TXTNAME_SIZE];
@@ -631,7 +631,7 @@ void sabort (int sig)
 
 	if (signal (sig, SIG_IGN) == SIG_ERR)
 	{
-		perror ("SUE signal");
+		perror ("TextStar signal");
 	}
 
 	/* Look for a directory to save the work in */
@@ -659,11 +659,11 @@ void sabort (int sig)
 	{
 		if (n == 0)
 		{
-			sprintf (savname, "%s/SUEsaved.%ld", homeptr, (long) getpid ());
+			sprintf (savname, "%s/TSsaved.%ld", homeptr, (long) getpid ());
 		}
 		else
 		{
-			sprintf (savname, "%s/SUEsaved.%ld.%d", homeptr,
+			sprintf (savname, "%s/TSsaved.%ld.%d", homeptr,
 				(long) getpid (), n);
 		}
 		if ((probe = fopen (savname, "rb")) == (FILE *) NULL)
@@ -675,7 +675,7 @@ void sabort (int sig)
 
 	strcpy (txtname, savname);	/* Make it the new filename */
 
-	fprintf (stderr, "SUE: ");	/* Display signal received */
+	fprintf (stderr, "TextStar: ");	/* Display signal received */
 	switch (sig)
 	{
 #ifdef UNIX
@@ -716,7 +716,7 @@ void sabort (int sig)
 
 	if (save_fname ())
 	{
-		fprintf (stderr, "\nSUE: work saved to \"%s\".\n", txtname);
+		fprintf (stderr, "\nTextStar: work saved to \"%s\".\n", txtname);
 	}
 	/* Note: 'vi' uses /usr/preserve/[username] directory & sends mail */
 
@@ -834,7 +834,7 @@ int save (char *s_name, char *s_type)
 		return (0);
 	}
 
-	status (0, "SUE writing \"%s\"...", s_name, NULL);
+	status (0, "TextStar writing \"%s\"...", s_name, NULL);
 
 	s_file = fopen (s_name, s_type);
 	if (s_file == (FILE *) NULL)
@@ -901,7 +901,7 @@ int load (char *l_name)
 		return (0);
 	}
 
-	status (0, "SUE loading \"%s\"...", l_name, NULL);
+	status (0, "TextStar loading \"%s\"...", l_name, NULL);
 	j = 1;
 	old_beg = gap_beg;
 	while ((c = fgetc (l_file)) != EOF)
@@ -1603,7 +1603,7 @@ void do_shell (void)
 		fputs ("\n\n", stderr);
 		if (strlen (respptr) == 0)
 		{
-			fputs (" Type \"exit\" to return to SUE.\n\n", stderr);
+			fputs (" Type \"exit\" to return to TextStar.\n\n", stderr);
 		}
 
 		system (commands);	/* Shell out */
@@ -1615,7 +1615,7 @@ void do_shell (void)
 
 		if (strlen (respptr))
 		{
-			fputs (" Press ENTER to return to SUE: ", stderr);
+			fputs (" Press ENTER to return to TextStar: ", stderr);
 			fgets (commands, 255, stdin);
 		}
 	}
