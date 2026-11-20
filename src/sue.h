@@ -7,7 +7,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#ifdef ULTRIX
+#include <cursesX.h>
+#else
 #include <curses.h>
+#endif
 #include <signal.h>
 
 /* ===================== GLOBAL DEFINES =================== */
@@ -71,6 +75,18 @@
 
 #ifndef ACS_HLINE
 # define ACS_HLINE '-'
+#endif
+
+/* ULTRIX curses lacks the extended key codes and wechochar():
+ * the emulated codes are never delivered by the terminal, so the
+ * affected switch cases simply stay dead on that platform. */
+#ifdef ULTRIX
+# define KEY_SLEFT 0770		/* Not available, so disable these */
+# define KEY_SRIGHT 0771
+# define KEY_SUSPEND 0776
+# define KEY_HELP 0772
+# define KEY_SFIND 0773
+# define wechochar(win, ch) (waddch (win, ch), wrefresh (win))
 #endif
 
 /* ================= GLOBAL VARIABLES ================= */

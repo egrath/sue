@@ -265,7 +265,42 @@ Verification:
 - [x] Watcom warnings at -wx: only the DOS-unused debug_pr/pipebuf/fileptr
       params -> silenced via #ifdef UNIX decls and (void) casts.
 - [x] Runtime on real DOS/DOSBox not possible from here - manual test pass
-      requested from user.
+      requested from user. (User later verified the DOS version works on
+      real DOS.)
+
+== 2026-11-20 - Session 9: ULTRIX target restored ==
+
+User request: the build process was verified on ULTRIX (real hardware);
+restore ULTRIX support. Problems reported: Makefile should detect the OS
+and define ULTRIX (user previously did this with an uname/ifeq snippet);
+ULTRIX needs cursesX.h instead of curses.h; implicit declarations of
+wrefresh/wattrset/wclrtoeol and undeclared KEY_SLEFT/KEY_SRIGHT/
+KEY_SUSPEND/KEY_HELP/KEY_SFIND.
+
+Root cause: session 5 treated ULTRIX as a dropped target and removed the
+cursesX.h branch, the emulated key codes, the wechochar macro and the
+-DULTRIX hook.
+
+Implementation:
+- Makefile: UNAME = $(shell uname -s); ifeq ($(UNAME),ULTRIX) CFLAGS +=
+  -DULTRIX endif (user's exact snippet). GNU make required on ULTRIX -
+  user verified this setup there.
+- sue.h: cursesX.h on ULTRIX / curses.h otherwise; emulated key codes
+  KEY_SLEFT 0770 KEY_SRIGHT 0771 KEY_HELP 0772 KEY_SFIND 0773 KEY_SUSPEND
+  0776 (the last one is new in this fork - the original never had it) and
+  the wechochar macro, all #ifdef ULTRIX. The emulated codes are never
+  delivered by ULTRIX curses, so those switch cases stay dead - same as
+  the 1995 original.
+- AGENTS.md: build section documents the ULTRIX path (maintainer verified
+  on real hardware); decisions log entry.
+
+Verification:
+- [x] make on macOS: uname reports Darwin -> no -DULTRIX, zero warnings,
+      all 5 smoke tests pass.
+- [x] make UNAME=ULTRIX: the ifeq branch fires (-DULTRIX visible in the
+      compile line). The cursesX.h compile itself can only succeed on
+      ULTRIX (header exists only there) - maintainer re-verifies.
+- [x] DOS rebuild after the sue.h change: zero warnings, LE exe ok.
 
 == 2026-11-20 — Session 8: DOS maximum speed optimization ==
 

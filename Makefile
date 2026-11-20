@@ -11,6 +11,11 @@ CFLAGS = -O2 -std=c89 -Wpedantic -Wall -Werror
 EFLAGS = -DUNIX -D_DEFAULT_SOURCE
 LFLAGS = -lncurses
 #
+# Detect the operating system (ULTRIX needs special curses handling)
+UNAME   = $(shell uname -s)
+ifeq ($(UNAME), ULTRIX)
+	CFLAGS    += -DULTRIX
+endif
 # Uncomment the following lines for the standard C compiler:
 CC = cc
 #

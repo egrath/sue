@@ -66,6 +66,10 @@ marker and trailing newlines so all of the text can be treated as a string.
 - **New files are saved with the platform's line endings** (DOS: CRLF,
   UNIX: LF); `-d`/`-m`/`-u` override, and loaded files keep their detected
   endings (the file is never rewritten to a different style than it had).
+- **ULTRIX**: `make` detects the OS via `uname -s` and adds `-DULTRIX` —
+  the build then uses DEC's extended curses (`cursesX.h`) and emulates the
+  extended key codes ULTRIX curses lacks (those switch cases stay dead).
+  Needs GNU make on ULTRIX. Verified by the maintainer on real hardware.
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
 
@@ -192,6 +196,12 @@ marker and trailing newlines so all of the text can be treated as a string.
   save with CRLF (MODE_MSDOS), UNIX builds with LF (MODE_UNIX); -d/-m/-u
   override, and loaded files keep their detected endings (load() preserves
   the style the file already had).
+- 2026-11-20 — ULTRIX is back as a build target (verified by the maintainer
+  on real hardware): the Makefile detects it via uname and defines -DULTRIX,
+  sue.h uses DEC's extended curses (cursesX.h) there and emulates the
+  extended key codes ULTRIX curses lacks (KEY_SLEFT/KEY_SRIGHT/KEY_SUSPEND/
+  KEY_HELP/KEY_SFIND, wechochar). Those switch cases stay dead on ULTRIX,
+  exactly like the 1995 original.
 - 2026-11-20 — Closed out the remaining review findings: find() no longer
   uppercases the search string in place (an uppercased copy is compared),
   del_line() restores the cursor position when its undo-save fails, ^P ^@
