@@ -107,7 +107,7 @@ void edit_exit (int exparm)
  * Allocate memory (allocsize + EXTRAMEM)
  * Return 1 if OK, 0 if overflow.
  */
-static int doalloc (long allocsize)
+static int do_alloc (long allocsize)
 {
 	long	allocwork;
 	unsigned mallarg;
@@ -173,9 +173,9 @@ void edit_init (char *v_name)
 	scr_xbeg = 1; scr_xend = editlines;
 	scr_ybeg = 1; scr_yend = COLS;
 
-	if (doalloc (0L) == 0)				/* Pre-allocate up to EXTRAMEM */
+	if (do_alloc (0L) == 0)				/* Pre-allocate up to EXTRAMEM */
 	{
-		TPAErr ();						/* No memory; abort */
+		tpa_err ();						/* No memory; abort */
 		edit_exit (1);
 	}
 	strcpy (txtname, "");
@@ -184,7 +184,7 @@ void edit_init (char *v_name)
 		if (strlen (v_name) >= sizeof (txtname))
 		{
 			beep ();
-			promptkey ("Filename too long! ");
+			prompt_key ("Filename too long! ");
 		}
 		else
 		{
@@ -194,7 +194,7 @@ void edit_init (char *v_name)
 			if (stat (txtname, &suestat) != -1)
 			{
 				/* Yes. Have enough memory for file? */
-				if (doalloc (suestat.st_size))
+				if (do_alloc (suestat.st_size))
 				{
 					/* Yes, attempt load */
 					if (load (txtname) == -1)	/* Load fails */
@@ -204,7 +204,7 @@ void edit_init (char *v_name)
 				}
 				else	/* Not enough memory */
 				{
-					TPAErr ();
+					tpa_err ();
 					strcpy (txtname, "");
 				}
 			}
@@ -389,7 +389,7 @@ int main (int argc, char *argv[])
 	signal (SIGILL,  sabort);
 	signal (SIGSYS,  sabort);
 
-	bufptr = malloc (0);		/* Initialize pointer for doalloc() */
+	bufptr = malloc (0);		/* Initialize pointer for do_alloc() */
 
 	prompt (1, "", NULL, NULL, NULL);	/* Must do this so that newwin()'s auto-clear */
 						/* function doesn't clear text on first */
@@ -405,6 +405,6 @@ int main (int argc, char *argv[])
 			display ();		/* Don't erase warnings */
 		}
 
-		Key_scan ();
+		key_scan ();
 	}
 }

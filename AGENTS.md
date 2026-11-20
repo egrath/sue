@@ -17,11 +17,11 @@ configuration. Added: line/column indicator in the status line.
 
 | File | Contents |
 |---|---|
-| `src/sue.c` | Global variable definitions, `main()`, `doalloc()` (buffer mgmt), `edit_init()`, `edit_exit()` |
-| `src/data.c` | Text-buffer primitives over the gap: `start_line`, `next_line`, `new_line`, `column`, `text_move`, `line_y`, `move_x`, `move_y`, `move_ptr`, `strtoup`, `invert`, `undel`, `undelsave` |
-| `src/display.c` | All curses output: status/prompt windows, `dsp_lne`/`disp_page`/`display()`, help screens (`dohelp`), `xwprintw`, `promptst`/`promptkey` input |
-| `src/funcs.c` | Editor commands: find/replace, reform, save/load (`save`/`load`), block ops (`blockfuncs`), `addtext`, deletions, `doshell`, `sabort` (signal handler) |
-| `src/command.c` | Input dispatch: `Key_scan` and the ^Q/^K/^O menus (`q_key`/`k_key`/`o_key`), SIGALRM trampolines for the timed help screens |
+| `src/sue.c` | Global variable definitions, `main()`, `do_alloc()` (buffer mgmt), `edit_init()`, `edit_exit()` |
+| `src/data.c` | Text-buffer primitives over the gap: `start_line`, `next_line`, `new_line`, `column`, `text_move`, `line_y`, `move_x`, `move_y`, `move_ptr`, `strtoup`, `invert`, `undel`, `undel_save` |
+| `src/display.c` | All curses output: status/prompt windows, `dsp_line`/`disp_page`/`display()`, help screens (`do_help`), `xw_printw`, `prompt_st`/`prompt_key` input |
+| `src/funcs.c` | Editor commands: find/replace, reform, save/load (`save`/`load`), block ops (`block_funcs`), `add_text`, deletions, `do_shell`, `sabort` (signal handler) |
+| `src/command.c` | Input dispatch: `key_scan` and the ^Q/^K/^O menus (`q_key`/`k_key`/`o_key`), SIGALRM trampolines for the timed help screens |
 | `src/sue.h` | Shared types, globals (`extern`), full C89 prototypes |
 | `src/version.h` | Version string |
 | `_original/sue07i.tgz` | Pristine 0.7i sources, reference only |
@@ -63,16 +63,16 @@ marker and trailing newlines so all of the text can be treated as a string.
 - **Strict C89, no GNU extensions.** Function definitions in prototype form;
   all declarations at the top of a block.
 - Single-file helpers are `static` and kept out of `sue.h` (currently:
-  `test`, `dsp_lne`, `disp_page`, `status_linecol`, `doalloc`).
-- Format-string helpers: `statprint` and `status` have fixed argument lists
-  (call sites pass `NULL` for unused trailing args); `xwprintw` and `prompt`
+  `test`, `dsp_line`, `disp_page`, `status_linecol`, `do_alloc`).
+- Format-string helpers: `stat_print` and `status` have fixed argument lists
+  (call sites pass `NULL` for unused trailing args); `xw_printw` and `prompt`
   are variadic (`...` + `<stdarg.h>`, C89-standard) because several call sites
   legitimately pass `int`/`long` printf-arguments (`baudrate()`, `txt_x`,
   `tabdef`, memory sizes) that a `char *` parameter cannot carry. Both format
-  via `vsprintf` into local buffers. `promptst` keeps fixed args; its three
+  via `vsprintf` into local buffers. `prompt_st` keeps fixed args; its three
   int-substituting call sites pre-format the prompt string first.
 - Signal handlers must have `void f(int)` signatures; the no-argument help
-  routines get static trampolines (`alarm_*hlp`) in `command.c`.
+  routines get static trampolines (`alarm_*_hlp`) in `command.c`.
 - No deprecated APIs: crash-save filenames are generated with `getpid()`-based
   unique names instead of `tempnam()`.
 - Color support is always compiled in (the `DOCOLOR` build flag was removed);
@@ -93,8 +93,13 @@ marker and trailing newlines so all of the text can be treated as a string.
   - `case` labels one tab deeper than `switch`, statements one deeper.
   - `return (x);` with a space; parenless `return x;` kept where it predates
     the style pass. Tabs, one per level.
-- `wp1`–`wp4` macros wrap `xwprintw`; keep their args in sync with
-  `xwprintw`'s signature.
+  - **Function names are lower-case snake_case** (`key_scan`, `tpa_err`,
+    `del_line`, `set_file_mode`). Watch out: `<term.h>` pollutes the
+    namespace with terminfo capability macros (`insert_line`, `delete_line`,
+    `set_tab`, ...) — a new name must not collide (that is why the insert-a-
+    newline function is `insert_newline`).
+- `wp1`–`wp4` macros wrap `xw_printw`; keep their args in sync with
+  `xw_printw`'s signature.
 
 ## Decisions log
 
@@ -160,6 +165,12 @@ marker and trailing newlines so all of the text can be treated as a string.
   normalization (only exception: one pair of redundant parentheses removed in
   `load()`), zero-warning rebuild, smoke tests byte-perfect.
 - 2026-11-20 — Made single-file helpers `static` and removed them from `sue.h`.
+- 2026-11-20 — Renamed all functions to lower-case snake_case (key_scan,
+  tpa_err, find_func, quit_func, set_file_mode, del_line, insert_newline,
+  ...). Rule: underscore at word/abbreviation boundaries, abbreviations kept;
+  `insertline` became `insert_newline` (not `insert_line`) because term.h
+  defines terminfo capability macros like `insert_line` via <term.h>.
+  Variables and macros intentionally untouched.
 - 2026-11-20 — Moved the `WINDOW *editwin/promptwin/statuswin/helpwin`
   definitions from `sue.h` (tentative definitions in a header) to `sue.c`;
   header now declares them `extern`. Modern toolchains default to
@@ -171,7 +182,7 @@ marker and trailing newlines so all of the text can be treated as a string.
 
 ## Known issues / notes (not yet fixed)
 
-- `delline()` (funcs.c): on failed `undelsave` the cursor jumps to column 1
+- `del_line()` (funcs.c): on failed `undel_save` the cursor jumps to column 1
   (original author's BUG note).
 - `find()` (funcs.c) uppercases the search string in place (`strtoup(sptr)`),
   destroying it as typed.

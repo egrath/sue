@@ -4,7 +4,7 @@
 /* -------------------------------------------
  * Saving & Block help
  */
-void blockhlp (void)
+void block_hlp (void)
 {
 	enum	helptype	htype;
 
@@ -12,54 +12,54 @@ void blockhlp (void)
 
 	if (helplines)
 	{
-		dohelp (htype, helpwin);		/* Show it in separate window */
+		do_help (htype, helpwin);		/* Show it in separate window */
 	}
 	else
 	{
-		dohelp (htype, editwin);		/* Show in edit window */
+		do_help (htype, editwin);		/* Show in edit window */
 		wattrset (editwin, PROMPTATTR);
 		wp1 ("Strike any key: ");
 		wattrset (editwin, A_NORMAL);
 		wrefresh (editwin);
-		waitkey ();
+		wait_key ();
 	}
 }
 /* -----------------------------------------
  * Quick command help
  */
-void quickhlp (void)
+void quick_hlp (void)
 {
 	if (helplines)
 	{
-		dohelp (QUICK, helpwin);
+		do_help (QUICK, helpwin);
 	}
 	else
 	{
-		dohelp (QUICK, editwin);		/* Show in edit window */
+		do_help (QUICK, editwin);		/* Show in edit window */
 		wattrset (editwin, PROMPTATTR);
 		wp1 ("Strike any key: ");
 		wattrset (editwin, A_NORMAL);
 		wrefresh (editwin);
-		waitkey ();
+		wait_key ();
 	}
 }
 /* ----------------------------------------------------------
  * Onscreen command help
  */
-void onscrhlp (void)
+void onscr_hlp (void)
 {
 	if (helplines)
 	{
-		dohelp (ONSCREEN, helpwin);
+		do_help (ONSCREEN, helpwin);
 	}
 	else
 	{
-		dohelp (ONSCREEN, editwin);		/* Show in edit window */
+		do_help (ONSCREEN, editwin);		/* Show in edit window */
 		wattrset (editwin, PROMPTATTR);
 		wp1 ("Strike any key: ");
 		wattrset (editwin, A_NORMAL);
 		wrefresh (editwin);
-		waitkey ();
+		wait_key ();
 	}
 }
 
@@ -67,7 +67,7 @@ void onscrhlp (void)
 /*--------------------------------------------------------------
  * Drivel
  */
-void lookbusy (void)
+void look_busy (void)
 {
 	wclear (editwin);
 	wp1 ("and the annual outlook for such a plan seems reasonably promising. \n");
@@ -82,7 +82,7 @@ void lookbusy (void)
 	wp1 ("Another aspect of the problem that must be taken into \n");
 	wp1 ("consideration is the continual growth in significance of nonmarket ");
 	wrefresh (editwin);
-	waitkey ();				/* Get key */
+	wait_key ();				/* Get key */
 	disp_mode = dpage;		/* Repaint text */
 }
 #endif
@@ -90,18 +90,18 @@ void lookbusy (void)
  * Find text command.
  * Case-independent, forward text search.
  */
-int findfunc (void)
+int find_func (void)
 {
 	char	tfindbuf[60];
 
 	strcpy (tfindbuf, sptr);
-	if (promptst ("Find text: ", "", sptr, s_strsiz) > 0)
+	if (prompt_st ("Find text: ", "", sptr, s_strsiz) > 0)
 	{
 		repflag = FALSE;
 		txt_ptr = gap_end;
 		if (find () == 0)
 		{
-			notfound ();
+			not_found ();
 			return (0);
 		}
 		return (1);			/* Found */
@@ -118,13 +118,13 @@ int findfunc (void)
  * Change text command.
  * Case-independent, forward text search.
  */
-void replfunc (void)
+void repl_func (void)
 {
-	if (findfunc ())
+	if (find_func ())
 	{
 		repflag = TRUE;
 		repkey = 0;
-		if (promptst ("Change to: ", "", rptr, r_strsiz) < 0)
+		if (prompt_st ("Change to: ", "", rptr, r_strsiz) < 0)
 		{
 			return;
 		}
@@ -140,7 +140,7 @@ void replfunc (void)
 /* --------------------------------------------------
  * Quit command
  */
-void quitfunc (void)
+void quit_func (void)
 {
 	if (mod)					/* Ask first if file changed */
 	{
@@ -154,7 +154,7 @@ void quitfunc (void)
 /* ---------------------------------------------------
  * Save file & continue command
  */
-void savefunc (void)
+void save_func (void)
 {
 	if (save_fname ())
 	{
@@ -164,7 +164,7 @@ void savefunc (void)
 /* -----------------------------------------------
  *	Save/quit command
  */
-void exitfunc (void)
+void exit_func (void)
 {
 	if (save_fname ())
 	{
@@ -174,7 +174,7 @@ void exitfunc (void)
 /* -----------------------------------------------------
  * Info command (current status of edit session)
  */
-void infofunc (void)
+void info_func (void)
 {
 	char	modestr[20];
 
@@ -194,7 +194,7 @@ void infofunc (void)
 		break;
 	}
 	status (0, "SUE version %s Copyright 1995 Point to Point", suerev, NULL);
-	statprint (COLS - 23, "Author: carson@ppci.com", NULL, NULL);
+	stat_print (COLS - 23, "Author: carson@ppci.com", NULL, NULL);
 	wmove (editwin, 0, 0);
 	wp4 ("           Editing: `%s` at line `%u` column `%u`\n", txtname, txt_x, txt_y);		/* show full name */
 	wp2 ("          Modified: `%s`\n", mod ? "Yes" : "No");
@@ -210,14 +210,14 @@ void infofunc (void)
 	wp1 ("    Strike any key: ");
 	wattrset (editwin, A_NORMAL);
 	wrefresh (editwin);
-	waitkey ();					/* Get key */
+	wait_key ();					/* Get key */
 	status_line ();
 	disp_mode = dpage;			/* Repaint text */
 }
 /* ------------------------------------------------
  * Erase character under cursor
  */
-int delright (void)
+int del_right (void)
 {
 	if (gap_end < txt_end)		/* Can't delete past end of file */
 	{
@@ -254,7 +254,7 @@ int name (void)
 	char *tokptr;
 
 	/* Prompt and take first token: */
-	if ((promptst ("Name file: ", "", respptr, respsiz) > 0) &&
+	if ((prompt_st ("Name file: ", "", respptr, respsiz) > 0) &&
 		((tokptr = strtok (respptr, " \t")) != NULLCHARPTR))
 	{
 		strcpy (txtname, tokptr);
@@ -365,7 +365,7 @@ int replace (void)
 	strdif = strlen (rptr) - strlen (sptr);
 	if (gap_beg + strdif >= gap_end)
 	{
-		TPAErr ();
+		tpa_err ();
 		return (0);
 	}
 	getrepkey:
@@ -373,7 +373,7 @@ int replace (void)
 	{
 		wattron (statuswin, A_BOLD);
 		status (0, "Change (Y/N/*)? ", NULL, NULL);
-		statprint (COLS - 18, "F1 or ^U to abort", NULL, NULL);
+		stat_print (COLS - 18, "F1 or ^U to abort", NULL, NULL);
 		wattroff (statuswin, A_BOLD);
 		disp_mode = dpages;
 		display ();
@@ -382,7 +382,7 @@ int replace (void)
 	}
 	if (repkey != '*')
 	{
-		repkey = toupper (waitkey ());
+		repkey = toupper (wait_key ());
 		status_line ();
 	}
 	switch (repkey)
@@ -403,9 +403,9 @@ int replace (void)
 		for (counter = strlen (sptr) ;
 		     counter > 0 ; counter--)	/* Remove old string, */
 		{
-			delright ();	  		/* Preserve block markers */
+			del_right ();	  		/* Preserve block markers */
 		}
-		disp_mode = dpage;				/* Restore from delright() */
+		disp_mode = dpage;				/* Restore from del_right() */
 		gap_beg++;
 		strcpy (gap_beg, rptr);
 		gap_beg += strlen (rptr) - 1;
@@ -433,13 +433,13 @@ int replace (void)
 /* --------------------------------------------------
  * Position cursor to arbitrary line
  */
-void gotoline (void)
+void goto_line (void)
 {
 	int line_no;
 	char pbuf[40];
 
 	sprintf (pbuf, "Go to line [%d]: ", txt_x);
-	if (promptst (pbuf, "", respptr, 5) > 0)
+	if (prompt_st (pbuf, "", respptr, 5) > 0)
 	{
 		if (sscanf (respptr, "%d", &line_no) == 1)
 		{
@@ -449,20 +449,20 @@ void gotoline (void)
 		}
 		else
 		{
-			valerr ();	/* Value error */
+			val_err ();	/* Value error */
 		}
 	}
 }
 /* -----------------------------------------------
  * Set hard tab display
  */
-void tabset (void)
+void tab_set (void)
 {
 	int c;
 	char pbuf[40];
 
 	sprintf (pbuf, "Tab width [%d]: ", tabdef);
-	if (promptst (pbuf, "", respptr, 2) > 0)
+	if (prompt_st (pbuf, "", respptr, 2) > 0)
 	{
 		if ((sscanf (respptr, "%d", &c) == 1) && (c > 1) && (c <= 32))
 		{
@@ -472,20 +472,20 @@ void tabset (void)
 		}
 		else
 		{
-			valerr ();
+			val_err ();
 		}
 	}
 }
 /* -------------------------------
  * Set right margin
  */
-void rmset (void)
+void rm_set (void)
 {
 	int c;
 	char pbuf[40];
 
 	sprintf (pbuf, "Right margin [%d]: ", rt_marg);
-	if (promptst (pbuf, "", respptr, 3) > 0)
+	if (prompt_st (pbuf, "", respptr, 3) > 0)
 	{
 		if ((sscanf (respptr, "%d", &c) == 1) && (c > 1))
 		{
@@ -493,7 +493,7 @@ void rmset (void)
 		}
 		else
 		{
-			valerr ();
+			val_err ();
 		}
 	}
 }
@@ -585,7 +585,7 @@ void reform (void)
 		{
 			txt_y = column (gap_end);
 			beep ();
-			promptkey ("Can't reformat! ");
+			prompt_key ("Can't reformat! ");
 			return;
 		}
 		/* Break line if necessary */
@@ -607,7 +607,7 @@ void reform (void)
 		{
 			if (gap_beg + 1 >= gap_end)
 			{
-				TPAErr ();
+				tpa_err ();
 				txt_y = column (gap_end);
 				return;
 			}
@@ -736,7 +736,7 @@ void writeblk (void)
 {
 	int	c;
 
-	if (promptst ("Write block to: ", "", respptr, respsiz) > 0)
+	if (prompt_st ("Write block to: ", "", respptr, respsiz) > 0)
 	{
 		if (blk_beg == (char *) NULL)	/* no block specified */
 		{
@@ -749,7 +749,7 @@ void writeblk (void)
 		}
 		else
 		{
-			c = toupper (promptkey (
+			c = toupper (prompt_key (
 				"File exists: O(verwrite)/A(ppend)/Q(uit)? Q\b"));
 			if (c == 'A' || c == 'O')
 			{
@@ -774,7 +774,7 @@ void readblk (void)
 	int inlines;
 	char *tmp_ptr;
 
-	if (promptst ("Read block from: ", "", respptr, respsiz) > 0)
+	if (prompt_st ("Read block from: ", "", respptr, respsiz) > 0)
 	{
 		tmp_ptr = gap_beg + 1;
 		inlines = load (respptr);
@@ -792,14 +792,14 @@ void readblk (void)
 		else						/* No file */
 		{
 			beep ();
-			promptkey ("File not found ");
+			prompt_key ("File not found ");
 		}
 	}
 }
 /* ---------------------------------------------------
  * Edit new file.
  */
-void newfile (void)
+void new_file (void)
 {
 	if (mod)
 	{
@@ -808,7 +808,7 @@ void newfile (void)
 			return;
 		}
 	}
-	if (promptst ("Load file: ", "", respptr, respsiz) > 0)
+	if (prompt_st ("Load file: ", "", respptr, respsiz) > 0)
 	{
 		edit_init (response);
 		/*		disp_mode = dpage;*/
@@ -827,7 +827,7 @@ int save (char *s_name, char *s_type)
 	if (strlen (s_name) == 0)
 	{
 		beep ();
-		promptkey ("No name specified ");
+		prompt_key ("No name specified ");
 		return (0);
 	}
 
@@ -837,7 +837,7 @@ int save (char *s_name, char *s_type)
 	if (s_file == (FILE *) NULL)
 	{
 		beep ();
-		promptkey ("Can't write to file! ");
+		prompt_key ("Can't write to file! ");
 		status_line ();	/* restore */
 		return (0);
 	}
@@ -871,7 +871,7 @@ int save (char *s_name, char *s_type)
 	if (ferror (s_file) != 0 || fclose (s_file) != 0)
 	{
 		beep ();
-		promptkey ("Error writing file! ");
+		prompt_key ("Error writing file! ");
 		status_line ();	/* Restore */
 		return (0);
 	}
@@ -906,7 +906,7 @@ int load (char *l_name)
 		if (gap_beg + 1 >= gap_end)
 		{
 			beep ();
-			promptkey ("File too big ");
+			prompt_key ("File too big ");
 			gap_beg = old_beg;
 			fclose (l_file);
 			status_line ();
@@ -917,7 +917,7 @@ int load (char *l_name)
 			c &= 0x7F;	/* strip high bits */
 			if (c)		/* Remove NULLs */
 			{
-				*(gap_beg + 1) = c;		/* doalloc() sets initial gap_beg to \n */
+				*(gap_beg + 1) = c;		/* do_alloc() sets initial gap_beg to \n */
 				if (*gap_beg == '\r')	/* Previous was \r */
 				{
 					*gap_beg = '\n';	/* Xlate \r to \n and \r\n to \n\n */
@@ -958,11 +958,11 @@ int load (char *l_name)
 /* -------------------------------------------------------
  * Set filemode
  */
-void setfilemode (void)
+void set_file_mode (void)
 {
 	int	keyin;
 
-	keyin = toupper (promptkey ("File mode: Unix, msDos, or Macintosh (U/D/M)? "));
+	keyin = toupper (prompt_key ("File mode: Unix, msDos, or Macintosh (U/D/M)? "));
 	switch (keyin)
 	{
 	case 'U':
@@ -987,22 +987,22 @@ void setfilemode (void)
 /* -------------------------------------------------------
  * Toggle margin release
  */
-void marrel (void)
+void mar_rel (void)
 {
 	MRflag = !MRflag;
 	if (MRflag)
 	{
-		statprint (COLS - 27, "MR", NULL, NULL);
+		stat_print (COLS - 27, "MR", NULL, NULL);
 	}
 	else
 	{
-		statprint (COLS - 27, "  ", NULL, NULL);
+		stat_print (COLS - 27, "  ", NULL, NULL);
 	}
 }
 /* -------------------------------------------------------
  * Related block functions
  */
-void blockfuncs (int funcno)
+void block_funcs (int funcno)
 {
 	char	*old_ptr;
 
@@ -1036,12 +1036,12 @@ void blockfuncs (int funcno)
 
 	case 4:			/* Move (copy then delete) */
 	case 5:			/* Copy to in front of cursor */
-		if (blkerr (2))				/* In or not marked */
+		if (blk_err (2))				/* In or not marked */
 		{
 			break;
 		}
 		tblk_end = gap_end - 1;		/* Prepare to move block end (case 4) */
-		if (!textins (blk_beg, blk_end + 1, FORWARD))
+		if (!text_ins (blk_beg, blk_end + 1, FORWARD))
 		{
 			break;					/* TPA error */
 		}
@@ -1054,7 +1054,7 @@ void blockfuncs (int funcno)
 		}
 		/*FALLTHRU*/
 	case 6:							/* Delete block */
-		if (blkerr (1))				/* Not marked */
+		if (blk_err (1))				/* Not marked */
 		{
 			break;
 		}
@@ -1074,7 +1074,7 @@ void blockfuncs (int funcno)
 		}
 		if (funcno == 6)			/* If we're erasing.. */
 		{
-			if (!undelsave (blk_beg, gap_beg - blk_beg + 1, FORWARD))
+			if (!undel_save (blk_beg, gap_beg - blk_beg + 1, FORWARD))
 			{
 				goto NoBlockDel;	/* Didn't save, so don't delete */
 			}
@@ -1108,7 +1108,7 @@ void blockfuncs (int funcno)
 /* -------------------------------------------------------
  * Toggle help mode
  */
-void togglehelp (void)
+void toggle_help (void)
 {
 	if (helplines)
 	{
@@ -1136,7 +1136,7 @@ void togglehelp (void)
 /* -------------------------------------------------------
  * Repeat last find/replace.
  */
-void repfind (void)
+void rep_find (void)
 {
 	if (strlen (s_str) > 0)
 	{
@@ -1166,19 +1166,19 @@ void repfind (void)
 		}
 		else
 		{
-			notfound ();
+			not_found ();
 		}
 	}
 }
 /* -------------------------------------------------------
  * Invert case of character at cursor.
  */
-void caseinvert (void)
+void case_invert (void)
 {
 	txt_ptr = gap_end;
 	if (isprint (*txt_ptr))
 	{
-		outchar (*txt_ptr = invert (*txt_ptr));
+		out_char (*txt_ptr = invert (*txt_ptr));
 		mod = 1;
 	}
 	txt_y = move_y (movefwd, movechar);	/* Advance cursor */
@@ -1186,7 +1186,7 @@ void caseinvert (void)
 /* -------------------------------------------------------
  * Delete word right
  */
-void delword (void)
+void del_word (void)
 {
 	char	*tmp_ptr, *tmp_blkbeg, *tmp_blkend;
 
@@ -1194,14 +1194,14 @@ void delword (void)
 	tmp_blkbeg = blk_beg;
 	tmp_blkend = blk_end;
 	while
-		(delright () &&
+		(del_right () &&
 		(*(gap_end - 1) != '\n') &&
 		(*(gap_end - 1) != '.') &&
 		(*(gap_end - 1) != ',') &&
 		(*(gap_end - 1) != ':') &&
 		((*(gap_end - 1) != ' ' && *(gap_end - 1) != '\t') ||
 		 (*gap_end == ' ' || *gap_end == '\t')));
-	if (!undelsave (tmp_ptr, gap_end - tmp_ptr, FORWARD))
+	if (!undel_save (tmp_ptr, gap_end - tmp_ptr, FORWARD))
 	{
 		blk_beg = tmp_blkbeg;
 		blk_end = tmp_blkend;
@@ -1211,7 +1211,7 @@ void delword (void)
 /* -------------------------------------------------------
  * Delete cursor line.
  */
-void delline (void)
+void del_line (void)
 {
 	char	*tmp_ptr;
 
@@ -1224,7 +1224,7 @@ void delline (void)
 		{
 			gap_end = txt_end;
 		}
-		if (!undelsave (tmp_ptr, gap_end - tmp_ptr, FORWARD))
+		if (!undel_save (tmp_ptr, gap_end - tmp_ptr, FORWARD))
 		{
 			gap_end = tmp_ptr;	/* BUG - cursor jumps to col. 1 */
 		}
@@ -1236,7 +1236,7 @@ void delline (void)
 /* -------------------------------------------------------
  * Insert line after cursor
  */
-void insertline (void)
+void insert_newline (void)
 {
 	if (gap_beg + 1 < gap_end)
 	{
@@ -1246,7 +1246,7 @@ void insertline (void)
 	}
 	else
 	{
-		TPAErr ();
+		tpa_err ();
 	}
 }
 /* -------------------------------------------------------
@@ -1262,7 +1262,7 @@ void repaint (void)
 /* -------------------------------------------------------
  * Add text at cursor.
  */
-void addtext (int ch)
+void add_text (int ch)
 {
 	char	*tmp_ptr;
 
@@ -1270,7 +1270,7 @@ void addtext (int ch)
 	{
 	case CNTRL_P:				/* Enter a control char. */
 		warning ("^P-");
-		ch = (waitkey () & 0x1F);
+		ch = (wait_key () & 0x1F);
 #if 0
 		if (ch == 0)			/* Allow this? (search() won't find ^@) */
 		{
@@ -1288,7 +1288,7 @@ void addtext (int ch)
 		}
 		/*FALLTHRU*/
 	case CNTRL_N:				/* Insert a new line */
-		insertline ();
+		insert_newline ();
 		break;
 
 	case '\t':					/* TAB */
@@ -1298,7 +1298,7 @@ void addtext (int ch)
 			*++gap_beg = ch;
 			if (!insflag && (gap_end < txt_end) && (*gap_end != '\n'))
 			{
-				if (!undelsave (gap_end, 1, FORWARD))
+				if (!undel_save (gap_end, 1, FORWARD))
 				{
 					break;
 				}
@@ -1308,14 +1308,14 @@ void addtext (int ch)
 			/* Expand TABs on output */
 			for ( ; txt_y < ch ; txt_y++)
 			{
-				outchar (' ');
+				out_char (' ');
 			}
 			disp_mode = dtoeol;
 			mod = TRUE;
 		}
 		else
 		{
-			TPAErr ();
+			tpa_err ();
 		}
 		break;
 
@@ -1328,7 +1328,7 @@ void addtext (int ch)
 				*++gap_beg = ch;
 				if (!insflag && (gap_end < txt_end) && (*gap_end != '\n'))
 				{
-					if (!undelsave (gap_end, 1, FORWARD))
+					if (!undel_save (gap_end, 1, FORWARD))
 					{
 						break;
 					}
@@ -1366,7 +1366,7 @@ void addtext (int ch)
 				else
 				{
 					nowrap:
-					outchar (ch);
+					out_char (ch);
 					disp_mode = dtoeol;		/* Redraw rest of line */
 				}
 				mod = TRUE;
@@ -1384,12 +1384,12 @@ void addtext (int ch)
 			}
 			else
 			{
-				TPAErr ();	/* Out of space */
+				tpa_err ();	/* Out of space */
 			}
 		}
 		else
 		{
-			keyerr ();		/* Non-printable char. */
+			key_err ();		/* Non-printable char. */
 		}
 		break;
 	}
@@ -1397,11 +1397,11 @@ void addtext (int ch)
 /* -------------------------------------------------------
  * Delete character to left of cursor
  */
-void delleft (void)
+void del_left (void)
 {
 	if (gap_beg > txt_beg)
 	{
-		if (!undelsave (gap_beg, 1, BACKWARD))
+		if (!undel_save (gap_beg, 1, BACKWARD))
 		{
 			return;
 		}
@@ -1438,7 +1438,7 @@ void delleft (void)
  * Returns 0 if out of TPA, else 1.
  * Note: does NOT refresh screen.
  */
-int textins (char *ins_beg, char *ins_end, enum directions direction)
+int text_ins (char *ins_beg, char *ins_end, enum directions direction)
 {
 	char		*ti_ptr;
 	unsigned	ins_size;
@@ -1449,7 +1449,7 @@ int textins (char *ins_beg, char *ins_end, enum directions direction)
 	{
 		if ((long) ins_size > gap_end - gap_beg - 1)	/* Space? */
 		{
-			TPAErr ();
+			tpa_err ();
 			return (0);
 		}
 		memcpy (gap_end - ins_size, ins_beg, ins_size);
@@ -1459,7 +1459,7 @@ int textins (char *ins_beg, char *ins_end, enum directions direction)
 	{
 		if ((long) ins_size > gap_end - gap_beg - 2)	/* Space? */
 		{
-			TPAErr ();
+			tpa_err ();
 			return (0);
 		}
 		memcpy (gap_beg + 1, ins_beg, ins_size);
@@ -1481,7 +1481,7 @@ int textins (char *ins_beg, char *ins_end, enum directions direction)
  * NOTES: - Imported (">") text will terminate at main text buffer overflow.
  *        - Imported text lines will be truncated after 1023 characters each.
  */
-void doshell (void)
+void do_shell (void)
 {
 	int		result;
 	int		tempsize;
@@ -1502,7 +1502,7 @@ void doshell (void)
 
 	if (tempsize < respsiz)
 	{
-		promptkey ("$SHELL variable too long ");
+		prompt_key ("$SHELL variable too long ");
 		return;
 	}
 
@@ -1514,7 +1514,7 @@ void doshell (void)
 	wattrset (editwin, A_NORMAL);
 	disp_mode = dpage;
 
-	result = promptst ("Shell command: ", "", respptr, respsiz);
+	result = prompt_st ("Shell command: ", "", respptr, respsiz);
 	if (result < 0)
 	{
 		return;		/* Abort */
@@ -1556,7 +1556,7 @@ void doshell (void)
 		{
 			while ((fgets (pipebuf, 1023, fileptr)) != NULL)
 			{
-				if (textins (pipebuf, pipebuf + strlen (pipebuf), BACKWARD) == 0)
+				if (text_ins (pipebuf, pipebuf + strlen (pipebuf), BACKWARD) == 0)
 				{
 					pclose (fileptr);
 					return;
@@ -1569,7 +1569,7 @@ void doshell (void)
 		}
 		else
 		{
-			promptkey ("popen() error ");
+			prompt_key ("popen() error ");
 		}
 	}
 	else

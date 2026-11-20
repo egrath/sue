@@ -4,21 +4,21 @@
 /* -----------------------------------------------
  * Tell user he entered bad value
  */
-void valerr (void)
+void val_err (void)
 {
 	beep ();
-	promptkey ("Value error ");
+	prompt_key ("Value error ");
 }
 
-void notfound (void)		/* user's string search fails */
+void not_found (void)		/* user's string search fails */
 {
 	beep ();
-	promptkey ("Text not found ");
+	prompt_key ("Text not found ");
 }
 /* -----------------------------------------------
  * Check for and report block errors
  */
-int blkerr (char level)
+int blk_err (char level)
 {
 	if (((level > 1) &&
 	     (gap_end > blk_beg) &&
@@ -26,7 +26,7 @@ int blkerr (char level)
 	    (blk_beg < txt_beg) || (blk_end > txt_end))	/* No block */
 	{
 		beep ();
-		promptkey ("Block error ");
+		prompt_key ("Block error ");
 		return (1);
 	}
 	else
@@ -37,17 +37,17 @@ int blkerr (char level)
 /* ----------------------------------------------
  * User entered unknown command
  */
-void keyerr (void)
+void key_err (void)
 {
 	beep ();
-	promptkey ("Unknown command ");
+	prompt_key ("Unknown command ");
 }
 /* -------------------------------------------------
  */
-void TPAErr (void)
+void tpa_err (void)
 {
 	beep ();
-	promptkey ("Out of memory! ");
+	prompt_key ("Out of memory! ");
 }
 /* -----------------------------------------------
  * Confirm before abandoning text
@@ -56,7 +56,7 @@ char abandon (void)
 {
 	int	c;
 
-	c = toupper (promptkey ("File modified; Abandon (Y/N)? N\b"));
+	c = toupper (prompt_key ("File modified; Abandon (Y/N)? N\b"));
 	if (c == 'Y')
 	{
 		wechochar (promptwin, c);
@@ -66,14 +66,14 @@ char abandon (void)
 /* ---------------------------------------------------
  * Await keystroke from prompt window
  */
-int waitkey (void)
+int wait_key (void)
 {
 	return (wgetch (promptwin));
 }
 /* ----------------------------------------------------
  *	Output a single character to the screen.
  */
-void outchar (char a)
+void out_char (char a)
 {
 	if ((blk_beg <= gap_beg) && (blk_end > gap_beg))
 	{
@@ -90,7 +90,7 @@ void outchar (char a)
 /* --------------------------------------------
  * Print to status line
  */
-void statprint (int col, char *st1, char *st2, char *st3)
+void stat_print (int col, char *st1, char *st2, char *st3)
 {
 	mvwprintw (statuswin, 0, col, st1, st2, st3);
 	wrefresh (statuswin);
@@ -104,7 +104,7 @@ static void status_linecol (void)
 	char label_pos[32];
 
 	sprintf (label_pos, "L %-5d C %-5d", txt_x, txt_y);
-	statprint (COLS - 49, label_pos, NULL, NULL);
+	stat_print (COLS - 49, label_pos, NULL, NULL);
 }
 
 /* ---------------------------------------------
@@ -120,7 +120,7 @@ void status (int col, char *st1, char *st2, char *st3)
 	{
 		waddch (statuswin, ' ');
 	}
-	statprint (col, st1, st2, st3);
+	stat_print (col, st1, st2, st3);
 }
 /* ---------------------------------------------------
  * Restore status line
@@ -145,11 +145,11 @@ void status_line (void)
 	/* Show toggle status */
 	if (MRflag)
 	{
-		statprint (COLS - 27, "MR", NULL, NULL);			/* Margin Release */
+		stat_print (COLS - 27, "MR", NULL, NULL);			/* Margin Release */
 	}
 	if (insflag)
 	{
-		statprint (COLS - 24, "INS", NULL, NULL);		/* INSert status */
+		stat_print (COLS - 24, "INS", NULL, NULL);		/* INSert status */
 	}
 
 	if (helplines)		/* Don't show redundant msg */
@@ -158,7 +158,7 @@ void status_line (void)
 	}
 	else
 	{
-		statprint (COLS - 11, "^J for help", NULL, NULL);
+		stat_print (COLS - 11, "^J for help", NULL, NULL);
 	}
 }
 /* -----------------------------------------------------
@@ -195,7 +195,7 @@ void warning (char *strptr)
  * Prompt for and return string
  * Returns length of input string, or -1 if aborted. (12/15/92-crw)
  */
-int promptst (char *st1, char *st2, char *inputst, int inlen)
+int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 {
 	int		scresult;
 	int		abortflag;
@@ -205,7 +205,7 @@ int promptst (char *st1, char *st2, char *inputst, int inlen)
 
 	wattron (statuswin, A_BOLD);
 	status (0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
-	statprint (COLS - 18, "F1 or ^U to abort", NULL, NULL);
+	stat_print (COLS - 18, "F1 or ^U to abort", NULL, NULL);
 	wattrset (statuswin, STATATTR);
 
 	prompt (0, st1, st2, NULL, NULL);			/* Prompt user */
@@ -216,7 +216,7 @@ int promptst (char *st1, char *st2, char *inputst, int inlen)
 
 	while (editing)
 	{
-		keyin = waitkey ();
+		keyin = wait_key ();
 		switch (keyin)
 		{
 		case KEY_ENTER:
@@ -251,7 +251,7 @@ int promptst (char *st1, char *st2, char *inputst, int inlen)
 				sleep (1);  	/* For slow terminals */
 				break;
 			}
-			keyin = (waitkey () & 0x1F);		/* Xlate to ctl-code */
+			keyin = (wait_key () & 0x1F);		/* Xlate to ctl-code */
 			/* FALLTHRU */
 		default:
 			if (scresult >= inlen)
@@ -296,10 +296,10 @@ int promptst (char *st1, char *st2, char *inputst, int inlen)
 /* -----------------------------------------------------------
  * Prompt for and return keystroke
  */
-int promptkey (char *strptr)
+int prompt_key (char *strptr)
 {
 	warning (strptr);	/* Show prompt at right edge */
-	return (waitkey ());
+	return (wait_key ());
 }
 
 /* ---------------------------------------------------------------
@@ -307,7 +307,7 @@ int promptkey (char *strptr)
  *   return a pointer to the char AFTER the \n.
  * The line is displayed on the jTH line of the screen.
  */
-static char * dsp_lne (char *line, int row)
+static char * dsp_line (char *line, int row)
 /* line: Pointer to first character to display; row: Screen X position */
 {
 	int		i;			/* Column counter */
@@ -459,7 +459,7 @@ static void disp_page (int x_top, int x_bot)
 
 	for (i = x_top; i <= x_bot; i++)
 	{
-		line = dsp_lne (line, i);
+		line = dsp_line (line, i);
 	}
 	wrefresh (editwin);
 }
@@ -517,7 +517,7 @@ void display (void)
 	{
 	case dtoeol:			/* Display to end of line */
 	case dtoeolhc:			/* Same, but flags redisplay of "<" */
-		dsp_lne (gap_end, txt_x - scr_xbeg + 1);
+		dsp_line (gap_end, txt_x - scr_xbeg + 1);
 		break;
 
 	case dtoeos:			/* Delete line or redisplay from line down */
@@ -529,8 +529,8 @@ void display (void)
 	case dinsln:  			/* Insert new line or redisplay from ln. above */
 		wmove (editwin, txt_x - scr_xbeg, 0);
 		winsertln (editwin);
-		dsp_lne (gap_beg, txt_x - scr_xbeg);
-		dsp_lne (gap_end, txt_x - scr_xbeg + 1);
+		dsp_line (gap_beg, txt_x - scr_xbeg);
+		dsp_line (gap_end, txt_x - scr_xbeg + 1);
 		wrefresh (editwin);
 		break;
 
@@ -611,7 +611,7 @@ void display (void)
  *  Uses FLAGATTR | A_BOLD to highlight.
  *  Side-effect: always sets attributes for designated window to A_NORMAL.
  */
-void xwprintw (WINDOW *xwindow, char *string1, ...)
+void xw_printw (WINDOW *xwindow, char *string1, ...)
 {
 	va_list	args;
 	int		On = 0;
@@ -648,7 +648,7 @@ void xwprintw (WINDOW *xwindow, char *string1, ...)
 /* -----------------------------------------------------------------
  *	Display help in help window.
  */
-void dohelp (enum helptype helprequest, WINDOW *hwindow)
+void do_help (enum helptype helprequest, WINDOW *hwindow)
 {
 	chtype	ULchar = ACS_HLINE;	/* From curses.h */
 	int		i;
@@ -708,33 +708,33 @@ void dohelp (enum helptype helprequest, WINDOW *hwindow)
 	wmove (hwindow, 0, 0);
 	wclrtoeol (hwindow);
 	wmove (hwindow, 0, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-	xwprintw (hwindow, hline0, NULL, NULL, NULL);
+	xw_printw (hwindow, hline0, NULL, NULL, NULL);
 	wmove (hwindow, 1, 0);
 	wclrtoeol (hwindow);
 	wmove (hwindow, 1, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-	xwprintw (hwindow, hline1, NULL, NULL, NULL);
+	xw_printw (hwindow, hline1, NULL, NULL, NULL);
 	if (hline2 != NULL)
 	{
 		wmove (hwindow, 2, 0);
 		wclrtoeol (hwindow);
 		wmove (hwindow, 2, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xwprintw (hwindow, hline2, NULL, NULL, NULL);
+		xw_printw (hwindow, hline2, NULL, NULL, NULL);
 		wmove (hwindow, 3, 0);
 		wclrtoeol (hwindow);
 		wmove (hwindow, 3, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xwprintw (hwindow, hline3, NULL, NULL, NULL);
+		xw_printw (hwindow, hline3, NULL, NULL, NULL);
 		wmove (hwindow, 4, 0);
 		wclrtoeol (hwindow);
 		wmove (hwindow, 4, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xwprintw (hwindow, hline4, NULL, NULL, NULL);
+		xw_printw (hwindow, hline4, NULL, NULL, NULL);
 		wmove (hwindow, 5, 0);
 		wclrtoeol (hwindow);
 		wmove (hwindow, 5, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xwprintw (hwindow, hline5, NULL, NULL, NULL);
+		xw_printw (hwindow, hline5, NULL, NULL, NULL);
 		wmove (hwindow, 6, 0);
 		wclrtoeol (hwindow);
 		wmove (hwindow, 6, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xwprintw (hwindow, hline6, NULL, NULL, NULL);
+		xw_printw (hwindow, hline6, NULL, NULL, NULL);
 	}
 
 	helpstate = helprequest;	/* Global flag */
@@ -761,7 +761,7 @@ void dohelp (enum helptype helprequest, WINDOW *hwindow)
 }
 /* ================= DEBUG ROUTINE ================== */
 
-void debugpr (char *str1, char *str2, char *str3)
+void debug_pr (char *str1, char *str2, char *str3)
 {
 #ifdef DEBUG
 	fprintf (debugterm, str1, str2, str3);

@@ -216,70 +216,70 @@ extern void move_ptr (void);
 extern char * strtoup (char *str);
 extern char invert (char c);
 extern int undel (void);
-extern int undelsave (char *txt_start, unsigned txt_size,
+extern int undel_save (char *txt_start, unsigned txt_size,
 	enum directions undel_direction);
 
 /* display.c */
-extern int blkerr (char level);
+extern int blk_err (char level);
 extern char abandon (void);
-extern int waitkey (void);
-extern void outchar (char a);
-extern void statprint (int col, char *st1, char *st2, char *st3);
+extern int wait_key (void);
+extern void out_char (char a);
+extern void stat_print (int col, char *st1, char *st2, char *st3);
 extern void status (int col, char *st1, char *st2, char *st3);
 extern void status_line (void);
 extern void prompt (int col, char *st1, ...);
 extern void warning (char *strptr);
-extern int promptst (char *st1, char *st2, char *inputst, int inlen);
-extern int promptkey (char *strptr);
+extern int prompt_st (char *st1, char *st2, char *inputst, int inlen);
+extern int prompt_key (char *strptr);
 extern void display (void);
-extern void xwprintw (WINDOW *xwindow, char *string1, ...);
-extern void dohelp (enum helptype helprequest, WINDOW *hwindow);
-extern void valerr (void), notfound (void), keyerr (void), TPAErr (void);
-extern void debugpr (char *str1, char *str2, char *str3);
+extern void xw_printw (WINDOW *xwindow, char *string1, ...);
+extern void do_help (enum helptype helprequest, WINDOW *hwindow);
+extern void val_err (void), not_found (void), key_err (void), tpa_err (void);
+extern void debug_pr (char *str1, char *str2, char *str3);
 
 /* funcs.c */
-extern void blockhlp (void), quickhlp (void), onscrhlp (void);
-extern int findfunc (void);
-extern void replfunc (void), quitfunc (void), savefunc (void), exitfunc (void);
-extern void infofunc (void);
-extern int delright (void);
+extern void block_hlp (void), quick_hlp (void), onscr_hlp (void);
+extern int find_func (void);
+extern void repl_func (void), quit_func (void), save_func (void), exit_func (void);
+extern void info_func (void);
+extern int del_right (void);
 extern int name (void);
 extern int save_fname (void);
 extern int find (void);
 extern int replace (void);
-extern void gotoline (void), tabset (void), rmset (void);
+extern void goto_line (void), tab_set (void), rm_set (void);
 extern void reform (void);
 extern void sabort (int sig);
-extern void writeblk (void), readblk (void), newfile (void);
+extern void writeblk (void), readblk (void), new_file (void);
 extern int save (char *s_name, char *s_type);
 extern int load (char *l_name);
-extern void setfilemode (void), marrel (void);
-extern void blockfuncs (int funcno);
-extern void togglehelp (void);
-extern void repfind (void), caseinvert (void);
-extern void delword (void), delline (void), insertline (void);
-extern void repaint (void), addtext (int ch), delleft (void);
-extern int textins (char *ins_beg, char *ins_end,
+extern void set_file_mode (void), mar_rel (void);
+extern void block_funcs (int funcno);
+extern void toggle_help (void);
+extern void rep_find (void), case_invert (void);
+extern void del_word (void), del_line (void), insert_newline (void);
+extern void repaint (void), add_text (int ch), del_left (void);
+extern int text_ins (char *ins_beg, char *ins_end,
 	enum directions direction);
-extern void doshell (void);
+extern void do_shell (void);
 
 /* sue.c */
 extern void edit_init (char *v_name);
 extern void edit_exit (int exparm);
-extern void Key_scan (void);
+extern void key_scan (void);
 
 /* command.c */
 extern void q_key (void), k_key (void), o_key (void);
 
 #ifdef LOOKBUSY
-extern void lookbusy (void);
+extern void look_busy (void);
 #endif
 
 /* ===================== GLOBAL MACROS ==================== */
 
-#define wp1(str1) wclrtoeol (editwin); xwprintw (editwin, str1)
-#define wp2(str1, str2) wclrtoeol (editwin); xwprintw (editwin, str1, str2)
+#define wp1(str1) wclrtoeol (editwin); xw_printw (editwin, str1)
+#define wp2(str1, str2) wclrtoeol (editwin); xw_printw (editwin, str1, str2)
 #define wp3(str1, str2, str3) wclrtoeol (editwin); \
-	xwprintw (editwin, str1, str2, str3)
+	xw_printw (editwin, str1, str2, str3)
 #define wp4(str1, str2, str3, str4) wclrtoeol (editwin); \
-	xwprintw (editwin, str1, str2, str3, str4)
+	xw_printw (editwin, str1, str2, str3, str4)

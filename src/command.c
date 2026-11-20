@@ -3,7 +3,7 @@
 /* -------------------------------------------------
  * Main user input routine
  */
-void Key_scan (void)
+void key_scan (void)
 {
 	int	old_x;
 	int	ch;
@@ -117,15 +117,15 @@ void Key_scan (void)
 	case KEY_HELP:
 		if (helplines)	/* Help already present */
 		{
-			keyerr ();
+			key_err ();
 			break;
 		}
-		dohelp (PRIMARY, editwin);
+		do_help (PRIMARY, editwin);
 		wattrset (editwin, PROMPTATTR);
 		wp1 ("Strike a MENU KEY or RETURN: ");
 		wattrset (editwin, A_NORMAL);
 		wrefresh (editwin);
-		ch = waitkey ();
+		ch = wait_key ();
 		if ((ch < 255) && (ch >= '@'))
 		{
 			ch &= 0x1F;	/* mask alphabetics */
@@ -134,16 +134,16 @@ void Key_scan (void)
 		{
 		case CNTRL_Q:
 		case KEY_HOME:
-			quickhlp ();
+			quick_hlp ();
 			break;
 
 		case CNTRL_K:
 		case ESC:
-			blockhlp ();
+			block_hlp ();
 			break;
 
 		case CNTRL_O:
-			onscrhlp ();
+			onscr_hlp ();
 			break;
 		}
 		status_line ();			/* Repaint status line */
@@ -155,7 +155,7 @@ void Key_scan (void)
 	case CNTRL_L:
 	case 0x1C:			/* "^\" in case ^L is arrow key */
 	case KEY_SFIND:
-		repfind ();
+		rep_find ();
 		break;
 
 	/* --------- EXTENSIONS --------- */
@@ -199,16 +199,16 @@ void Key_scan (void)
 		insflag = !insflag;
 		if (insflag)
 		{
-			statprint (COLS - 24, "INS", NULL, NULL);
+			stat_print (COLS - 24, "INS", NULL, NULL);
 		}
 		else
 		{
-			statprint (COLS - 24, "   ", NULL, NULL);
+			stat_print (COLS - 24, "   ", NULL, NULL);
 		}
 		break;
 
 	case CASE_INVERT:		/* Change case of char. */
-		caseinvert ();
+		case_invert ();
 		break;
 
 	/* --------- TEXT DELETION --------- */
@@ -217,24 +217,24 @@ void Key_scan (void)
 	case KEY_DC:
 	case BS:				/* Destructive BS */
 	case DEL:				/* delete key */
-		delleft ();
+		del_left ();
 		break;
 
 	case CNTRL_G:			/* Delete character under cursor */
-		if (!undelsave (gap_end, 1, FORWARD))
+		if (!undel_save (gap_end, 1, FORWARD))
 		{
 			break;
 		}
-		delright ();
+		del_right ();
 		break;
 
 	case CNTRL_T:			/* Delete word right */
-		delword ();
+		del_word ();
 		break;
 
 	case CNTRL_Y:			/* Delete cursor line */
 	case KEY_DL:
-		delline ();
+		del_line ();
 		break;
 
 	/* ------- UNDO COMMAND -------- */
@@ -261,7 +261,7 @@ void Key_scan (void)
 		}
 		else
 		{
-			TPAErr ();
+			tpa_err ();
 		}
 		break;
 
@@ -281,11 +281,11 @@ void Key_scan (void)
 #endif
 		if (ch > 255)	/* Unhandled extended key code */
 		{
-			keyerr ();
+			key_err ();
 		}
 		else
 		{
-			addtext (ch);				/* All else is text */
+			add_text (ch);				/* All else is text */
 		}
 		break;
 	}
@@ -298,20 +298,20 @@ void Key_scan (void)
  * signal() requires a void (*)(int) function; the help
  * routines themselves take no arguments.
  */
-static void alarm_quickhlp (int sig)
+static void alarm_quick_hlp (int sig)
 {
 	(void) sig;		/* Unused */
-	quickhlp ();
+	quick_hlp ();
 }
-static void alarm_blockhlp (int sig)
+static void alarm_block_hlp (int sig)
 {
 	(void) sig;		/* Unused */
-	blockhlp ();
+	block_hlp ();
 }
-static void alarm_onscrhlp (int sig)
+static void alarm_onscr_hlp (int sig)
 {
 	(void) sig;		/* Unused */
-	onscrhlp ();
+	onscr_hlp ();
 }
 
 /* --------------------------------------
@@ -325,17 +325,17 @@ void q_key (void)
 
 	if (helplines)
 	{
-		signal (SIGALRM, alarm_quickhlp);
+		signal (SIGALRM, alarm_quick_hlp);
 		alarm (2);
 	}
-	keyin = waitkey ();
+	keyin = wait_key ();
 	if (helplines)
 	{
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
-			keyin = waitkey ();	/* ..so get input again */
+			keyin = wait_key ();	/* ..so get input again */
 		}
 	}
 	if ((keyin < 255) && (keyin >= '@'))
@@ -360,11 +360,11 @@ void q_key (void)
 		break;
 
 	case CNTRL_F:			/* Find string */
-		findfunc ();
+		find_func ();
 		break;
 
 	case CNTRL_A:			/* Replace string */
-		replfunc ();
+		repl_func ();
 		break;
 
 	case CNTRL_S:			/* To start of line */
@@ -378,7 +378,7 @@ void q_key (void)
 		break;
 
 	case CNTRL_I:			/* Seek line # */
-		gotoline ();
+		goto_line ();
 		break;
 
 	case CNTRL_Y:			/* Delete to end of line */
@@ -388,7 +388,7 @@ void q_key (void)
 		{
 			gap_end++;	/* leave \n there */
 		}
-		if (!undelsave (temp_ptr, gap_end - temp_ptr, FORWARD))
+		if (!undel_save (temp_ptr, gap_end - temp_ptr, FORWARD))
 		{
 			gap_end = temp_ptr;
 			break;
@@ -401,7 +401,7 @@ void q_key (void)
 		break;
 
 	default:
-		keyerr ();
+		key_err ();
 	}
 }
 /* ----------------------------------------------------------
@@ -413,17 +413,17 @@ void k_key (void)
 
 	if (helplines)
 	{
-		signal (SIGALRM, alarm_blockhlp);
+		signal (SIGALRM, alarm_block_hlp);
 		alarm (2);
 	}
-	keyin = waitkey ();
+	keyin = wait_key ();
 	if (helplines)
 	{
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
-			keyin = waitkey ();	/* ..so get input again */
+			keyin = wait_key ();	/* ..so get input again */
 		}
 	}
 	if ((keyin < 255) && (keyin >= '@'))
@@ -433,30 +433,30 @@ void k_key (void)
 	switch (keyin)
 	{
 	case CNTRL_B:		/* Begin block */
-		blockfuncs (1);
+		block_funcs (1);
 		break;
 	case CNTRL_K:		/* End block */
-		blockfuncs (2);
+		block_funcs (2);
 		break;
 	case CNTRL_H:		/* Clear block markers */
-		blockfuncs (3);
+		block_funcs (3);
 		break;
 	case CNTRL_V:	/* Move */
-		blockfuncs (4);
+		block_funcs (4);
 		break;
 	case CNTRL_C:	/* Copy */
-		blockfuncs (5);
+		block_funcs (5);
 		break;
 	case CNTRL_Y:	/* Delete block */
-		blockfuncs (6);
+		block_funcs (6);
 		break;
 
 	case CNTRL_L:			/* Load new file */
-		newfile ();
+		new_file ();
 		break;
 
 	case CNTRL_Q:			/* Quit */
-		quitfunc ();
+		quit_func ();
 		break;
 
 	case CNTRL_R:			/* read in */
@@ -464,14 +464,14 @@ void k_key (void)
 		break;
 
 	case CNTRL_S:			/* Save */
-		savefunc ();
+		save_func ();
 		break;
 
 	case CNTRL_D:			/* Done */
 		if (save_fname ())
 		{
 			mod = FALSE;
-			newfile ();
+			new_file ();
 		}
 		break;
 
@@ -480,7 +480,7 @@ void k_key (void)
 		break;
 
 	case CNTRL_W:			/* Write block */
-		if (blkerr (1))
+		if (blk_err (1))
 		{
 			break;
 		}
@@ -491,26 +491,26 @@ void k_key (void)
 		break;
 
 	case CNTRL_X:			/* eXit */
-		exitfunc ();
+		exit_func ();
 		break;
 
 	case CNTRL_I:			/* Status */
-		infofunc ();
+		info_func ();
 		break;
 
 	case CNTRL_F:			/* Change file mode */
-		setfilemode ();
+		set_file_mode ();
 		break;
 
 	case '!':				/* Shell escape */
-		doshell ();
+		do_shell ();
 		break;
 
 	case ' ':
 		break;
 
 	default:
-		keyerr ();
+		key_err ();
 	}
 }
 /*----------------------------------------------------------
@@ -522,17 +522,17 @@ void o_key (void)
 
 	if (helplines)
 	{
-		signal (SIGALRM, alarm_onscrhlp);
+		signal (SIGALRM, alarm_onscr_hlp);
 		alarm (2);
 	}
-	keyin = waitkey ();
+	keyin = wait_key ();
 	if (helplines)
 	{
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
-			keyin = waitkey ();	/* ..so get input again */
+			keyin = wait_key ();	/* ..so get input again */
 		}
 	}
 	if ((keyin < 255) && (keyin >= '@'))
@@ -548,20 +548,20 @@ void o_key (void)
 		break;
 
 	case CNTRL_X:					/* MR toggle */
-		marrel ();
+		mar_rel ();
 		break;
 
 	case CNTRL_R:					/* Set right margin */
-		rmset ();
+		rm_set ();
 		break;
 
 	case CNTRL_T:					/* set Tabs */
-		tabset ();
+		tab_set ();
 		break;
 
 #ifdef LOOKBUSY
 	case CNTRL_B:					/* Don't ask */
-		lookbusy ();
+		look_busy ();
 		break;
 #endif
 
@@ -572,6 +572,6 @@ void o_key (void)
 	case ' ':
 		break;
 	default:
-		keyerr ();
+		key_err ();
 	}
 }

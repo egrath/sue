@@ -465,7 +465,7 @@ int undel (void)
 
 	if (undelptr != NULL)
 	{
-		textins (undelptr->text, undelptr->text + undelptr->size,
+		text_ins (undelptr->text, undelptr->text + undelptr->size,
 			undelptr->direction);
 		/* Free previously allocated memory */
 		nodeptr	= undelptr;
@@ -482,7 +482,7 @@ int undel (void)
 /*------------------------------------------------------------
  * Save text to undelete buffer (before deleting)
  */
-int undelsave (char *txt_start, unsigned txt_size,
+int undel_save (char *txt_start, unsigned txt_size,
 	enum directions undel_direction)
 {
 	struct undelnode *nodeptr;
@@ -518,7 +518,7 @@ int undelsave (char *txt_start, unsigned txt_size,
 	else
 	{
 		beep ();
-		c = toupper (promptkey ("Can't save text; delete anyway (Y/N)? N\b"));
+		c = toupper (prompt_key ("Can't save text; delete anyway (Y/N)? N\b"));
 		if (c == 'Y')
 		{
 			wechochar (promptwin, c);

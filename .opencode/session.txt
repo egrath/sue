@@ -136,6 +136,77 @@ Verification:
       cursesX/MACOS/LINUX/DOCOLOR references left in src/ or Makefile.
 - [x] make clean empties build/ but keeps the directory.
 
+== 2026-11-20 — Session 4: bugfix pass + snake_case renames ==
+
+User request: review the code for latent bugs, problematic constructs, bad
+algorithms, logic problems; then implement the fixes. Plus: function names
+must be lower-case snake_case ("Key_scan becomes key_scan").
+
+Review findings (discussed, severity-tiered):
+A. Corruption: textins() space check off-by-3 (gap overrun + gap inversion);
+   replace() space check off-by-one (cursor char clobbered at boundary);
+   status_linecol() label_pos[16] overflow at >= 100000 lines; xwprintw()
+   strbuf[2000] overflow via very long txtname (Linux PATH_MAX 4096);
+   edit_init() use-after-free when the second doalloc() malloc fails;
+   doshell() respptr[-1] read on empty shell input.
+B. Logic: caseinvert() assumes txt_ptr == gap_end (broken after backward gap
+   moves -> ^^ inverted a gap byte, painted garbage); textins() newline
+   counter scanned ins_end inclusively (txt_x drift); key codes > 255 fell
+   into isprint() out-of-domain / got inserted as text; tab width unbounded
+   (char ii overflow); reform() unsigned col_cnt underflow; save() ignored
+   ferror/fclose (disk-full reported success); usage listed -c -f -n -r.
+C. Quirks (documented, not fixed): find() uppercasing the search string,
+   delline() cursor-jump note, sabort() curses-after-endwin, ^P ^@ NUL insert,
+   load() lines+1 count, delwin(NULL) on first togglehelp, doshell setuid
+   dance, dsp_lne hardflag theoretical OOB, dinsln row-0 glitch, unbounded
+   vsprintf, doalloc 80286 loop.
+
+User decisions: implement A+B; full snake_case normalization (not just case);
+two commits.
+
+Bugfix implementation (commit ab4fc91):
+- textins(): per-direction signed space bounds; counter < ins_end
+- replace(): >= gap_end; status_linecol(): label_pos[32]
+- xwprintw(): strbuf[TXTNAME_SIZE + 128] (new TXTNAME_SIZE in sue.h -
+  sizeof(txtname) was impossible: incomplete extern array type)
+- doalloc(): malloc before free; doshell(): strlen guard
+- caseinvert(): txt_ptr = gap_end; Key_scan(): KEY_RESIZE repaint + ch > 255
+  -> keyerr(); tab clamp 1..32 (tabset + -t); reform(): long col_cnt
+- save(): ferror/fclose check; getopt "bdmst:u" + usage [-bdmstu]
+- Verified: zero-warning build; undo round-trip byte-perfect; ASan/UBSan run
+  on a 110000-line file (^Q-C -> status_linecol) clean; ^K-! empty ENTER
+  under ASan clean; B1 proof: abc + ^Q-S + ^^ saved as "Abc" (fails on old
+  code). Agent gotcha: first rewrite accidentally ate the first line of the
+  reformat decisions entry -> restored.
+
+Rename implementation (commit 2):
+- Full snake_case mapping (~45 functions): Key_scan->key_scan, TPAErr->
+  tpa_err, valerr->val_err, notfound->not_found, blkerr->blk_err, keyerr->
+  key_err, waitkey->wait_key, outchar->out_char, statprint->stat_print,
+  promptst->prompt_st, promptkey->prompt_key, xwprintw->xw_printw, dohelp->
+  do_help, debugpr->debug_pr, blockhlp->block_hlp, quickhlp->quick_hlp,
+  onscrhlp->onscr_hlp, lookbusy->look_busy, findfunc->find_func, replfunc->
+  repl_func, quitfunc->quit_func, savefunc->save_func, exitfunc->exit_func,
+  infofunc->info_func, delright->del_right, delleft->del_left, delword->
+  del_word, delline->del_line, newfile->new_file, setfilemode->set_file_mode,
+  marrel->mar_rel, blockfuncs->block_funcs, togglehelp->toggle_help,
+  repfind->rep_find, caseinvert->case_invert, textins->text_ins, doshell->
+  do_shell, addtext->add_text, undelsave->undel_save, doalloc->do_alloc,
+  tabset->tab_set, rmset->rm_set, gotoline->goto_line, dsp_lne->dsp_line,
+  alarm_*hlp->alarm_*_hlp. Kept: single words, strtoup/undel (abbreviations),
+  variables/macros.
+- Gotcha: insert_line collides with a terminfo capability macro in term.h
+  (compiler caught it) -> insert_newline; verified no other name collides
+  against the SDK term.h.
+- Applied via \b-delimited perl substitutions (comments updated too).
+- AGENTS.md: naming rule added to style section (incl. the term.h warning),
+  source map + conventions + known-issues renamed.
+
+Verification:
+- [x] grep: zero old names left in src/
+- [x] make: zero warnings under -Werror; smoke test byte-perfect
+- [x] term.h collision check against the SDK header: none
+
 == 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
 
 User request: reformat all code to their personal style. Example given:
