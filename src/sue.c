@@ -64,7 +64,6 @@ int		editlines;			/* Lines in edit window; varies with helplines */
 
 char	*bufptr;			/* Buffer ptr. for malloc */
 
-int		opt;				/* Results from getopt() */
 int		optresult;
 
 int		bwopt;				/* Force black & white display */
@@ -229,7 +228,7 @@ void edit_init (char *v_name)
  */
 int main (int argc, char *argv[])
 {
-	int c;
+	int i;
 
 #ifdef MARKERS
 	fprintf (stderr, "SUE: startup A (main entered)\n");
@@ -244,7 +243,6 @@ int main (int argc, char *argv[])
 	rptr = &r_str[0];
 	r_strsiz = sizeof (r_str) - 1;
 
-	opterr = 0;			/* Suppress getopt() error message */
 	bwopt = optresult = helplines = 0;	/* Option defaults */
 	autofilemode = 1;	/* Default to file mode autodetect */
 #ifdef DOS
@@ -254,52 +252,71 @@ int main (int argc, char *argv[])
 #endif
 
 
-	/* Process command line options */
-	optind = 1;
-	while ((opt = getopt (argc, argv, "bdms:t:u")) != -1)
+	/* Parse the command line options (built-in parser - no getopt()
+	 * dependency: the Watcom clib getopt hangs with an empty command
+	 * line on DOS). */
+	i = 1;
+	while (i < argc && argv[i][0] == '-' && argv[i][1] != '\0')
 	{
-		switch (opt)
+		char	*arg = argv[i] + 1;
+
+		while (*arg != '\0')
 		{
-		case 'b':
-			bwopt = !bwopt;
-			break;
-		case 'd':
-			autofilemode = 0;
-			filemode = MODE_MSDOS;
-			break;
-		case 'm':
-			autofilemode = 0;
-			filemode = MODE_MACINTOSH;
-			break;
-		case 's':
-			if (optarg != NULL && atoi (optarg) > 1)
+			switch (*arg)
 			{
-				rt_marg = atoi (optarg);
-			}
-			else
-			{
+			case 'b':
+				bwopt = !bwopt;
+				break;
+			case 'd':
+				autofilemode = 0;
+				filemode = MODE_MSDOS;
+				break;
+			case 'm':
+				autofilemode = 0;
+				filemode = MODE_MACINTOSH;
+				break;
+			case 's':
+				{
+					int value = atoi (arg + 1);
+
+					if (arg[1] == '\0' || value <= 1)
+					{
+						optresult++;
+					}
+					else
+					{
+						rt_marg = value;
+					}
+					arg += strlen (arg + 1);
+				}
+				break;
+			case 't':
+				{
+					int value = atoi (arg + 1);
+
+					if (arg[1] == '\0' || value < 1 || value > 32)
+					{
+						optresult++;
+					}
+					else
+					{
+						tabdef = value;
+					}
+					arg += strlen (arg + 1);
+				}
+				break;
+			case 'u':
+				autofilemode = 0;
+				filemode = MODE_UNIX;
+				break;
+			default:
 				optresult++;
 			}
-			break;
-		case 't':
-			c = atoi (optarg);
-			if (optarg != NULL && c >= 1 && c <= 32)
-			{
-				tabdef = c;
-			}
-			else
-			{
-				optresult++;
-			}
-			break;
-		case 'u':
-			autofilemode = 0;
-			filemode = MODE_UNIX;
-			break;
-		default :
-			optresult++;
+			arg++;
 		}
+		i++;
 	}
+	optind = i;		/* argv[optind] = the file name (if any) */
 	if (optresult)
 	{
 		fprintf (stderr, "\nSUE - a Simple Unix Editor, version %s", suerev);

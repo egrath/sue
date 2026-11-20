@@ -242,12 +242,10 @@ struct undelnode
 
 extern	struct	undelnode	*undelptr;
 
-/* getopt() and its variables come from <unistd.h> - except on ULTRIX */
+/* The option variables come from <unistd.h> (ULTRIX: sue.h declares
+ * optind itself - the built-in option parser needs nothing from there) */
 #ifdef ULTRIX
-extern	char	*optarg;	/* 3 for getopt() */
 extern	int		optind;
-extern	int		opterr;
-extern	int		getopt (int, char **, char *);
 #endif
 
 /* ================== GLOBAL FUNCTION PROTOTYPES ================ */

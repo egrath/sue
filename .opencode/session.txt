@@ -309,6 +309,35 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
+== 2026-11-20 - Session 13: DOS startup hang + built-in option parser ==
+
+User reports (rebuilt from current HEAD):
+- The DOS build hangs immediately after the DOS/4GW banner (DOSBox AND a
+  real 386; screen stays on the banner, cursor blinks, Ctrl-Break ignored).
+- MARKERS=Y: only "startup A (main entered)" prints -> the hang is in the
+  option-parsing loop: Watcom's clib getopt() called with argc = 1 and
+  argv[1] = NULL reads past the argument list (on DOS: the interrupt
+  vector table -> garbage "options" -> endless loop). The 1995 code never
+  hit this because old compilers accepted implicit declarations silently.
+
+Fix: replaced getopt() with a built-in option parser in main() (~40
+lines, cluster options b/d/m/u + s/t with attached values, the first
+non-option argument = the file). No getopt/optarg/opterr/optind
+dependency at any level; the sue.h ULTRIX extern block is reduced to
+extern int optind (used for edit_init (argv[optind])). The -s/-t values
+are attached-only (-s78, -t8) as the usage [-sn][-tn] documents; the
+separate-value form (-t 8) is no longer accepted (documented behavior
+change). --help now correctly produces the usage error.
+
+Verification:
+- [x] make: zero warnings; smoke 5/5.
+- [x] wmake -f Makefile.wcc: zero warnings; LE exe ok.
+- [x] ./build/sue -s78 + 130-char line + save: no crash, wrap at the
+      word boundary <= 78 (lines 75 + 54).
+- [x] ./build/sue --help: usage error, clean exit.
+- [x] ASan/UBSan run clean (the parse loop + the edit session).
+- ULTRIX/DOS rebuilds pending on the maintainer's side (the same source).
+
 == 2026-11-20 — Session 6: F-key leftovers ==
 
 User request: check for F-key references (like "F1 or ^U to abort") - F-keys
