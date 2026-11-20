@@ -456,10 +456,11 @@ char	*argv[];
 	promptwin = newwin(1, COLS, helplines+1, 0);
 
 #ifdef DOCOLOR
-	/* Color terminals and curses implementations */
-	start_color();					/* Initialize color routines */
+	/* Color terminals and curses implementations */			
 	if (has_colors() && !bwopt)		/* Black & White option flag */
-	{	init_pair(1, COLOR_GREEN, COLOR_BLACK);
+	{	
+		start_color (); /* Initialize color routines */
+		init_pair(1, COLOR_GREEN, COLOR_BLACK);
 		STATATTR = COLOR_PAIR(1);
 		init_pair(2, COLOR_BLUE, COLOR_BLACK);
 		/*FLAGATTR = COLOR_PAIR(2) | A_BOLD;*/
