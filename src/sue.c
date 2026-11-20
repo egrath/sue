@@ -231,6 +231,9 @@ int main (int argc, char *argv[])
 {
 	int c;
 
+#ifdef MARKERS
+	fprintf (stderr, "SUE: startup A (main entered)\n");
+#endif
 	respptr = &response[0];		/* Initialize pointers */
 	respsiz = sizeof (response) - 1;
 	undelptr = NULL;
@@ -313,8 +316,16 @@ int main (int argc, char *argv[])
 		exit (1);
 	}
 
+#ifdef MARKERS
+	fprintf (stderr, "SUE: startup B (options parsed)\n");
+#endif
+
 	/* Initialize 'curses' functions */
 	initscr ();	/* Initialize 'curses' from environment */
+
+#ifdef MARKERS
+	fprintf (stderr, "SUE: startup C (curses initialized)\n");
+#endif
 
 	if (COLS < 80)
 	{
@@ -396,6 +407,9 @@ int main (int argc, char *argv[])
 
 	/* Load file and/or prepare to edit */
 	edit_init (argv[optind]);
+#ifdef MARKERS
+	fprintf (stderr, "SUE: startup D (edit_init done)\n");
+#endif
 	/* Main edit loop - should never exit */
 	for ( ;; )
 	{

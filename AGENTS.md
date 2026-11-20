@@ -75,8 +75,9 @@ marker and trailing newlines so all of the text can be treated as a string.
   almost nothing (only `initscr`/`newwin`/`subwin`/`newpad`,
   `longname`/`erasechar`/`killchar`, `wgetch`/`newterm`, plus macros).
   Sets `CC = gcc`. Needs GNU make on ULTRIX. Build and runtime verified
-  by the maintainer on real hardware. ULTRIX unistd.h also does not declare `getopt` or
-  its variables — sue.h declares all four under `#ifdef ULTRIX`.
+  by the maintainer on real hardware. ULTRIX unistd.h also does not
+  declare `getopt` or its variables — sue.h declares all four under
+  `#ifdef ULTRIX`.
 - **Runtime verification**: the UNIX build is smoke-tested on macOS; the
   DOS build (`build.dos/sue.exe`) is confirmed working on real DOS by the
   maintainer; the ULTRIX build is confirmed compiling and running on real
