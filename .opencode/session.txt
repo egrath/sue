@@ -544,3 +544,15 @@ Result:
   do not reintroduce feature flags.
 - Both builds re-verified warning-free (make -Werror, Watcom -wx); smoke
   tests 5/5; grep proves zero leftover references.
+
+Session 12 addendum (user-reported -s78 segfault):
+- Root cause: the getopt string lost the colon after 's' in the session 4
+  option-string cleanup ("bdmns:t:u" -> "bdmst:u"), so -s78 parsed as a
+  no-argument -s with optarg NULL -> atoi(NULL) -> SEGV. Reproduced under
+  ASan (strtol_l read at 0x0 via atoi <- main sue.c).
+- Fixed to "bdms:t:u"; -s/-t handlers NULL-guard optarg (defense in
+  depth). Wordwrap at -s78 verified: wraps at the word boundary <= 78
+  (saved file lines 75 + 54); bare -s gives the usage error, not a crash.
+- AGENTS.md decisions log rewritten (it had accumulated orphaned
+  fragments from repeated anchored insertions - now clean and
+  chronological).

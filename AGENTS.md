@@ -144,12 +144,12 @@ marker and trailing newlines so all of the text can be treated as a string.
   same class of bug in `disp_page()`); `sabort()` `strcat`'d into the `HOME`
   environment string; `tempnam()` replaced (deprecated on macOS).
 - 2026-11-20 — Chose "fix call sites with NULL fillers" over `<stdarg.h>` for
-  the missing-argument call sites of `statprint`/`status` — but a full clean
-  build proved `xwprintw` and `prompt` *must* be variadic: call sites pass
+  the missing-argument call sites of `stat_print`/`status` — but a full clean
+  build proved `xw_printw` and `prompt` *must* be variadic: call sites pass
   `int`/`long` printf-arguments (baud rate, cursor position, tab width, memory
   usage) through them, which a `char *` parameter cannot legally carry under
   prototyped C. Both now use `<stdarg.h>` (C89-standard) + `vsprintf`; the
-  three `promptst` call sites that substitute an int pre-format their prompt
+  three `prompt_st` call sites that substitute an int pre-format their prompt
   string instead.
 - 2026-11-20 — Verified: full clean rebuild on macOS produces **zero warnings**
   under `-std=c89 -Wpedantic -Wall -Werror`; smoke tests via `expect`/pty:
@@ -165,10 +165,28 @@ marker and trailing newlines so all of the text can be treated as a string.
   `lint` targets were dropped, together with their code paths (AIX
   termio/ioctl blocks, ULTRIX `cursesX.h`, `SUEV32`/`SYSV`, the dead `xLINUX`
   workaround, the Linux `SIGSYS` hack). No `-DMACOS`/`-DLINUX` defines exist
-  anymore; the `#ifdef LINUX` `touchwin` in `dohelp()` became unconditional.
+  anymore; the `#ifdef LINUX` `touchwin` in `do_help()` became unconditional.
 - 2026-11-20 — Removed the `DOCOLOR` build flag: color support is always
-  compiled in; runtime selection via `has_colors()` and `-b`. The remaining
-  feature `#ifdef`s are `DEBUG`, `TRACE`, `LOOKBUSY` only.
+  compiled in; runtime selection via `has_colors()` and `-b`.
+- 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
+  braces, always-braced bodies, space between function name and paren
+  everywhere, floating `*` in return types, name-glued `*` in declarations).
+  Pure formatting: verified token-identical after whitespace/brace
+  normalization (only exception: one pair of redundant parentheses removed in
+  `load()`), zero-warning rebuild, smoke tests byte-perfect.
+- 2026-11-20 — Made single-file helpers `static` and removed them from `sue.h`;
+  renamed all functions to lower-case snake_case (key_scan, tpa_err, find_func,
+  quit_func, set_file_mode, del_line, insert_newline, ...). Rule: underscore at
+  word/abbreviation boundaries, abbreviations kept; `insertline` became
+  `insert_newline` (not `insert_line`) because term.h defines terminfo
+  capability macros like `insert_line` via <term.h>. Variables and macros
+  intentionally untouched.
+- 2026-11-20 — Closed out the remaining review findings: find() no longer
+  uppercases the search string in place (an uppercased copy is compared),
+  del_line() restores the cursor position when its undo-save fails, ^P ^@
+  (NUL) is rejected with a beep, and the dinsln redraw at the top screen
+  line no longer writes at row -1. Added tests/smoke.sh (expect-based
+  round-trip tests) and refreshed README.md.
 - 2026-11-20 — Bugfix pass from a full manual code review:
   - textins(): per-direction gap-space bounds (the old check allowed
     overrunning the gap by up to 3 bytes, corrupting text next to the gap);
@@ -176,14 +194,14 @@ marker and trailing newlines so all of the text can be treated as a string.
   - replace(): space check off-by-one could clobber the cursor char when the
     gap was nearly exactly full
   - status_linecol(): label buffer overflow on files with >= 100000 lines
-  - xwprintw(): info-screen buffer sized from txtname (new TXTNAME_SIZE in
+  - xw_printw(): info-screen buffer sized from txtname (new TXTNAME_SIZE in
     sue.h); a very long filename overflowed the old fixed 2000-byte buffer
-  - doalloc(): allocates the new buffer before freeing the old one - an
+  - do_alloc(): allocates the new buffer before freeing the old one - an
     out-of-memory failure no longer leaves dangling gap pointers behind
-  - doshell(): guards the respptr[-1] read on empty shell input
-  - caseinvert(): re-syncs txt_ptr to gap_end - after backward gap moves
+  - do_shell(): guards the respptr[-1] read on empty shell input
+  - case_invert(): re-syncs txt_ptr to gap_end - after backward gap moves
     (e.g. ^Q-S) it pointed into the gap and ^^ inverted a free byte
-  - Key_scan(): repaint on KEY_RESIZE; unknown key codes > 255 no longer
+  - key_scan(): repaint on KEY_RESIZE; unknown key codes > 255 no longer
     reach isprint() out-of-domain or get inserted as text
   - tab width clamped to 1..32 (char arithmetic in line_y()/column())
   - reform(): col_cnt signed; the search-back loop can no longer wrap
@@ -205,60 +223,34 @@ marker and trailing newlines so all of the text can be treated as a string.
   save with CRLF (MODE_MSDOS), UNIX builds with LF (MODE_UNIX); -d/-m/-u
   override, and loaded files keep their detected endings (load() preserves
   the style the file already had).
-- 2026-11-20 — ULTRIX is back as a build target (verified by the maintainer
-  on real hardware): the Makefile detects it via uname, sets CC = gcc and
-  defines -DULTRIX; sue.h uses DEC's extended curses (cursesX.h) there and
-  emulates the extended key codes ULTRIX curses lacks (KEY_SLEFT/KEY_SRIGHT/
-  KEY_SUSPEND/KEY_HELP/KEY_SFIND, wechochar). Those switch cases stay dead
-  on ULTRIX, exactly like the 1995 original. ULTRIX cursesX.h has no color
-  API, so that build runs monochrome (like the 1995 original, which built
-  ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
-  variables, so sue.h declares them under #ifdef ULTRIX. The maintainer
-  supplied the real cursesX.h: it declares almost nothing (initscr/newwin/
+- 2026-11-20 — DOS build: maximum speed optimization for 386 (-oneatx -s -3).
+- 2026-11-20 — ULTRIX is back as a build target (build and runtime verified
+  by the maintainer on real hardware): the Makefile detects it via uname,
+  sets CC = gcc and defines -DULTRIX; sue.h uses DEC's extended curses
+  (cursesX.h) there and emulates the extended key codes ULTRIX curses lacks
+  (KEY_SLEFT/KEY_SRIGHT/KEY_SUSPEND/KEY_HELP/KEY_SFIND, wechochar). Those
+  switch cases stay dead on ULTRIX, exactly like the 1995 original.
+- 2026-11-20 — ULTRIX cursesX.h declares almost nothing (initscr/newwin/
   subwin/newpad, longname/erasechar/killchar, wgetch/newterm + macros), so
-  sue.h now carries the full prototype block for every curses routine SUE
-  calls - all standard curses signatures, compatible with the old-style
-  header declarations. Round 2: getopt itself is also undeclared on
-  ULTRIX - sue.h prototypes it (int getopt (int, char **, char *)).
-  on ULTRIX, exactly like the 1995 original. ULTRIX cursesX.h has no color
-  API, so that build runs monochrome (like the 1995 original, which built
-  ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
-  variables, so sue.h declares them under #ifdef ULTRIX.
-- 2026-11-20 — Removed the DEBUG/TRACE/LOOKBUSY feature flags entirely.
-  The ULTRIX cursesX.h gap is handled by sue.h prototypes, the UNIX build
-  defines -DUNIX, and there is no conditional feature code left: the only
-  preprocessor decisions left in the code are the platform guards
-  (UNIX/DOS/ULTRIX) and the KEY_RESIZE capability check. Unused debug_pr()
-  and the /dev/vt04 debugterm channel are gone with them.
-- 2026-11-20 — Closed out the remaining review findings: find() no longer
-  uppercases the search string in place (an uppercased copy is compared),
-  del_line() restores the cursor position when its undo-save fails, ^P ^@
-  (NUL) is rejected with a beep, and the dinsln redraw at the top screen
-  line no longer writes at row -1. Added tests/smoke.sh (expect-based
-  round-trip tests) and refreshed README.md. Kept: sabort() curses-after-
-  endwin messages (intentional), load() reporting lines+1 (only truthiness
-  is used), the 80286 truncation loop in do_alloc() (vestigial but harmless).
-- 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
-  braces, always-braced bodies, space between function name and paren
-  everywhere, floating `*` in return types, name-glued `*` in declarations).
-  Pure formatting: verified token-identical after whitespace/brace
-  normalization (only exception: one pair of redundant parentheses removed in
-  `load()`), zero-warning rebuild, smoke tests byte-perfect.
-- 2026-11-20 — Made single-file helpers `static` and removed them from `sue.h`.
-- 2026-11-20 — Renamed all functions to lower-case snake_case (key_scan,
-  tpa_err, find_func, quit_func, set_file_mode, del_line, insert_newline,
-  ...). Rule: underscore at word/abbreviation boundaries, abbreviations kept;
-  `insertline` became `insert_newline` (not `insert_line`) because term.h
-  defines terminfo capability macros like `insert_line` via <term.h>.
-  Variables and macros intentionally untouched.
-- 2026-11-20 — Moved the `WINDOW *editwin/promptwin/statuswin/helpwin`
-  definitions from `sue.h` (tentative definitions in a header) to `sue.c`;
-  header now declares them `extern`. Modern toolchains default to
-  `-fno-common`, which rejects duplicate tentative definitions.
-- 2026-11-20 — Removed the manual `optarg`/`optind`/`opterr` externs from
-  `sue.h`; `<unistd.h>` supplies them (Linux needs `-D_DEFAULT_SOURCE`).
-- 2026-11-20 — `.opencode/session.txt` is the running session log
-  (gitignored); this file is the durable knowledge base (tracked).
+  sue.h carries the full prototype block for every curses routine SUE calls
+  - all standard curses signatures, compatible with the old-style header
+  declarations. Round 2: getopt itself is also undeclared on ULTRIX - sue.h
+  prototypes it (int getopt (int, char **, char *)). The `ii` might-be-
+  uninitialized warning from old gcc's conservative dataflow was fixed with
+  an initializer in line_y(). ULTRIX cursesX.h has no color API, so that
+  build runs monochrome (like the 1995 original, which built ULTRIX without
+  DOCOLOR).
+- 2026-11-20 — Removed the DEBUG/TRACE/LOOKBUSY feature flags entirely
+  (never enabled, never needed - see conventions); the codebase has zero
+  conditional feature code left: the only preprocessor decisions left are
+  the platform guards (UNIX/DOS/ULTRIX) and the KEY_RESIZE capability
+  check. A stray "sleep (1);" accidentally inserted into o_key()'s switch
+  during the LOOKBUSY removal was caught by Watcom's unreachable-code
+  warning and removed.
+- 2026-11-20 — Runtime verification closed out: the DOS build is confirmed
+  working on real DOS and the ULTRIX build compiles and works on real
+  ULTRIX hardware (both maintainer-tested); the UNIX build is smoke-tested
+  on macOS.
 
 ## Known issues / notes (not yet fixed)
 

@@ -583,8 +583,6 @@ void o_key (void)
 		tab_set ();
 		break;
 
-	sleep (1);
-
 	case CNTRL_L:					/* Repaint */
 		repaint ();
 		break;

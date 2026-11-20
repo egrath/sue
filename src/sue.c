@@ -253,7 +253,7 @@ int main (int argc, char *argv[])
 
 	/* Process command line options */
 	optind = 1;
-	while ((opt = getopt (argc, argv, "bdmst:u")) != -1)
+	while ((opt = getopt (argc, argv, "bdms:t:u")) != -1)
 	{
 		switch (opt)
 		{
@@ -269,7 +269,7 @@ int main (int argc, char *argv[])
 			filemode = MODE_MACINTOSH;
 			break;
 		case 's':
-			if (atoi (optarg) > 1)
+			if (optarg != NULL && atoi (optarg) > 1)
 			{
 				rt_marg = atoi (optarg);
 			}
@@ -280,7 +280,7 @@ int main (int argc, char *argv[])
 			break;
 		case 't':
 			c = atoi (optarg);
-			if (c >= 1 && c <= 32)
+			if (optarg != NULL && c >= 1 && c <= 32)
 			{
 				tabdef = c;
 			}
