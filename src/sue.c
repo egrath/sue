@@ -89,10 +89,6 @@ WINDOW	*editwin, *promptwin,	/* Curses windows */
 
 struct undelnode *undelptr;
 
-#ifdef DEBUG
-FILE	*debugterm;
-#endif
-
 /*----------------------------------------
  * Exit SUE
  */
@@ -235,9 +231,6 @@ int main (int argc, char *argv[])
 {
 	int c;
 
-#ifdef DEBUG
-	debugterm = fopen (DEBUGTERM, "w");
-#endif
 	respptr = &response[0];		/* Initialize pointers */
 	respsiz = sizeof (response) - 1;
 	undelptr = NULL;
@@ -322,13 +315,6 @@ int main (int argc, char *argv[])
 
 	/* Initialize 'curses' functions */
 	initscr ();	/* Initialize 'curses' from environment */
-
-#ifdef TRACE
-/* Ncurses tracing */
-	trace (TRACE_ORDINARY);
-/*	trace(TRACE_CHARPUT);	*/
-/*	trace(TRACE_MAXIMUM);	*/
-#endif
 
 	if (COLS < 80)
 	{

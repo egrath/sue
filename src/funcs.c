@@ -62,30 +62,6 @@ void onscr_hlp (void)
 		wait_key ();
 	}
 }
-
-#ifdef LOOKBUSY
-/*--------------------------------------------------------------
- * Drivel
- */
-void look_busy (void)
-{
-	wclear (editwin);
-	wp1 ("and the annual outlook for such a plan seems reasonably promising. \n");
-	wp1 ("On the other hand, we will have to anticipate further adjustments \n");
-	wp1 ("to the entire project if current trends continue for the rest of \n");
-	wp1 ("the fiscal year.  What must be taken into account is the continual \n");
-	wp1 ("fluidity of the marketplace despite predictions of a coming period \n");
-	wp1 ("of stabilization.  While the firm has in the past dealt \n");
-	wp1 ("effectively with market forces beyond its control, in the future \n");
-	wp1 ("further attention must be paid to the possible side effects of \n");
-	wp1 ("these forces.\n\n");
-	wp1 ("Another aspect of the problem that must be taken into \n");
-	wp1 ("consideration is the continual growth in significance of nonmarket ");
-	wrefresh (editwin);
-	wait_key ();				/* Get key */
-	disp_mode = dpage;		/* Repaint text */
-}
-#endif
 /* ----------------------------------------------------------
  * Find text command.
  * Case-independent, forward text search.

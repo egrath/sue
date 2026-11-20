@@ -583,11 +583,7 @@ void o_key (void)
 		tab_set ();
 		break;
 
-#ifdef LOOKBUSY
-	case CNTRL_B:					/* Don't ask */
-		look_busy ();
-		break;
-#endif
+	sleep (1);
 
 	case CNTRL_L:					/* Repaint */
 		repaint ();

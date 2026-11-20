@@ -242,11 +242,6 @@ struct undelnode
 
 extern	struct	undelnode	*undelptr;
 
-#ifdef	DEBUG
-extern	FILE	*debugterm;
-#define	DEBUGTERM	"/dev/vt04"
-#endif
-
 /* getopt() and its variables come from <unistd.h> - except on ULTRIX */
 #ifdef ULTRIX
 extern	char	*optarg;	/* 3 for getopt() */
@@ -289,7 +284,6 @@ extern void display (void);
 extern void xw_printw (WINDOW *xwindow, char *string1, ...);
 extern void do_help (enum helptype helprequest, WINDOW *hwindow);
 extern void val_err (void), not_found (void), key_err (void), tpa_err (void);
-extern void debug_pr (char *str1, char *str2, char *str3);
 
 /* funcs.c */
 extern void block_hlp (void), quick_hlp (void), onscr_hlp (void);
@@ -324,10 +318,6 @@ extern void key_scan (void);
 
 /* command.c */
 extern void q_key (void), k_key (void), o_key (void);
-
-#ifdef LOOKBUSY
-extern void look_busy (void);
-#endif
 
 /* ===================== GLOBAL MACROS ==================== */
 

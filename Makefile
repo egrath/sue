@@ -2,10 +2,6 @@
 # Makefile for Simple Unix Editor (SUE)
 # Copyright 1992, Point to Point Communications, Inc.
 #
-#--------------------- Debug flags ------------------------------
-# DFLAGS = -g -DDEBUG
-# DFLAGS = -g
-#
 #--------------------- Compiler Flags ---------------------------
 CFLAGS = -O2 -std=c89 -Wpedantic -Wall -Werror
 EFLAGS = -DUNIX -D_DEFAULT_SOURCE
@@ -60,16 +56,16 @@ build	:
 # Dependencies
 
 ${BUILDDIR}/command.o : ${SRCDIR}/command.c ${SRCDIR}/sue.h build
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
 ${BUILDDIR}/data.o : ${SRCDIR}/data.c ${SRCDIR}/sue.h build
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
 ${BUILDDIR}/display.o : ${SRCDIR}/display.c ${SRCDIR}/sue.h build
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
 ${BUILDDIR}/funcs.o : ${SRCDIR}/funcs.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@
 
 ${BUILDDIR}/sue.o : ${SRCDIR}/sue.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+	${CC} -c ${CFLAGS} ${EFLAGS} $< -o $@

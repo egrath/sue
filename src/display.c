@@ -775,15 +775,3 @@ void do_help (enum helptype helprequest, WINDOW *hwindow)
 		waddstr (hwindow, "\n");		/* Next line */
 	}
 }
-/* ================= DEBUG ROUTINE ================== */
-
-void debug_pr (char *str1, char *str2, char *str3)
-{
-#ifdef DEBUG
-	fprintf (debugterm, str1, str2, str3);
-#else
-	(void) str1;	/* Unused without DEBUG */
-	(void) str2;
-	(void) str3;
-#endif
-}

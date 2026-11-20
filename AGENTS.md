@@ -61,8 +61,9 @@ marker and trailing newlines so all of the text can be treated as a string.
   round-trip tests against `build/sue`; run after every change.
 - **Future targets: Windows, Macintosh, Linux, DOS** — and Solaris should
   "come free" if it compiles cleanly on the others. Add no per-platform
-  `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and feature flags
-  (`DEBUG`, `TRACE`, `LOOKBUSY`).
+  `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and the `KEY_RESIZE`
+  capability check — feature flags (`DEBUG`, `TRACE`, `LOOKBUSY`) were
+  removed entirely in the cleanup; do not reintroduce them.
 - **New files are saved with the platform's line endings** (DOS: CRLF,
   UNIX: LF); `-d`/`-m`/`-u` override, and loaded files keep their detected
   endings (the file is never rewritten to a different style than it had).
@@ -217,10 +218,16 @@ marker and trailing newlines so all of the text can be treated as a string.
   calls - all standard curses signatures, compatible with the old-style
   header declarations. Round 2: getopt itself is also undeclared on
   ULTRIX - sue.h prototypes it (int getopt (int, char **, char *)).
-- 2026-11-20 — ULTRIX cursesX.h also lacks prototypes for wrefresh/
-  wattrset/wclrtoeol — sue.h declares them under #ifdef ULTRIX after the
-  include (reported from the maintainer's real ULTRIX build; the same
-  header declares wgetch etc., so the gap is partial).
+  on ULTRIX, exactly like the 1995 original. ULTRIX cursesX.h has no color
+  API, so that build runs monochrome (like the 1995 original, which built
+  ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
+  variables, so sue.h declares them under #ifdef ULTRIX.
+- 2026-11-20 — Removed the DEBUG/TRACE/LOOKBUSY feature flags entirely.
+  The ULTRIX cursesX.h gap is handled by sue.h prototypes, the UNIX build
+  defines -DUNIX, and there is no conditional feature code left: the only
+  preprocessor decisions left in the code are the platform guards
+  (UNIX/DOS/ULTRIX) and the KEY_RESIZE capability check. Unused debug_pr()
+  and the /dev/vt04 debugterm channel are gone with them.
 - 2026-11-20 — Closed out the remaining review findings: find() no longer
   uppercases the search string in place (an uppercased copy is compared),
   del_line() restores the cursor position when its undo-save fails, ^P ^@
