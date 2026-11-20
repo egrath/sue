@@ -101,7 +101,7 @@ void statprint (int col, char *st1, char *st2, char *st3)
  */
 static void status_linecol (void)
 {
-	char label_pos[16];
+	char label_pos[32];
 
 	sprintf (label_pos, "L %-5d C %-5d", txt_x, txt_y);
 	statprint (COLS - 49, label_pos, NULL, NULL);
@@ -615,7 +615,7 @@ void xwprintw (WINDOW *xwindow, char *string1, ...)
 {
 	va_list	args;
 	int		On = 0;
-	char	strbuf[2000];
+	char	strbuf[TXTNAME_SIZE + 128];
 	char	*xstring = strbuf;
 
 	va_start (args, string1);

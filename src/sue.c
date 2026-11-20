@@ -43,7 +43,7 @@ char	*txt_ptr;				/* Temporary text pointer */
 char	*blk_beg, *blk_end;		/* Block markers */
 char	*tblk_beg, *tblk_end;	/* Block temporary markers */
 
-char	txtname[PATH_MAX+FILENAME_MAX+1];		/* Edit full file name */
+char	txtname[TXTNAME_SIZE];		/* Edit full file name */
 
 char	response[60];		/* General purpose response buffer */
 char	*respptr;			/* ..and pointer	*/
@@ -112,6 +112,7 @@ static int doalloc (long allocsize)
 	long	allocwork;
 	unsigned mallarg;
 	int	i;
+	char *newbuf;
 
 	/* Set up working memory */
 	allocwork = allocsize + EXTRAMEM;	/* Add buffer space */
@@ -128,12 +129,13 @@ static int doalloc (long allocsize)
 		return (0);
 	}
 
-	free ((char *) bufptr);			/* Release prev. allocation */
-	bufptr = malloc (mallarg);
-	if (bufptr == (char *) NULL)	/* Allocation fails */
+	newbuf = malloc (mallarg);		/* Allocate new buffer first */
+	if (newbuf == NULL)				/* Allocation fails; old buffer stays valid */
 	{
 		return (0);
 	}
+	free ((char *) bufptr);			/* Release prev. allocation */
+	bufptr = newbuf;
 
 	txt_beg = bufptr;
 	txt_end = txt_beg + mallarg - 1;	/* Final top memory */
@@ -232,6 +234,8 @@ void edit_init (char *v_name)
  */
 int main (int argc, char *argv[])
 {
+	int c;
+
 #ifdef DEBUG
 	debugterm = fopen (DEBUGTERM, "w");
 #endif
@@ -253,7 +257,7 @@ int main (int argc, char *argv[])
 
 	/* Process command line options */
 	optind = 1;
-	while ((opt = getopt (argc, argv, "bdmns:t:u")) != -1)
+	while ((opt = getopt (argc, argv, "bdmst:u")) != -1)
 	{
 		switch (opt)
 		{
@@ -279,9 +283,10 @@ int main (int argc, char *argv[])
 			}
 			break;
 		case 't':
-			if (atoi (optarg) > 0)
+			c = atoi (optarg);
+			if (c >= 1 && c <= 32)
 			{
-				tabdef = atoi (optarg);
+				tabdef = c;
 			}
 			else
 			{
@@ -301,7 +306,7 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "\nSUE - a Simple Unix Editor, version %s", suerev);
 		fprintf (stderr, "\nCopyright 1995 by Point to Point Communications\n");
 		fprintf (stderr, "  Usage:\n");
-		fprintf (stderr, "    %s [-bcfdmnru][-sn][-tn] [file]\n", argv[0]);
+		fprintf (stderr, "    %s [-bdmstu][-sn][-tn] [file]\n", argv[0]);
 		fprintf (stderr, "  Options:\n");
 		fprintf (stderr, "    -b  for black & white operation\n");
 		fprintf (stderr, "    -d  MSDOS file mode\n");

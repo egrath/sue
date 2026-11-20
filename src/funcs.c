@@ -363,7 +363,7 @@ int replace (void)
 	char *tmpptr;
 
 	strdif = strlen (rptr) - strlen (sptr);
-	if (gap_beg + strdif > gap_end)
+	if (gap_beg + strdif >= gap_end)
 	{
 		TPAErr ();
 		return (0);
@@ -464,7 +464,7 @@ void tabset (void)
 	sprintf (pbuf, "Tab width [%d]: ", tabdef);
 	if (promptst (pbuf, "", respptr, 2) > 0)
 	{
-		if ((sscanf (respptr, "%d", &c) == 1) && (c > 1))
+		if ((sscanf (respptr, "%d", &c) == 1) && (c > 1) && (c <= 32))
 		{
 			tabdef = c;
 			txt_y = column (gap_end);
@@ -504,7 +504,7 @@ void rmset (void)
 void reform (void)
 {
 	char	*tmp_ptr;
-	unsigned	col_cnt;
+	long	col_cnt;
 
 	if (MRflag)				/* Margin released */
 	{
@@ -868,7 +868,13 @@ int save (char *s_name, char *s_type)
 			ptr++;
 		}
 	}
-	fclose (s_file);
+	if (ferror (s_file) != 0 || fclose (s_file) != 0)
+	{
+		beep ();
+		promptkey ("Error writing file! ");
+		status_line ();	/* Restore */
+		return (0);
+	}
 	status_line ();	/* Restore */
 	return (1);
 }
@@ -1169,6 +1175,7 @@ void repfind (void)
  */
 void caseinvert (void)
 {
+	txt_ptr = gap_end;
 	if (isprint (*txt_ptr))
 	{
 		outchar (*txt_ptr = invert (*txt_ptr));
@@ -1438,23 +1445,26 @@ int textins (char *ins_beg, char *ins_end, enum directions direction)
 
 	ins_size = ins_end - ins_beg;			/* Size to insert */
 
-	if (ins_size > (gap_end - gap_beg + 2))	/* Space? */
-	{
-		TPAErr ();
-		return (0);
-	}
-	disp_mode = dpage;						/* Redraw page afterwards */
-
 	if (direction == FORWARD)				/* Insert after cursor */
 	{
+		if ((long) ins_size > gap_end - gap_beg - 1)	/* Space? */
+		{
+			TPAErr ();
+			return (0);
+		}
 		memcpy (gap_end - ins_size, ins_beg, ins_size);
 		gap_end -= ins_size;
 	}
 	else									/* Insert before cursor */
 	{
+		if ((long) ins_size > gap_end - gap_beg - 2)	/* Space? */
+		{
+			TPAErr ();
+			return (0);
+		}
 		memcpy (gap_beg + 1, ins_beg, ins_size);
 		gap_beg += ins_size;
-		for (ti_ptr = ins_beg ; ti_ptr <= ins_end; ti_ptr++)
+		for (ti_ptr = ins_beg ; ti_ptr < ins_end; ti_ptr++)
 		{
 			if (*ti_ptr == '\n')
 			{
@@ -1463,6 +1473,7 @@ int textins (char *ins_beg, char *ins_end, enum directions direction)
 		}
 		txt_y = column (gap_end);	/* Adjust horizontal */
 	}
+	disp_mode = dpage;						/* Redraw page afterwards */
 	return (1);
 }
 /* -----------------------------------------------
@@ -1536,7 +1547,8 @@ void doshell (void)
 	setgid (getgid ());
 
 	/* If last character is ">" ... */
-	if (respptr[strlen (respptr) - 1] == '>')
+	if (strlen (respptr) > 0 &&
+		respptr[strlen (respptr) - 1] == '>')
 	{
 		commands[strlen (commands) - 2] = '"';	/* Remove ">" */
 		commands[strlen (commands) - 1] = '\0';

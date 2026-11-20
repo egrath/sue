@@ -272,7 +272,21 @@ void Key_scan (void)
 		}
 		/* FALLTHRU */
 	default:
-		addtext (ch);				/* All else is text */
+#ifdef KEY_RESIZE
+		if (ch == KEY_RESIZE)	/* Terminal was resized */
+		{
+			repaint ();
+			break;
+		}
+#endif
+		if (ch > 255)	/* Unhandled extended key code */
+		{
+			keyerr ();
+		}
+		else
+		{
+			addtext (ch);				/* All else is text */
+		}
 		break;
 	}
 	warnflag2 = 0;

@@ -95,7 +95,8 @@ extern	char	*blk_beg, 		/* Block markers */
 				*tblk_beg,
 				*tblk_end;
 
-extern	char	txtname[];		/* Current filename */
+#define TXTNAME_SIZE (PATH_MAX + FILENAME_MAX + 1)
+extern	char	txtname[TXTNAME_SIZE];		/* Current filename */
 
 extern	char	s_str[];		/* External array for ^L */
 extern	char	*sptr;			/* pointer to same */

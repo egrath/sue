@@ -131,6 +131,28 @@ marker and trailing newlines so all of the text can be treated as a string.
 - 2026-11-20 — Removed the `DOCOLOR` build flag: color support is always
   compiled in; runtime selection via `has_colors()` and `-b`. The remaining
   feature `#ifdef`s are `DEBUG`, `TRACE`, `LOOKBUSY` only.
+- 2026-11-20 — Bugfix pass from a full manual code review:
+  - textins(): per-direction gap-space bounds (the old check allowed
+    overrunning the gap by up to 3 bytes, corrupting text next to the gap);
+    the newline counter scans the exclusive range now
+  - replace(): space check off-by-one could clobber the cursor char when the
+    gap was nearly exactly full
+  - status_linecol(): label buffer overflow on files with >= 100000 lines
+  - xwprintw(): info-screen buffer sized from txtname (new TXTNAME_SIZE in
+    sue.h); a very long filename overflowed the old fixed 2000-byte buffer
+  - doalloc(): allocates the new buffer before freeing the old one - an
+    out-of-memory failure no longer leaves dangling gap pointers behind
+  - doshell(): guards the respptr[-1] read on empty shell input
+  - caseinvert(): re-syncs txt_ptr to gap_end - after backward gap moves
+    (e.g. ^Q-S) it pointed into the gap and ^^ inverted a free byte
+  - Key_scan(): repaint on KEY_RESIZE; unknown key codes > 255 no longer
+    reach isprint() out-of-domain or get inserted as text
+  - tab width clamped to 1..32 (char arithmetic in line_y()/column())
+  - reform(): col_cnt signed; the search-back loop can no longer wrap
+  - save(): checks ferror()/fclose() - disk-full no longer reports success
+  - usage/getopt unified: no-op -n dropped, usage shows [-bdmstu]
+  Verified with an ASan/UBSan build (110000-line file, scripted sessions)
+  plus the regular smoke tests.
 - 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
   braces, always-braced bodies, space between function name and paren
   everywhere, floating `*` in return types, name-glued `*` in declarations).
