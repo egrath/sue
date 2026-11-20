@@ -729,3 +729,38 @@ Verification:
       history and the deliberate heritage mentions.
 - [x] Committed and PUSHED to https://github.com/egrath/ts (per the
       new AGENTS.md rule).
+
+== 2026-11-20 - Session 16: full source documentation rework ==
+
+User request: document every function (purpose, parameters, returns,
+notes) and the non-obvious parts of the code, so a reader can
+understand the program from its comments. Style decided by the user:
+
+    /* ###################################################################
+     * int xyz (int x, char y)
+     * purpose: / returns: / parameters: / notes:  (sections as needed)
+     * ################################################################### */
+
+Everything else: plain /* ... */ comments. AGENTS.md Code style now
+carries the rule and template (commit 46f9110).
+
+Rework, one commit+push per file:
+- ts.h (a417e28): file banner with the gap-buffer architecture note,
+  richer variable comments (gap, block markers), prototype groups
+  documented, key_scan moved to the command.c group, screen-coordinate
+  comments corrected (scr_x* are rows, scr_y* columns).
+- ts.c (1cf709a): banner, do_alloc/edit_init/edit_exit/main.
+- data.c (1173520): all 14 gap primitives (start_line/next_line/
+  new_line/column/text_move/line_y/move_x/test/move_y/move_ptr/
+  strtoup/invert/undel/undel_save).
+- command.c (0adac1a): key_scan + q_key/k_key/o_key + the three
+  alarm trampolines.
+- display.c (851c835): all 21 (status/prompt helpers, dsp_line/
+  disp_page/display repaint machinery, help screens).
+- funcs.c (e901c42): all 38 commands. -Wcomment caught a literal
+  "Y/N/*" (contains /*) inside two new blocks - reworded.
+
+Proof it is comments-only: the five .o files are BYTE-IDENTICAL to the
+pre-rework build (cmp against /tmp/obj_base copies). Both builds zero
+warnings, smoke 6/6. 91 #-bordered blocks = 85 functions + 6 file
+banners (grep check). No // comments anywhere.
