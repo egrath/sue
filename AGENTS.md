@@ -74,7 +74,8 @@ marker and trailing newlines so all of the text can be treated as a string.
   almost nothing (only `initscr`/`newwin`/`subwin`/`newpad`,
   `longname`/`erasechar`/`killchar`, `wgetch`/`newterm`, plus macros).
   Sets `CC = gcc`. Needs GNU make on ULTRIX. Verified by the maintainer
-  on real hardware.
+  on real hardware. ULTRIX unistd.h also does not declare `getopt` or
+  its variables — sue.h declares all four under `#ifdef ULTRIX`.
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
 
@@ -214,7 +215,8 @@ marker and trailing newlines so all of the text can be treated as a string.
   subwin/newpad, longname/erasechar/killchar, wgetch/newterm + macros), so
   sue.h now carries the full prototype block for every curses routine SUE
   calls - all standard curses signatures, compatible with the old-style
-  header declarations.
+  header declarations. Round 2: getopt itself is also undeclared on
+  ULTRIX - sue.h prototypes it (int getopt (int, char **, char *)).
 - 2026-11-20 — ULTRIX cursesX.h also lacks prototypes for wrefresh/
   wattrset/wclrtoeol — sue.h declares them under #ifdef ULTRIX after the
   include (reported from the maintainer's real ULTRIX build; the same

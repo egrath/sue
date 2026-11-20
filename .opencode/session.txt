@@ -361,6 +361,14 @@ Verification:
       (the cursesX.h compile itself can only succeed on ULTRIX).
 - [x] DOS rebuild after the sue.c/sue.h changes: zero warnings, LE exe ok.
 
+Session 11 addendum 2 (ULTRIX round 3):
+- getopt itself is undeclared on ULTRIX (unistd.h is minimal). sue.h now
+  prototypes it under #ifdef ULTRIX: int getopt (int, char **, char *) -
+  the plain BSD form, so passing char ** argv and the string literal
+  optstring produces no pointer warnings on old GCC.
+- Verified: UNIX build zero warnings, smoke 5/5; DOS rebuild zero
+  warnings. Further ULTRIX diagnostics -> same loop.
+
 Session 11 addendum (user supplied the real cursesX.h):
 - Confirms the analysis: cursesX.h declares ONLY initscr/newwin/subwin/
   newpad/longname/erasechar/killchar/wgetch/newterm (+ stdscr macros and

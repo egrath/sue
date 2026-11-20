@@ -252,6 +252,7 @@ extern	FILE	*debugterm;
 extern	char	*optarg;	/* 3 for getopt() */
 extern	int		optind;
 extern	int		opterr;
+extern	int		getopt (int, char **, char *);
 #endif
 
 /* ================== GLOBAL FUNCTION PROTOTYPES ================ */
