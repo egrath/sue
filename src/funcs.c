@@ -1,9 +1,35 @@
+/* #######################################################################
+ * funcs.c - TextStar editor commands.
+ * purpose:
+ *     Everything a keystroke can DO: the find/replace machinery
+ *     (find_func/repl_func/find/replace/rep_find), reformatting
+ *     (reform), file I/O with line-ending translation (save/load,
+ *     writeblk/readblk, save_fname/name), block operations
+ *     (block_funcs), deletions and their undo saves (del_right/
+ *     del_left/del_line/del_word/del_line/text_ins), text entry with
+ *     word wrap (add_text), the crash-save signal handler (ts_abort),
+ *     the info screen and the small help helpers.
+ * notes:
+ *     Commands are invoked from command.c's dispatch. They leave the
+ *     wanted repaint in disp_mode (see display.c) and set mod = TRUE
+ *     when the buffer changed. All file I/O is binary; line endings
+ *     are translated according to filemode.
+ * ####################################################################### */
+
 #include "ts.h"
 #include "version.h"
 
-/* -------------------------------------------
- * Saving & Block help
- */
+/* #######################################################################
+ * void block_hlp (void)
+ * purpose:
+ *     Show the ^K block/file command help: in the persistent help
+ *     window when help mode is on, otherwise as a timed overlay in
+ *     the edit window ("strike any key").
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void block_hlp (void)
 {
 	enum	helptype	htype;
@@ -24,9 +50,16 @@ void block_hlp (void)
 		wait_key ();
 	}
 }
-/* -----------------------------------------
- * Quick command help
- */
+/* #######################################################################
+ * void quick_hlp (void)
+ * purpose:
+ *     Show the ^Q quick-command help (persistent window or timed
+ *     overlay, like block_hlp).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void quick_hlp (void)
 {
 	if (helplines)
@@ -43,9 +76,16 @@ void quick_hlp (void)
 		wait_key ();
 	}
 }
-/* ----------------------------------------------------------
- * Onscreen command help
- */
+/* #######################################################################
+ * void onscr_hlp (void)
+ * purpose:
+ *     Show the ^O onscreen-command help (persistent window or timed
+ *     overlay, like block_hlp).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void onscr_hlp (void)
 {
 	if (helplines)
@@ -62,10 +102,20 @@ void onscr_hlp (void)
 		wait_key ();
 	}
 }
-/* ----------------------------------------------------------
- * Find text command.
- * Case-independent, forward text search.
- */
+/* #######################################################################
+ * int find_func (void)
+ * purpose:
+ *     The ^Q F "find text" command: prompt for a search string (the
+ *     previous one is kept so ^L can repeat it), then run find()
+ *     forward from the cursor.
+ * returns:
+ *     1 when the string was found, 0 on empty input or not found
+ *     (with "Text not found" feedback).
+ * parameters:
+ *     None; works on the global search string s_str/sptr.
+ * notes:
+ *     Case-independent; repflag = FALSE keeps ^L in "find" mode.
+ * ####################################################################### */
 int find_func (void)
 {
 	char	tfindbuf[60];
@@ -90,10 +140,21 @@ int find_func (void)
 
 	return (0);				/* Null response */
 }
-/* -----------------------------------------------------------
- * Change text command.
- * Case-independent, forward text search.
- */
+/* #######################################################################
+ * void repl_func (void)
+ * purpose:
+ *     The ^Q A "change text" command: ask what to find (find_func),
+ *     then what to change it into, and loop find()/replace() forward
+ *     from the cursor. The replace() Y/N/"*" prompt drives each step.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; works on the global search (sptr) and replace (rptr)
+ *     strings.
+ * notes:
+ *     Ends when the string is no longer found, the user aborts, or
+ *     the gap runs out of space.
+ * ####################################################################### */
 void repl_func (void)
 {
 	if (find_func ())
@@ -113,9 +174,16 @@ void repl_func (void)
 		}
 	}
 }
-/* --------------------------------------------------
- * Quit command
- */
+/* #######################################################################
+ * void quit_func (void)
+ * purpose:
+ *     The ^K Q quit command: when the file is modified, ask "abandon?"
+ *     first; then exit via edit_exit(0) without saving.
+ * returns:
+ *     Nothing (returns to caller when the user declines).
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void quit_func (void)
 {
 	if (mod)					/* Ask first if file changed */
@@ -127,9 +195,19 @@ void quit_func (void)
 	}
 	edit_exit (0);
 }
-/* ---------------------------------------------------
- * Save file & continue command
- */
+/* #######################################################################
+ * void save_func (void)
+ * purpose:
+ *     The ^K S "save and resume" command: write the text (prompting
+ *     for a name when there is none) and clear the modified flag.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     mod is only cleared when the save succeeded, so a failed save
+ *     keeps protecting the text.
+ * ####################################################################### */
 void save_func (void)
 {
 	if (save_fname ())
@@ -137,9 +215,17 @@ void save_func (void)
 		mod = FALSE;
 	}
 }
-/* -----------------------------------------------
- *	Save/quit command
- */
+/* #######################################################################
+ * void exit_func (void)
+ * purpose:
+ *     The ^K X "save and exit" command: save (prompting for a name
+ *     when needed) and leave the editor; a declined/failed save keeps
+ *     the session open.
+ * returns:
+ *     Nothing (does not return on a successful save - edit_exit).
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void exit_func (void)
 {
 	if (save_fname ())
@@ -147,9 +233,18 @@ void exit_func (void)
 		edit_exit (0);
 	}
 }
-/* -----------------------------------------------------
- * Info command (current status of edit session)
- */
+/* #######################################################################
+ * void info_func (void)
+ * purpose:
+ *     The ^K I info screen: version/copyright, edited file with cursor
+ *     position, modified flag, file mode, margins, tab width, control-
+ *     character display, memory usage (text bytes vs free gap), baud
+ *     rate and terminal type. Waits for any key and repaints.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void info_func (void)
 {
 	char	modestr[20];
@@ -190,9 +285,22 @@ void info_func (void)
 	status_line ();
 	disp_mode = dpage;			/* Repaint text */
 }
-/* ------------------------------------------------
- * Erase character under cursor
- */
+/* #######################################################################
+ * int del_right (void)
+ * purpose:
+ *     Delete the character UNDER the cursor (the ^G target): grow the
+ *     gap by one byte at gap_end, jumping any block marker out of the
+ *     way. Refuses to delete the newline that terminates the text - the
+ *     [EOF] marker must stay on its own line.
+ * returns:
+ *     1 when a character was deleted, 0 at the end of the text or when
+ *     the final newline was the target.
+ * parameters:
+ *     None; the cursor is gap_end.
+ * notes:
+ *     Sets disp_mode: dtoeos when a newline was deleted (rest of the
+ *     screen moves up), dtoeolhc otherwise (rest of the line).
+ * ####################################################################### */
 int del_right (void)
 {
 	if (gap_end < txt_end)		/* Can't delete past end of file */
@@ -228,9 +336,18 @@ int del_right (void)
 		return (0);
 	}
 }
-/*----------------------------------------------------
- * Select or change name of text
- */
+/* #######################################################################
+ * int name (void)
+ * purpose:
+ *     Prompt for a file name and make it the editor's file name
+ *     (^K N). Only the first whitespace-separated token is taken.
+ * returns:
+ *     1 when a name was entered and set, 0 on empty input.
+ * parameters:
+ *     None; reads the response buffer, writes txtname.
+ * notes:
+ *     Refreshes the status line so the new name shows immediately.
+ * ####################################################################### */
 int name (void)
 {
 	char *tokptr;
@@ -248,9 +365,19 @@ int name (void)
 		return (0);	/* Null response */
 	}
 }
-/* ------------------------------------------------
- * Save text to file, prompting for name if needed
- */
+/* #######################################################################
+ * int save_fname (void)
+ * purpose:
+ *     Save the WHOLE text to txtname (prompting for a name first when
+ *     there is none). Works by aiming the block markers at the full
+ *     text and handing the job to save(), restoring the user's block
+ *     markers afterwards - so all of save()'s line-ending logic is
+ *     reused.
+ * returns:
+ *     1 when the file was written, 0 on failure (no name, I/O error).
+ * parameters:
+ *     None.
+ * ####################################################################### */
 int save_fname (void)
 {
 	int ioresult;
@@ -294,9 +421,24 @@ int save_fname (void)
 
 	return ioresult;
 }
-/*------------------------------------------------
- * Global search for a string
- */
+/* #######################################################################
+ * int find (void)
+ * purpose:
+ *     Case-independent forward search for the global search string
+ *     (sptr) from txt_ptr: for each candidate position, copy as many
+ *     bytes as the search string is long into a work buffer, uppercase
+ *     both and compare. On a match the cursor (gap) is moved there.
+ * returns:
+ *     1 when found (cursor on the match, disp_mode = dpages to center
+ *     it), 0 when the end of the text is reached.
+ * parameters:
+ *     None; txt_ptr is the start position and the search string comes
+ *     from sptr.
+ * notes:
+ *     The copy-and-compare keeps the user's text untouched (an older
+ *     version uppercased the search string in place). Works across the
+ *     gap since txt_ptr walks byte-wise.
+ * ####################################################################### */
 int find (void)
 {
 	char fbuf[70], *fbufptr;
@@ -333,13 +475,24 @@ int find (void)
 	}
 	return (0);			/* report failure */
 }
-/* -----------------------------------------------------------
- * Replace the text under the cursor with the null-terminated 
- * string pointed to by the global pointer rptr.  'repkey' is 
- * a global variable which holds the user's last response to the
- * "Change (Y / N / *)?" prompt.  If repkey == '*' then the prompt 
- * is skipped and the string replaced without asking.
- */
+/* #######################################################################
+ * int replace (void)
+ * purpose:
+ *     Replace the found text at the cursor with the replace string
+ *     (rptr): delete the old text with del_right() (block-safe), write
+ *     the new text into the gap, and adjust txt_x/txt_y for any
+ *     newlines the replacement contains. Asks "Change (Y N *)?" per
+ *     instance unless the user answered * (change all).
+ * returns:
+ *     1 when handled (replaced or skipped), 0 when the user aborted
+ *     (^U/ESC) or the gap had no room.
+ * parameters:
+ *     None; uses the global search string (sptr), replace string
+ *     (rptr) and repkey.
+ * notes:
+ *     repkey = '*' skips all further prompts (the ^L global replace).
+ *     'N'/RETURN just skips past this instance.
+ * ####################################################################### */
 int replace (void)
 {
 	int strdif, counter;
@@ -413,9 +566,20 @@ int replace (void)
 	}
 	return (1);			/* Report success */
 }
-/* --------------------------------------------------
- * Position cursor to arbitrary line
- */
+/* #######################################################################
+ * void goto_line (void)
+ * purpose:
+ *     The ^Q I "go to line" command: prompt for a line number
+ *     (pre-filled suggestion = current line) and jump there.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     A non-numeric answer beeps with "Value error"; the cursor lands
+ *     on the closest reachable line and the screen centers on it
+ *     (dpages).
+ * ####################################################################### */
 void goto_line (void)
 {
 	int line_no;
@@ -436,9 +600,20 @@ void goto_line (void)
 		}
 	}
 }
-/* -----------------------------------------------
- * Set hard tab display
- */
+/* #######################################################################
+ * void tab_set (void)
+ * purpose:
+ *     The ^O T "set tab width" command: prompt for a value and accept
+ *     only 2..32 (clamped by the parser at 1..32 for char arithmetic
+ *     safety). Repaints the page since every TAB expands differently.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; writes tabdef.
+ * notes:
+ *     Recomputes txt_y - the cursor's column may shift with the new
+ *     tab stops.
+ * ####################################################################### */
 void tab_set (void)
 {
 	int c;
@@ -459,9 +634,18 @@ void tab_set (void)
 		}
 	}
 }
-/* -------------------------------
- * Set right margin
- */
+/* #######################################################################
+ * void rm_set (void)
+ * purpose:
+ *     The ^O R "set right margin" command: prompt for a value > 1.
+ * The margin drives ^B reformatting and the word wrap in add_text().
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; writes rt_marg.
+ * notes:
+ *     No repaint needed - the margin only affects future typing.
+ * ####################################################################### */
 void rm_set (void)
 {
 	int c;
@@ -480,10 +664,26 @@ void rm_set (void)
 		}
 	}
 }
-/* -------------------------------------------------------
- * Reform paragraph from cursor to next Hard CR or EOF.
- * Cursor gap is moved to position after last reformed line.
- */
+/* #######################################################################
+ * void reform (void)
+ * purpose:
+ *     The ^B reformat command: re-flow the paragraph from the cursor's
+ *     line to the next hard CR (a line whose last character before the
+ *     break is not a space) or the end of the text. Lines are joined
+ *     (their leading whitespace eaten) and re-broken at the right
+ *     margin, breaking before the word that would cross it. The final
+ *     newline of the text is never joined away - the [EOF] marker
+ *     stays on its own line.
+ * returns:
+ *     Nothing; the cursor ends after the last reformed line.
+ * parameters:
+ *     None.
+ * notes:
+ *     Does nothing while margin release (MRflag) is on. The line break
+ *     needs one free byte in the gap (gap_beg + 1 < gap_end); a
+ *     line with no space before the margin cannot be broken and beeps
+ *     "Can't reformat!".
+ * ####################################################################### */
 void reform (void)
 {
 	char	*tmp_ptr;
@@ -616,9 +816,25 @@ void reform (void)
 		txt_y = column (gap_end);
 	}
 }
-/* ------------------------------------------------
- * Exit gracefully on receipt of Unix SIGNALs
- */
+/* #######################################################################
+ * void ts_abort (int sig)
+ * purpose:
+ *     The signal handler that tries to preserve the user's work when
+ *     the editor dies: leave curses, pick a save directory ($HOME on
+ *     UNIX, $TEMP/$TMP on DOS), build an unused "TSsaved.<pid>[.n]"
+ *     name, sanity-check the gap pointers, save the whole text via
+ *     save_fname() and report what happened. Fatal signals then re-
+ *     raise themselves for a core image.
+ * returns:
+ *     Does not return (exit(1)).
+ * parameters:
+ *     int sig: the signal number that invoked the handler (SIGINT,
+ *     SIGTERM, SIGSEGV, ... per platform).
+ * notes:
+ *     Re-arms itself with SIG_IGN first so a second signal cannot
+ *     interrupt the save. Old SUEsaved.* files are simply not found
+ *     any more - the prefix followed the rename.
+ * ####################################################################### */
 void ts_abort (int sig)
 {
 	char *homeptr;
@@ -732,9 +948,20 @@ void ts_abort (int sig)
 
 /********************** FILE I/O ROUTINES *********************/
 
-/* ----------------------------------------
- * Write block to specified file
-*/
+/* #######################################################################
+ * void writeblk (void)
+ * purpose:
+ *     The ^K W "write block" command: prompt for a file name and write
+ *     the marked block to it. An existing file is offered as
+ *     Overwrite/Append/Quit.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     save() does the writing with mode "wb"/"ab"; nothing happens
+ *     when no block is marked.
+ * ####################################################################### */
 void writeblk (void)
 {
 	int	c;
@@ -769,9 +996,21 @@ void writeblk (void)
 		}
 	}
 }
-/* ------------------------------------------------
- *	Insert file at cursor
- */
+/* #######################################################################
+ * void readblk (void)
+ * purpose:
+ *     The ^K R "read block" command: load a file INTO the text at the
+ *     cursor (load() appends at the gap and the gap is then moved to
+ *     the insertion point). "File not found"/"File too big" feedback
+ *     as appropriate.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Uses load() like a file open does - the loaded bytes become part
+ *     of the edited text, not a separate block.
+ * ####################################################################### */
 void readblk (void)
 {
 	int inlines;
@@ -799,9 +1038,20 @@ void readblk (void)
 		}
 	}
 }
-/* ---------------------------------------------------
- * Edit new file.
- */
+/* #######################################################################
+ * void new_file (void)
+ * purpose:
+ *     The ^K L "load new file" command: ask about modified text
+ *     (abandon), prompt for a file name and re-run the whole session
+ *     setup (edit_init).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     edit_init() handles allocation, loading and the "New file"
+ *     warning; this command only guards and feeds it.
+ * ####################################################################### */
 void new_file (void)
 {
 	if (mod)
@@ -817,10 +1067,27 @@ void new_file (void)
 		/*		disp_mode = dpage;*/
 	}
 }
-/* -----------------------------------------------------------
- *	Save the block defined by the block markers,
- *	  jumping the gap if necessary.
- */
+/* #######################################################################
+ * int save (char *s_name, char *s_type)
+ * purpose:
+ *     Write the marked block to a file: open it in the given mode,
+ *     walk the buffer from blk_beg to blk_end (jumping the gap) and
+ *     write every byte, translating newlines per filemode (LF for
+ *     Unix, CRLF for MSDOS, CR for Macintosh - the buffer always holds
+ *     LF internally). Checks ferror/fclose so a disk-full cannot pass
+ *     as success.
+ * returns:
+ *     1 on success, 0 on any error (no name, open failed, write/
+ *     close failed) - with feedback on the prompt line.
+ * parameters:
+ *     char *s_name: the destination file name.
+ *     char *s_type: the fopen mode - "wb", "ab" (callers always use
+ *     binary modes so DOS does not double-translate CRLF).
+ * notes:
+ *     All file I/O goes through here (whole-text saves aim the block
+ *     markers at the full text first). Only 7-bit text: the buffer
+ *     never holds bytes >= 0x80.
+ * ####################################################################### */
 int save (char *s_name, char *s_type)
 {
 	FILE	*s_file;
@@ -881,13 +1148,25 @@ int save (char *s_name, char *s_type)
 	status_line ();	/* Restore */
 	return (1);
 }
-/* -------------------------------------------------------
- * Load the named file into memory starting at gap_beg,
- *   checking for overflow.  Both new files and block loads may 
- *   be performed with this routine.
- * Set filemode if this is first load this session & mode option not used.
- * Return number of new lines loaded in text.
- */
+/* #######################################################################
+ * int load (char *l_name)
+ * purpose:
+ *     Read a file into the gap (appending at gap_beg), detecting its
+ *     line-ending style on the fly: CRLF -> MODE_MSDOS, lone CR ->
+ *     MODE_MACINTOSH, no CR -> MODE_UNIX. All endings are normalized
+ *     to LF in the buffer; NUL bytes and high bits are stripped (the
+ *     editor is 7-bit). On the first load of a session (and when no
+ *     -d/-m/-u option was given) the detected mode becomes filemode.
+ * returns:
+ *     The number of lines loaded (j); 0 when the file could not be
+ *     opened; -1 when the file does not fit the gap (nothing kept).
+ * parameters:
+ *     char *l_name: the file to read.
+ * notes:
+ *     Used by edit_init() (initial load) and readblk() (insert at
+ *     cursor). The gap-shrinking insert checks the space per byte and
+ *     rewinds cleanly on overflow.
+ * ####################################################################### */
 int load (char *l_name)
 {
 	FILE	*l_file;
@@ -958,9 +1237,19 @@ int load (char *l_name)
 	status_line ();
 	return (j);
 }
-/* -------------------------------------------------------
- * Set filemode
- */
+/* #######################################################################
+ * void set_file_mode (void)
+ * purpose:
+ *     The ^K F "change file mode" command: prompt U/D/M and set
+ *     filemode (Unix / msDos / Macintosh line endings for save()).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Also clears autofilemode - once the user picks a mode manually,
+ *     the load-time autodetection must not override it.
+ * ####################################################################### */
 void set_file_mode (void)
 {
 	int	keyin;
@@ -987,9 +1276,17 @@ void set_file_mode (void)
 		break;
 	}
 }
-/* -------------------------------------------------------
- * Toggle margin release
- */
+/* #######################################################################
+ * void mar_rel (void)
+ * purpose:
+ *     The ^O X "margin release" toggle: when on, the right margin does
+ *     not word-wrap typed text and ^B refuses to reformat. Updates the
+ *     MR status-line indicator.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; toggles MRflag.
+ * ####################################################################### */
 void mar_rel (void)
 {
 	MRflag = !MRflag;
@@ -1002,9 +1299,25 @@ void mar_rel (void)
 		stat_print (COLS - 27, "  ", NULL, NULL);
 	}
 }
-/* -------------------------------------------------------
- * Related block functions
- */
+/* #######################################################################
+ * void block_funcs (int funcno)
+ * purpose:
+ *     The ^K block operations dispatcher: 1 = begin mark at cursor,
+ *     2 = end mark at cursor, 3 = clear markers, 4 = move block to
+ *     cursor, 5 = copy block to cursor, 6 = delete block. Move/copy/
+ *     delete share one implementation: insert the marked text in
+ *     front of the cursor via text_ins (FORWARD), then - for move and
+ *     delete - expand the gap backwards over the original text.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int funcno: which operation, 1..6 (see above).
+ * notes:
+ *     blk_err() guards the cases; block markers are preserved across
+ *     the gap moves (tblk_* temporaries hold the moved block's new
+ *     position). Undo: the delete path saves the block first; the
+ *     cursor is restored to its pre-operation position.
+ * ####################################################################### */
 void block_funcs (int funcno)
 {
 	char	*old_ptr;
@@ -1108,9 +1421,21 @@ void block_funcs (int funcno)
 		break;
 	}
 }
-/* -------------------------------------------------------
- * Toggle help mode
- */
+/* #######################################################################
+ * void toggle_help (void)
+ * purpose:
+ *     Toggle the 8-line persistent help window at the top of the
+ *     screen: destroy and recreate the curses windows (they overlap
+ *     differently), re-apply keypad/attributes and repaint.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     editlines (the edit window height) follows helplines. The
+ *     prompt(1, "") dance is needed so newwin()'s auto-clear does not
+ *     wipe text on the first warning().
+ * ####################################################################### */
 void toggle_help (void)
 {
 	if (helplines)
@@ -1136,9 +1461,22 @@ void toggle_help (void)
 	status_line ();				/* Clear expert help message */
 	disp_mode = dpage;
 }
-/* -------------------------------------------------------
- * Repeat last find/replace.
- */
+/* #######################################################################
+ * void rep_find (void)
+ * purpose:
+ *     The ^L "repeat find/replace" command: repeat the last operation
+ *     from the cursor. In find mode (repflag = FALSE) search one more
+ *     time; in replace mode find the next instance and run replace() -
+ *     when the user answered * (change all) earlier, keep replacing
+ *     until find() fails.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; reads repflag, s_str, rptr, repkey.
+ * notes:
+ *     In find mode the search starts AFTER the cursor (gap_end + 1)
+ *     so the same match is not found again.
+ * ####################################################################### */
 void rep_find (void)
 {
 	if (strlen (s_str) > 0)
@@ -1173,9 +1511,21 @@ void rep_find (void)
 		}
 	}
 }
-/* -------------------------------------------------------
- * Invert case of character at cursor.
- */
+/* #######################################################################
+ * void case_invert (void)
+ * purpose:
+ *     The ^^ "invert case" command: invert the letter under the cursor
+ *     in place (writing it back through out_char so block highlight
+ *     stays correct) and advance the cursor one position.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Only the isprint() case is touched; the in-place write means
+ *     txt_ptr must be re-synced to gap_end first (the cursor side of
+ *     the gap).
+ * ####################################################################### */
 void case_invert (void)
 {
 	txt_ptr = gap_end;
@@ -1186,9 +1536,22 @@ void case_invert (void)
 	}
 	txt_y = move_y (movefwd, movechar);	/* Advance cursor */
 }
-/* -------------------------------------------------------
- * Delete word right
- */
+/* #######################################################################
+ * void del_word (void)
+ * purpose:
+ *     The ^T "delete word right" command: repeatedly del_right() up to
+ *     the end of the word - stopping at a newline, sentence punctuation
+ *     (. , :) or a space/tab boundary - then save the deleted range to
+ *     the undo stack.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Block markers are snapshotted and restored when the undo save
+ *     fails (the user declined to delete without undo) - the gap is
+ *     rewound to the start position.
+ * ####################################################################### */
 void del_word (void)
 {
 	char	*tmp_ptr, *tmp_blkbeg, *tmp_blkend;
@@ -1211,9 +1574,23 @@ void del_word (void)
 		gap_end = tmp_ptr;
 	}
 }
-/* -------------------------------------------------------
- * Delete cursor line.
- */
+/* #######################################################################
+ * void del_line (void)
+ * purpose:
+ *     The ^Y "delete line" command: move to the start of the line
+ *     (line_y(1)), extend the gap over the whole line up to and
+ *     including its newline (clamped at txt_end), saving the line to
+ *     the undo stack first.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     On undo-save failure the line AND the cursor column are restored
+ *     (del_line is careful not to lose text it cannot undo). Leaves
+ *     the cursor at the same column on the line that moved up
+ *     (disp_mode = dtoeos).
+ * ####################################################################### */
 void del_line (void)
 {
 	char	*tmp_ptr;
@@ -1241,9 +1618,20 @@ void del_line (void)
 		mod = TRUE;
 	}
 }
-/* -------------------------------------------------------
- * Insert line after cursor
- */
+/* #######################################################################
+ * void insert_newline (void)
+ * purpose:
+ *     Insert an empty line BEFORE the cursor line (^N): take one byte
+ *     from the gap's end and fill it with a newline. Named
+ *     insert_newline (not insert_line) because <term.h> defines an
+ *     insert_line curses capability macro.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Needs one free gap byte; tpa_err() when the gap is exhausted.
+ * ####################################################################### */
 void insert_newline (void)
 {
 	if (gap_beg + 1 < gap_end)
@@ -1257,9 +1645,17 @@ void insert_newline (void)
 		tpa_err ();
 	}
 }
-/* -------------------------------------------------------
- * Repaint screen.
- */
+/* #######################################################################
+ * void repaint (void)
+ * purpose:
+ *     Full screen refresh (^O L, and the KEY_RESIZE handler): clear
+ *     the edit window, mark the help state stale, request a full page
+ *     repaint and rebuild the status line.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void repaint (void)
 {
 	status_line ();
@@ -1267,9 +1663,26 @@ void repaint (void)
 	helpstate = REFRESH;
 	disp_mode = dpage;
 }
-/* -------------------------------------------------------
- * Add text at cursor.
- */
+/* #######################################################################
+ * void add_text (int ch)
+ * purpose:
+ *     The default key handler: insert printable text at the cursor
+ *     (or overwrite it when insflag is off, saving the overwritten
+ *     character for undo). Handles ^P (enter a literal control code),
+ *     ^N (new line), TAB expansion to spaces, the word wrap at the
+ *     right margin (break at the last space; without MRflag) and the
+ *     control-character display rules.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int ch: the keystroke as delivered by key_scan().
+ * notes:
+ *     The word wrap shares reform()'s break-at-space logic but only
+ *     for the freshly typed character; when no space is found nothing
+ *     wraps (nowrap). Control characters count as one column only
+ *     when cntlflag is on - otherwise the cursor does not advance.
+ *     A NUL (^P ^@) is rejected: it would break find().
+ * ####################################################################### */
 void add_text (int ch)
 {
 	char	*tmp_ptr;
@@ -1400,9 +1813,21 @@ void add_text (int ch)
 		break;
 	}
 }
-/* -------------------------------------------------------
- * Delete character to left of cursor
- */
+/* #######################################################################
+ * void del_left (void)
+ * purpose:
+ *     Delete the character to the LEFT of the cursor (Backspace/Del
+ *     keys): grow the gap backwards over it, jumping block markers,
+ *     and save the character for undo first.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Adjusts txt_x/txt_y per deleted character type (newline moves
+ *     the cursor up a whole line, TAB recomputes the column, plain
+ *     character decrements it) and picks dtoeos/dtoeolhc repaint.
+ * ####################################################################### */
 void del_left (void)
 {
 	if (gap_beg > txt_beg)
@@ -1439,11 +1864,26 @@ void del_left (void)
 		}
 	}
 }
-/* ----------------------------------------------------------
- * Insert text from ins_beg to ins_end at cursor.
- * Returns 0 if out of TPA, else 1.
- * Note: does NOT refresh screen.
- */
+/* #######################################################################
+ * int text_ins (char *ins_beg, char *ins_end, enum directions direction)
+ * purpose:
+ *     The one insertion primitive: copy the range [ins_beg, ins_end)
+ *     into the gap at the cursor. FORWARD inserts after the cursor
+ *     (shrinks the gap from gap_end), BACKWARD before it (grows the
+ *     text at gap_beg, used for typed text and undo). Checks the gap
+ *     space first - FORWARD keeps one byte spare.
+ * returns:
+ *     1 on success, 0 when the gap has no room (tpa_err() beeped).
+ * parameters:
+ *     char *ins_beg: first byte of the text to insert.
+ *     char *ins_end: one past the last byte to insert.
+ *     enum directions direction: BACKWARD (before cursor) or FORWARD
+ *     (after cursor).
+ * notes:
+ *     BACKWARD mode also updates txt_x for newlines inside the text
+ *     and recomputes txt_y. Does NOT refresh the screen - the caller
+ *     sets disp_mode.
+ * ####################################################################### */
 int text_ins (char *ins_beg, char *ins_end, enum directions direction)
 {
 	char		*ti_ptr;
@@ -1487,6 +1927,24 @@ int text_ins (char *ins_beg, char *ins_end, enum directions direction)
  * NOTES: - Imported (">") text will terminate at main text buffer overflow.
  *        - Imported text lines will be truncated after 1023 characters each.
  */
+/* #######################################################################
+ * void do_shell (void)
+ * purpose:
+ *     The ^K ! shell escape: prompt for a command (empty = $SHELL on
+ *     UNIX, COMSPEC on DOS), leave curses screen mode, run the command
+ *     via system() with STDIN/STDOUT redirected through the terminal
+ *     (on UNIX the "> file" import form is read back via popen and
+ *     inserted at the cursor, truncated to 1023 bytes per line), then
+ *     wait for ENTER and rebuild the editing session windows.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     The windows are destroyed and recreated (like toggle_help) so
+ *     the shell has the whole screen. Imported text is bounded by the
+ *     remaining gap space.
+ * ####################################################################### */
 void do_shell (void)
 {
 	int		result;
