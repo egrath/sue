@@ -676,3 +676,12 @@ Verification:
 - [x] Pristine 0.7i checked: the ORIGINAL had color too (start_color
       in _original sue.c) - removal is a deliberate divergence from
       0.7i, documented in AGENTS.md conventions ("monochrome only").
+
+Session 14 addendum (project moved to "ts"):
+- User renamed the GitHub repository: egrath/sue -> egrath/ts. origin is
+  now https://github.com/egrath/ts.
+- The working directory moves ~/work/sue -> ~/work/ts; the OpenCode
+  session is rebound with session_move.
+- AGENTS.md new hard rule: always push after committing.
+- Project rename SUE -> TextStar (binary "ts", sue.c -> ts.c, sue.h ->
+  ts.h) planned; implementation pending.

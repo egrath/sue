@@ -93,6 +93,9 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Conventions / hard rules
 
+- **Always push after committing.** Every `git commit` is immediately
+  followed by `git push` to the upstream remote — a commit left unpushed
+  is considered unfinished work.
 - **DOS compatibility is mandatory for every change.** POSIX-only functions
   (`alarm`, `kill`, `popen`, `setuid`/`setgid`, `SIGHUP`/`SIGQUIT`/`SIGSYS`/
   `SIGBUS`) must be guarded with `#ifdef UNIX`; DOS-specific code (COMSPEC,
