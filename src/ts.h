@@ -1,3 +1,26 @@
+/* #######################################################################
+ * ts.h - TextStar, global definitions and declarations.
+ * purpose:
+ *     The one shared header of the editor: system includes, the curses
+ *     setup (with prototype gap-fills for ULTRIX cursesX.h), the
+ *     monochrome video attributes, all global variables, the shared
+ *     enums and structs, and the prototypes of every function.
+ * notes:
+ *     TextStar keeps the entire text in one malloc'd GAP BUFFER:
+ *
+ *         txt_beg          gap_beg    gap_end        txt_end
+ *           v                 v          v              v
+ *           [text before cursor][.. free ..][text after cursor][EOF]...
+ *
+ *     The cursor lives in the gap. Inserting shrinks the gap, deleting
+ *     grows it, and text_move() relocates it to the cursor position -
+ *     so a cursor position is simply the gap position. txt_end points
+ *     at the "[EOF]" marker (followed by padding newlines and a NUL)
+ *     that terminates the text so it can be treated as a string.
+ *     Block markers (blk_beg/blk_end) must jump the gap whenever the
+ *     gap moves past them.
+ * ####################################################################### */
+
 /* ================== GLOBAL INCLUDES ================= */
 
 #include <limits.h>
@@ -134,15 +157,18 @@ extern	int txt_y;		/*   "       "    column */
 
 extern	int rt_marg;	/* Current right margin */
 
-extern	char	*gap_beg, *gap_end;	/* Gap markers */
-extern	char	*txt_beg, *txt_end;	/* Text buffer limits */
+extern	char	*gap_beg, *gap_end;	/* The gap: text before the cursor ends
+					 * at gap_beg, text after the cursor
+					 * starts at gap_end */
+extern	char	*txt_beg, *txt_end;	/* Buffer limits; txt_end points at the
+					 * "[EOF]" marker */
 
 extern	char	*txt_ptr;		/* General purpose pointer */
 
-extern	char	*blk_beg, 		/* Block markers */
-				*blk_end,	
-				*tblk_beg,
-				*tblk_end;
+extern	char	*blk_beg, 		/* Marked block: begins at blk_beg, */
+				*blk_end,	/* ends before blk_end. tblk_* are  */
+				*tblk_beg,	/* the temporaries while the block  */
+				*tblk_end;	/* is being moved/resized           */
 
 #define TXTNAME_SIZE (PATH_MAX + FILENAME_MAX + 1)
 extern	char	txtname[TXTNAME_SIZE];		/* Current filename */
@@ -244,7 +270,8 @@ extern	struct	undelnode	*undelptr;
 
 /* ================== GLOBAL FUNCTION PROTOTYPES ================ */
 
-/* data.c */
+/* data.c - gap-buffer primitives: cursor positioning, the gap itself,
+ * undo-save. See the full documentation at each definition. */
 extern char * start_line (char *line);
 extern char * next_line (char *line);
 extern int new_line (int ntime);
@@ -260,7 +287,8 @@ extern int undel (void);
 extern int undel_save (char *txt_start, unsigned txt_size,
 	enum directions undel_direction);
 
-/* display.c */
+/* display.c - all curses output: status/prompt windows, screen
+ * repainting, help screens. */
 extern int blk_err (char level);
 extern char abandon (void);
 extern int wait_key (void);
@@ -277,7 +305,8 @@ extern void xw_printw (WINDOW *xwindow, char *string1, ...);
 extern void do_help (enum helptype helprequest, WINDOW *hwindow);
 extern void val_err (void), not_found (void), key_err (void), tpa_err (void);
 
-/* funcs.c */
+/* funcs.c - the editor commands: find/replace, reformatting, file
+ * I/O, block operations, deletions, shell escape. */
 extern void block_hlp (void), quick_hlp (void), onscr_hlp (void);
 extern int find_func (void);
 extern void repl_func (void), quit_func (void), save_func (void), exit_func (void);
@@ -303,12 +332,12 @@ extern int text_ins (char *ins_beg, char *ins_end,
 	enum directions direction);
 extern void do_shell (void);
 
-/* ts.c */
+/* ts.c - program startup, buffer allocation, exit path. */
 extern void edit_init (char *v_name);
 extern void edit_exit (int exparm);
-extern void key_scan (void);
 
-/* command.c */
+/* command.c - key dispatch: the main loop and the ^Q/^K/^O menus. */
+extern void key_scan (void);
 extern void q_key (void), k_key (void), o_key (void);
 
 /* ===================== GLOBAL MACROS ==================== */
