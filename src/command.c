@@ -1,8 +1,38 @@
+/* #######################################################################
+ * command.c - TextStar key dispatch.
+ * purpose:
+ *     Everything between the keyboard and the commands: key_scan() is
+ *     the main input routine (one call = one keystroke handled), with
+ *     the WordStar two-key menus ^Q (quick/curor commands), ^K (block
+ *     and file commands) and ^O (onscreen toggles) plus the alarm()
+ *     trampolines that time out the help screens on UNIX.
+ * notes:
+ *     key_scan() sets disp_mode = dnothing by default; every command
+ *     case is responsible for requesting the repaint it needs. Typing
+ *     falls through to add_text() in the default case.
+ * ####################################################################### */
+
 #include "ts.h"
 
-/* -------------------------------------------------
- * Main user input routine
- */
+/* #######################################################################
+ * void key_scan (void)
+ * purpose:
+ *     The main user input routine, called in a loop from main(): read
+ *     one keystroke and dispatch it - cursor movement, scrolling,
+ *     reformatting, help, the two-key menus, toggles, deletions, undo,
+ *     and (default case) plain text entry. Also routes the newline
+ *     into the buffer and handles KEY_RESIZE repaints.
+ * returns:
+ *     Nothing; the dispatched handler performs the action and leaves
+ *     the wanted repaint in disp_mode.
+ * parameters:
+ *     None.
+ * notes:
+ *     While warnflag is set (a warning on screen) the first keystroke
+ *     is consumed just to repaint the text - RETURN/SPACE clear the
+ *     warning instead of acting. Alphabetics in the menus are masked
+ *     to their control codes so upper/lowercase both work.
+ * ####################################################################### */
 void key_scan (void)
 {
 	int	old_x;
@@ -300,16 +330,51 @@ void key_scan (void)
  * (Only used on UNIX - DOS shows the help screens at once.)
  */
 #ifdef UNIX
+/* #######################################################################
+ * static void alarm_quick_hlp (int sig)
+ * purpose:
+ *     alarm() trampoline: refresh the ^Q help screen when the 2-second
+ *     menu timeout expires.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int sig: the signal number (unused, SIGALRM).
+ * notes:
+ *     signal() requires a void (*)(int) handler while quick_hlp()
+ *     takes no arguments - UNIX only, DOS shows the help at once.
+ * ####################################################################### */
 static void alarm_quick_hlp (int sig)
 {
 	(void) sig;		/* Unused */
 	quick_hlp ();
 }
+/* #######################################################################
+ * static void alarm_block_hlp (int sig)
+ * purpose:
+ *     alarm() trampoline: refresh the ^K help screen on menu timeout.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int sig: the signal number (unused, SIGALRM).
+ * notes:
+ *     UNIX only; see alarm_quick_hlp().
+ * ####################################################################### */
 static void alarm_block_hlp (int sig)
 {
 	(void) sig;		/* Unused */
 	block_hlp ();
 }
+/* #######################################################################
+ * static void alarm_onscr_hlp (int sig)
+ * purpose:
+ *     alarm() trampoline: refresh the ^O help screen on menu timeout.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int sig: the signal number (unused, SIGALRM).
+ * notes:
+ *     UNIX only; see alarm_quick_hlp().
+ * ####################################################################### */
 static void alarm_onscr_hlp (int sig)
 {
 	(void) sig;		/* Unused */
@@ -317,9 +382,23 @@ static void alarm_onscr_hlp (int sig)
 }
 #endif
 
-/* --------------------------------------
- * Quick (^Q-) commands
- */
+/* #######################################################################
+ * void q_key (void)
+ * purpose:
+ *     The ^Q "quick" command menu: wait for the second key and
+ *     dispatch - file top/bottom, find/replace, line start/end, goto
+ *     line, delete to end of line. Two-key command: main() prints the
+ *     "^Q-" prompt before calling this.
+ * returns:
+ *     Nothing; the executed command updates the cursor/screen state.
+ * parameters:
+ *     None.
+ * notes:
+ *     When help windows are up, alarm(2) times the menu out (UNIX)
+ *     or the help is shown at once (DOS). Alphabetics are masked to
+ *     control codes so case does not matter; unknown keys beep via
+ *     key_err().
+ * ####################################################################### */
 void q_key (void)
 {
 	int	keyin;
@@ -414,9 +493,22 @@ void q_key (void)
 		key_err ();
 	}
 }
-/* ----------------------------------------------------------
- * Saving and Block (^K-) commands
- */
+/* #######################################################################
+ * void k_key (void)
+ * purpose:
+ *     The ^K block and file command menu: block begin/end/hide/move/
+ *     copy/delete, load file, save, save-as (name change), quit, exit,
+ *     read/write block, file mode, info screen and the shell escape.
+ * Two-key command: main() prints the "^K-" prompt before calling
+ *     this.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Same timeout/masking scheme as q_key(). ^K W refuses to run when
+ *     no block is marked (blk_err(1) beeps).
+ * ####################################################################### */
 void k_key (void)
 {
 	int	keyin;
@@ -530,9 +622,19 @@ void k_key (void)
 		key_err ();
 	}
 }
-/*----------------------------------------------------------
- * Onscreen (^O-) commands
- */
+/* #######################################################################
+ * void o_key (void)
+ * purpose:
+ *     The ^O "onscreen" command menu: toggle control-character display
+ *     (^O D), margin release (^O X), right margin (^O R), tab width
+ *     (^O T) and full repaint (^O L).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * notes:
+ *     Same timeout/masking scheme as q_key().
+ * ####################################################################### */
 void o_key (void)
 {
 	int	keyin;
