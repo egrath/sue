@@ -1,6 +1,7 @@
 SUE project — session log (.opencode/session.txt)
 Started: 2026-11-20
 
+
 == 2026-11-20 — Session 1: K&R -> strict C89 overhaul ==
 
 User requests:
@@ -136,6 +137,46 @@ Verification:
       cursesX/MACOS/LINUX/DOCOLOR references left in src/ or Makefile.
 - [x] make clean empties build/ but keeps the directory.
 
+== 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
+
+User request: reformat all code to their personal style. Example given:
+Allman braces, `char * function (int a, char *b)`, locals at top, tabs.
+
+Style rulings (user confirmed via questions):
+- Space between function name and paren: EVERYWHERE (definitions, prototypes,
+  and all call sites including library/curses calls).
+- Pointer style asymmetric, as in the example: floating `*` in return types
+  (`char * function (...)`), name-glued `*` in params/locals/members.
+- Always braces: all ~40 braceless single-statement bodies got braced.
+- switch/case: Allman braces, case labels one tab deeper than switch.
+- (agent default, stated in plan) `return (x);` spaced; parenless `return x;`
+  kept as-is; casts and keywords untouched; macro DEFINITIONS keep glued paren
+  (#define wp1(str1) - a space would break the macro); macro CALLS get space.
+
+Implementation:
+- [x] Backup taken (opencode temp dir sue_before_style) before rewriting.
+- [x] sue.h, data.c, display.c, funcs.c, sue.c, command.c rewritten file by
+      file; each compiled immediately after its rewrite.
+- [x] AGENTS.md: full style guide added to Conventions (incl. the #define
+      paren exception) + decisions-log entry.
+
+Agent thoughts:
+- Verification trick: strip ALL whitespace and braces from old and new files
+  and compare token streams - catches any accidental token change while the
+  expected diff is empty by construction (call spacing etc. is whitespace-only,
+  added braces are stripped).
+- Result: sue.h (one intentional enum-comment relocation), data.c, display.c,
+  sue.c, command.c token-identical. funcs.c: exactly one token change - the
+  redundant parens in `(*gap_beg = '\n');` removed (2 bytes, semantics equal).
+
+Verification:
+- [x] Per-file compile checks during the pass, then full make clean && make:
+      ZERO warnings under -std=c89 -Wpedantic -Wall -Werror.
+- [x] Smoke test 1 (expect/pty): start, render, ^K q quit - clean exit.
+- [x] Smoke test 2: type "hello", ^K s -> /tmp/sue_smoke3.txt, ^K q ->
+      byte-perfect "hello\n" round-trip, clean exit.
+- [x] git diff overview: sources reformatted, no logic drift.
+
 == 2026-11-20 — Session 4: bugfix pass + snake_case renames ==
 
 User request: review the code for latent bugs, problematic constructs, bad
@@ -268,92 +309,119 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
-== 2026-11-20 - Session 12: remove DEBUG/TRACE/LOOKBUSY feature flags ==
+== 2026-11-20 — Session 6: F-key leftovers ==
 
-User request: remove the three feature flags entirely - "You don't need
-them for debugging, do you?" (Confirmed: during the whole modernization,
-debugging used code review, ASan/UBSan builds and the pty smoke harness -
-never these flags. User chose beep-over-silent for ignored extended keys
-in the session 6 discussion; removal makes the question moot.)
+User request: check for F-key references (like "F1 or ^U to abort") - F-keys
+are unsupported. User reported F-keys entering trash in input fields.
 
-What the flags were:
-- DEBUG: /dev/vt04 debugterm channel + debug_pr() (an uncalled hook).
-  UNIX-only in nature (/dev/vt04).
-- TRACE: ncurses trace(TRACE_ORDINARY) after initscr - library-level call
-  logging for chasing 1995-era curses bugs.
-- LOOKBUSY: the ^O ^B easter egg (look_busy() - "Drivel").
+Findings:
+- "F1 or ^U to abort" hint in prompt_st() and replace() - F1 does nothing
+  anymore, only ^U aborts.
+- dead noF5 global (sue.c/sue.h, "F5 key present?") - unreferenced.
+- THE reported trash: prompt_st() had no extended-key filter - its default
+  case stored any keyin (KEY_F(1)=265 -> truncated to byte 9 = TAB) into the
+  input string. key_scan() was already filtered (session 4 B3), but the
+  input-field reader was not. Also prompt_key() returned F-key codes to
+  toupper() callers (out-of-domain; benign outcome).
 
-Implementation:
-- sue.h: DEBUG extern/DEBUGTERM block, debug_pr prototype, LOOKBUSY
-  look_busy declaration removed.
-- sue.c: debugterm definition, fopen block, TRACE block removed.
-- display.c: debug_pr() removed entirely.
-- funcs.c: look_busy() "Drivel" function removed.
-- command.c: LOOKBUSY case in o_key() removed.
-- Makefile: Debug flags comment section removed; ${DFLAGS} dropped from
-  the compile rules (expanded to nothing anyway).
-
-Result:
-- The codebase now has ZERO conditional feature code. The only
-  preprocessor decisions left are the platform guards (UNIX/DOS/ULTRIX)
-  and the KEY_RESIZE capability check. AGENTS.md conventions updated:
-  do not reintroduce feature flags.
-- Both builds re-verified warning-free (make -Werror, Watcom -wx); smoke
-  tests 5/5; grep proves zero leftover references.
-
-== 2026-11-20 - Session 11: Makefile CC override fix + ULTRIX prototypes ==
-
-Makefile CC fix (user-reported logical error):
-- The ULTRIX branch set CC = gcc, but a later unconditional "CC = cc"
-  clobbered it back (assignment order bug, introduced with the uname block
-  in session 9). Fix: CC = cc moved BEFORE the uname detection block.
-- User also re-reported the wrefresh/wattrset/wclrtoeol implicit warnings -
-  those were from a build of the pre-582fad5 tree; 582fad5 restored
-  cursesX.h which declares wgetch etc. (verified: their line numbers
-  matched the old state).
-- Verified: make -n shows cc normally; make -n UNAME=ULTRIX shows gcc +
-  -DULTRIX; rebuild + smoke 5/5.
-
-ULTRIX cursesX.h prototypes (user-reported from real ULTRIX hardware):
-- cursesX.h declares wgetch/wmove/etc. but NOT wrefresh/wattrset/wclrtoeol
-  -> sue.h declares them under #ifdef ULTRIX after the include.
-- Gotchas: first block-level edit failed on invisible whitespace -> redone
-  as anchored edits; a planned known-issues edit assumed text that was
-  never written -> read the section first.
+Implementation (user chose beep over silent ignore):
+- prompt_st() default case: keyin > 255 -> beep + drop, before the length
+  check. Covers all ten prompt sites (filename, find, change-to, goto line,
+  tab width, right margin, write/read block, load file, shell command).
+- prompt_key(): keys > 255 -> beep + return 0 (Y/N/U/D/M prompts take their
+  "no"/default path; no out-of-domain toupper).
+- Hints -> "^U to abort" at COLS - 12 (was "F1 or ^U to abort" at COLS - 18).
+- noF5 removed from sue.c/sue.h.
 
 Verification:
-- [x] make: zero warnings; DOS rebuild: zero warnings; smoke 5/5.
-- [x] Full ULTRIX build log still pending from the maintainer - more
-      missing cursesX.h declarations may surface (same one-line pattern).
-      Round 2 done: gcc 2.x also flagged `ii` in line_y() as "might be
-      used uninitialized" (conservative dataflow - ii is assigned on every
-      loop iteration, but the loop can run zero times before the post-loop
-      use). Fixed with an initializer (char ii = 0), zero behavior change.
-      Further ULTRIX gcc rounds may surface the same class in files not
-      yet reached (display.c/funcs.c/sue.c compile after data.c).
+- [x] Both builds zero warnings (make + wmake -f Makefile.wcc).
+- [x] Regression proof: filename prompt, type "test.txt", press F1
+      (TERM=xterm, \033OP -> keypad decodes KEY_F(1)=265), ENTER -> saved
+      file has NO junk byte. Gotcha during testing: the saved file landed in
+      the editor's working directory (relative name typed), not /tmp where I
+      first looked. Content 0a = correct empty-new-file save.
+- [x] Smoke test byte-perfect.
 
-== 2026-11-20 - Session 11: Makefile CC override fix ==
+Commit: "Ignore F-key presses in input fields; drop stale F1 hints".
 
-User request: the Makefile had a logical error - the ULTRIX branch set
-CC = gcc, but a later unconditional "CC = cc" clobbered it back (the
-assignment block sat after the uname detection, left over from the original
-layout). Also re-reported: the wrefresh/wattrset/wclrtoeol implicit-
-declaration warnings - those were already fixed by 582fad5 (cursesX.h
-restored); the diagnostics came from a build of the pre-582fad5 tree.
+== 2026-11-20 — Session 7: platform-default file mode ==
+
+User request: DOS version should default to DOS file mode (CRLF), UNIX
+version to UNIX file mode (LF). Easy via the existing -d/-u options' mode
+values as the startup default.
 
 Implementation:
-- Makefile: CC = cc moved BEFORE the uname detection block; the ifeq
-  override (CC = gcc + -DULTRIX) now wins. The stale "Uncomment the
-  following lines" comment removed.
-- AGENTS.md/session.txt updated.
+- sue.c main(): filemode default is now platform-dependent -
+  #ifdef DOS filemode = MODE_MSDOS #else MODE_UNIX #endif.
+- load()'s internal "mode = MODE_UNIX" init intentionally UNCHANGED: it is
+  the preserve-what-was-loaded path (a loaded LF-only file keeps LF even on
+  DOS; CRLF files round-trip as CRLF). Only NEW files get the platform
+  default. -d/-m/-u still override; the "option masks auto-detect for the
+  first load" quirk (autofilemode re-enable in load()) left as-is.
 
 Verification:
-- [x] make -n: normal build uses cc, no -DULTRIX.
-- [x] make -n UNAME=ULTRIX: gcc + -DULTRIX in the compile lines.
-- [x] Full macOS rebuild: zero warnings; smoke tests 5/5.
-- ULTRIX rebuild with current HEAD pending on the maintainer's machine
-  (the reported warnings are expected to be gone - cursesX.h declares
-  the three functions).
+- [x] make (UNIX, -DUNIX): zero warnings.
+- [x] Behavioral proof of the filemode path: "./build/sue -d /tmp/fm_d.txt"
+      -> "hi\r\n" (CRLF on a UNIX build via -d); "./build/sue /tmp/fm_u.txt"
+      -> "hi\n" (default LF). Same path the DOS default uses.
+- [x] wmake -f Makefile.wcc: zero warnings/errors.
+
+Commit: "Default file mode per platform (DOS: CRLF, UNIX: LF)".
+
+== 2026-11-20 — Session 8: DOS maximum speed optimization ==
+
+User request: Makefile.wcc should do maximum speed optimization for 386
+systems.
+
+Implementation:
+- CFLAGS now -bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s ...
+  -oneatx was already present (max optimizer set incl. -oa aliasing
+  relaxation, matching PDCurses' own watcom.mif).
+  Added: -3 (explicit 386 instruction set - runs on every 386+ machine)
+  and -s (no runtime stack checks; DOS/4GW flat stack + non-recursive code
+  make the checks pure overhead).
+
+Verification:
+- [x] wmake rebuild: zero warnings/errors; sue.exe still DOS/4GW LE.
+- [x] UNIX build unaffected (zero warnings).
+- Size delta: 115596 -> 115760 bytes (LE image; -s trims call overhead,
+  -3 changes codegen slightly - speed, not size, is the goal).
+
+Commit: "DOS build: maximum speed optimization for 386 (-oneatx -s -3)".
+
+== 2026-11-20 - Session 9: ULTRIX target restored ==
+
+User request: the build process was verified on ULTRIX (real hardware);
+restore ULTRIX support. Problems reported: Makefile should detect the OS
+and define ULTRIX (user previously did this with an uname/ifeq snippet);
+ULTRIX needs cursesX.h instead of curses.h; implicit declarations of
+wrefresh/wattrset/wclrtoeol and undeclared KEY_SLEFT/KEY_SRIGHT/
+KEY_SUSPEND/KEY_HELP/KEY_SFIND.
+
+Root cause: session 5 treated ULTRIX as a dropped target and removed the
+cursesX.h branch, the emulated key codes, the wechochar macro and the
+-DULTRIX hook.
+
+Implementation:
+- Makefile: UNAME = $(shell uname -s); ifeq ($(UNAME),ULTRIX) CFLAGS +=
+  -DULTRIX endif (user's exact snippet). GNU make required on ULTRIX -
+  user verified this setup there.
+- sue.h: cursesX.h on ULTRIX / curses.h otherwise; emulated key codes
+  KEY_SLEFT 0770 KEY_SRIGHT 0771 KEY_HELP 0772 KEY_SFIND 0773 KEY_SUSPEND
+  0776 (the last one is new in this fork - the original never had it) and
+  the wechochar macro, all #ifdef ULTRIX. The emulated codes are never
+  delivered by ULTRIX curses, so those switch cases stay dead - same as
+  the 1995 original.
+- AGENTS.md: build section documents the ULTRIX path (maintainer verified
+  on real hardware); decisions log entry.
+
+Verification:
+- [x] make on macOS: uname reports Darwin -> no -DULTRIX, zero warnings,
+      all 5 smoke tests pass.
+- [x] make UNAME=ULTRIX: the ifeq branch fires (-DULTRIX visible in the
+      compile line). The cursesX.h compile itself can only succeed on
+      ULTRIX (header exists only there) - maintainer re-verifies.
+- [x] DOS rebuild after the sue.h change: zero warnings, LE exe ok.
 
 == 2026-11-20 - Session 10: ULTRIX build fixes ==
 
@@ -413,156 +481,66 @@ Session 11 addendum (user supplied the real cursesX.h):
   in the header - no prototypes needed for them.
 - Both builds re-verified: zero warnings, smoke 5/5.
 
-== 2026-11-20 - Session 9: ULTRIX target restored ==
+== 2026-11-20 - Session 11: Makefile CC override fix + ULTRIX prototypes ==
 
-User request: the build process was verified on ULTRIX (real hardware);
-restore ULTRIX support. Problems reported: Makefile should detect the OS
-and define ULTRIX (user previously did this with an uname/ifeq snippet);
-ULTRIX needs cursesX.h instead of curses.h; implicit declarations of
-wrefresh/wattrset/wclrtoeol and undeclared KEY_SLEFT/KEY_SRIGHT/
-KEY_SUSPEND/KEY_HELP/KEY_SFIND.
+Makefile CC fix (user-reported logical error):
+- The ULTRIX branch set CC = gcc, but a later unconditional "CC = cc"
+  clobbered it back (assignment order bug, introduced with the uname block
+  in session 9). Fix: CC = cc moved BEFORE the uname detection block.
+- User also re-reported the wrefresh/wattrset/wclrtoeol implicit warnings -
+  those were from a build of the pre-582fad5 tree; 582fad5 restored
+  cursesX.h which declares wgetch etc. (verified: their line numbers
+  matched the old state).
+- Verified: make -n shows cc normally; make -n UNAME=ULTRIX shows gcc +
+  -DULTRIX; rebuild + smoke 5/5.
 
-Root cause: session 5 treated ULTRIX as a dropped target and removed the
-cursesX.h branch, the emulated key codes, the wechochar macro and the
--DULTRIX hook.
+ULTRIX cursesX.h prototypes (user-reported from real ULTRIX hardware):
+- cursesX.h declares wgetch/wmove/etc. but NOT wrefresh/wattrset/wclrtoeol
+  -> sue.h declares them under #ifdef ULTRIX after the include.
+- Gotchas: first block-level edit failed on invisible whitespace -> redone
+  as anchored edits; a planned known-issues edit assumed text that was
+  never written -> read the section first.
+
+Verification:
+- [x] make: zero warnings; DOS rebuild: zero warnings; smoke 5/5.
+- [x] Full ULTRIX build log still pending from the maintainer - more
+      missing cursesX.h declarations may surface (same one-line pattern).
+      Round 2 done: gcc 2.x also flagged `ii` in line_y() as "might be
+      used uninitialized" (conservative dataflow - ii is assigned on every
+      loop iteration, but the loop can run zero times before the post-loop
+      use). Fixed with an initializer (char ii = 0), zero behavior change.
+      Further ULTRIX gcc rounds may surface the same class in files not
+      yet reached (display.c/funcs.c/sue.c compile after data.c).
+
+== 2026-11-20 - Session 12: remove DEBUG/TRACE/LOOKBUSY feature flags ==
+
+User request: remove the three feature flags entirely - "You don't need
+them for debugging, do you?" (Confirmed: during the whole modernization,
+debugging used code review, ASan/UBSan builds and the pty smoke harness -
+never these flags. User chose beep-over-silent for ignored extended keys
+in the session 6 discussion; removal makes the question moot.)
+
+What the flags were:
+- DEBUG: /dev/vt04 debugterm channel + debug_pr() (an uncalled hook).
+  UNIX-only in nature (/dev/vt04).
+- TRACE: ncurses trace(TRACE_ORDINARY) after initscr - library-level call
+  logging for chasing 1995-era curses bugs.
+- LOOKBUSY: the ^O ^B easter egg (look_busy() - "Drivel").
 
 Implementation:
-- Makefile: UNAME = $(shell uname -s); ifeq ($(UNAME),ULTRIX) CFLAGS +=
-  -DULTRIX endif (user's exact snippet). GNU make required on ULTRIX -
-  user verified this setup there.
-- sue.h: cursesX.h on ULTRIX / curses.h otherwise; emulated key codes
-  KEY_SLEFT 0770 KEY_SRIGHT 0771 KEY_HELP 0772 KEY_SFIND 0773 KEY_SUSPEND
-  0776 (the last one is new in this fork - the original never had it) and
-  the wechochar macro, all #ifdef ULTRIX. The emulated codes are never
-  delivered by ULTRIX curses, so those switch cases stay dead - same as
-  the 1995 original.
-- AGENTS.md: build section documents the ULTRIX path (maintainer verified
-  on real hardware); decisions log entry.
+- sue.h: DEBUG extern/DEBUGTERM block, debug_pr prototype, LOOKBUSY
+  look_busy declaration removed.
+- sue.c: debugterm definition, fopen block, TRACE block removed.
+- display.c: debug_pr() removed entirely.
+- funcs.c: look_busy() "Drivel" function removed.
+- command.c: LOOKBUSY case in o_key() removed.
+- Makefile: Debug flags comment section removed; ${DFLAGS} dropped from
+  the compile rules (expanded to nothing anyway).
 
-Verification:
-- [x] make on macOS: uname reports Darwin -> no -DULTRIX, zero warnings,
-      all 5 smoke tests pass.
-- [x] make UNAME=ULTRIX: the ifeq branch fires (-DULTRIX visible in the
-      compile line). The cursesX.h compile itself can only succeed on
-      ULTRIX (header exists only there) - maintainer re-verifies.
-- [x] DOS rebuild after the sue.h change: zero warnings, LE exe ok.
-
-== 2026-11-20 — Session 8: DOS maximum speed optimization ==
-
-User request: Makefile.wcc should do maximum speed optimization for 386
-systems.
-
-Implementation:
-- CFLAGS now -bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s ...
-  -oneatx was already present (max optimizer set incl. -oa aliasing
-  relaxation, matching PDCurses' own watcom.mif).
-  Added: -3 (explicit 386 instruction set - runs on every 386+ machine)
-  and -s (no runtime stack checks; DOS/4GW flat stack + non-recursive code
-  make the checks pure overhead).
-
-Verification:
-- [x] wmake rebuild: zero warnings/errors; sue.exe still DOS/4GW LE.
-- [x] UNIX build unaffected (zero warnings).
-- Size delta: 115596 -> 115760 bytes (LE image; -s trims call overhead,
-  -3 changes codegen slightly - speed, not size, is the goal).
-
-Commit: "DOS build: maximum speed optimization for 386 (-oneatx -s -3)".
-
-== 2026-11-20 — Session 7: platform-default file mode ==
-
-User request: DOS version should default to DOS file mode (CRLF), UNIX
-version to UNIX file mode (LF). Easy via the existing -d/-u options' mode
-values as the startup default.
-
-Implementation:
-- sue.c main(): filemode default is now platform-dependent -
-  #ifdef DOS filemode = MODE_MSDOS #else MODE_UNIX #endif.
-- load()'s internal "mode = MODE_UNIX" init intentionally UNCHANGED: it is
-  the preserve-what-was-loaded path (a loaded LF-only file keeps LF even on
-  DOS; CRLF files round-trip as CRLF). Only NEW files get the platform
-  default. -d/-m/-u still override; the "option masks auto-detect for the
-  first load" quirk (autofilemode re-enable in load()) left as-is.
-
-Verification:
-- [x] make (UNIX, -DUNIX): zero warnings.
-- [x] Behavioral proof of the filemode path: "./build/sue -d /tmp/fm_d.txt"
-      -> "hi\r\n" (CRLF on a UNIX build via -d); "./build/sue /tmp/fm_u.txt"
-      -> "hi\n" (default LF). Same path the DOS default uses.
-- [x] wmake -f Makefile.wcc: zero warnings/errors.
-
-Commit: "Default file mode per platform (DOS: CRLF, UNIX: LF)".
-
-== 2026-11-20 — Session 6: F-key leftovers ==
-
-User request: check for F-key references (like "F1 or ^U to abort") - F-keys
-are unsupported. User reported F-keys entering trash in input fields.
-
-Findings:
-- "F1 or ^U to abort" hint in prompt_st() and replace() - F1 does nothing
-  anymore, only ^U aborts.
-- dead noF5 global (sue.c/sue.h, "F5 key present?") - unreferenced.
-- THE reported trash: prompt_st() had no extended-key filter - its default
-  case stored any keyin (KEY_F(1)=265 -> truncated to byte 9 = TAB) into the
-  input string. key_scan() was already filtered (session 4 B3), but the
-  input-field reader was not. Also prompt_key() returned F-key codes to
-  toupper() callers (out-of-domain; benign outcome).
-
-Implementation (user chose beep over silent ignore):
-- prompt_st() default case: keyin > 255 -> beep + drop, before the length
-  check. Covers all ten prompt sites (filename, find, change-to, goto line,
-  tab width, right margin, write/read block, load file, shell command).
-- prompt_key(): keys > 255 -> beep + return 0 (Y/N/U/D/M prompts take their
-  "no"/default path; no out-of-domain toupper).
-- Hints -> "^U to abort" at COLS - 12 (was "F1 or ^U to abort" at COLS - 18).
-- noF5 removed from sue.c/sue.h.
-
-Verification:
-- [x] Both builds zero warnings (make + wmake -f Makefile.wcc).
-- [x] Regression proof: filename prompt, type "test.txt", press F1
-      (TERM=xterm, \033OP -> keypad decodes KEY_F(1)=265), ENTER -> saved
-      file has NO junk byte. Gotcha during testing: the saved file landed in
-      the editor's working directory (relative name typed), not /tmp where I
-      first looked. Content 0a = correct empty-new-file save.
-- [x] Smoke test byte-perfect.
-
-Commit: "Ignore F-key presses in input fields; drop stale F1 hints".
-
-== 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
-
-User request: reformat all code to their personal style. Example given:
-Allman braces, `char * function (int a, char *b)`, locals at top, tabs.
-
-Style rulings (user confirmed via questions):
-- Space between function name and paren: EVERYWHERE (definitions, prototypes,
-  and all call sites including library/curses calls).
-- Pointer style asymmetric, as in the example: floating `*` in return types
-  (`char * function (...)`), name-glued `*` in params/locals/members.
-- Always braces: all ~40 braceless single-statement bodies got braced.
-- switch/case: Allman braces, case labels one tab deeper than switch.
-- (agent default, stated in plan) `return (x);` spaced; parenless `return x;`
-  kept as-is; casts and keywords untouched; macro DEFINITIONS keep glued paren
-  (#define wp1(str1) - a space would break the macro); macro CALLS get space.
-
-Implementation:
-- [x] Backup taken (opencode temp dir sue_before_style) before rewriting.
-- [x] sue.h, data.c, display.c, funcs.c, sue.c, command.c rewritten file by
-      file; each compiled immediately after its rewrite.
-- [x] AGENTS.md: full style guide added to Conventions (incl. the #define
-      paren exception) + decisions-log entry.
-
-Agent thoughts:
-- Verification trick: strip ALL whitespace and braces from old and new files
-  and compare token streams - catches any accidental token change while the
-  expected diff is empty by construction (call spacing etc. is whitespace-only,
-  added braces are stripped).
-- Result: sue.h (one intentional enum-comment relocation), data.c, display.c,
-  sue.c, command.c token-identical. funcs.c: exactly one token change - the
-  redundant parens in `(*gap_beg = '\n');` removed (2 bytes, semantics equal).
-
-Verification:
-- [x] Per-file compile checks during the pass, then full make clean && make:
-      ZERO warnings under -std=c89 -Wpedantic -Wall -Werror.
-- [x] Smoke test 1 (expect/pty): start, render, ^K q quit - clean exit.
-- [x] Smoke test 2: type "hello", ^K s -> /tmp/sue_smoke3.txt, ^K q ->
-      byte-perfect "hello\n" round-trip, clean exit.
-- [x] git diff overview: sources reformatted, no logic drift.
+Result:
+- The codebase now has ZERO conditional feature code. The only
+  preprocessor decisions left are the platform guards (UNIX/DOS/ULTRIX)
+  and the KEY_RESIZE capability check. AGENTS.md conventions updated:
+  do not reintroduce feature flags.
+- Both builds re-verified warning-free (make -Werror, Watcom -wx); smoke
+  tests 5/5; grep proves zero leftover references.
