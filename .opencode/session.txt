@@ -268,6 +268,45 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
+== 2026-11-20 - Session 10: ULTRIX build fixes ==
+
+User request (ULTRIX verified on real hardware): (1) Makefile should detect
+the OS and define ULTRIX (user did this before with an uname/ifeq snippet);
+(2) ULTRIX needs cursesX.h instead of curses.h; (3) errors: opterr/optind/
+optarg undeclared, COLOR_GREEN/COLOR_BLACK/COLOR_BLUE/COLOR_YELLOW
+undeclared. Also: set CC to gcc for ULTRIX (GCC-only support).
+
+Root causes:
+- The getopt externs removed in session 5 ("come from <unistd.h>") are not
+  declared by ULTRIX unistd.h.
+- cursesX.h (DEC extended curses) has NO color API - that is why the 1995
+  original built ULTRIX without DOCOLOR. Our unconditional color path
+  cannot compile there.
+
+Implementation:
+- Makefile: user's uname/ifeq snippet (adds -DULTRIX) + CC = gcc in the
+  same branch.
+- sue.h: #ifdef ULTRIX extern optarg/optind/opterr; cursesX.h branch
+  (restored with the ULTRIX support in the previous session).
+- sue.c: color setup wrapped in #ifdef ULTRIX / #else / #endif - ULTRIX
+  gets the monochrome attributes (matches the 1995 original, which built
+  ULTRIX without DOCOLOR); -b stays a parsed no-op there.
+- AGENTS.md: ULTRIX bullet updated.
+
+Gotchas:
+- First block-level edit failed on an invisible whitespace difference in
+  the DOCOLOR-era block -> redone as two anchored edits.
+- Decisions-log insertion ate the first line of the following entry AGAIN
+  (same as session 5/8) -> restored immediately. Rule for future edits:
+  when inserting a log entry before an existing one, anchor on the FULL
+  old entry, not its first line.
+
+Verification:
+- [x] make (macOS, no ULTRIX): zero warnings; all 5 smoke tests pass.
+- [x] make UNAME=ULTRIX: ifeq fires, -DULTRIX visible in the compile line
+      (the cursesX.h compile itself can only succeed on ULTRIX).
+- [x] DOS rebuild after the sue.c/sue.h changes: zero warnings, LE exe ok.
+
 == 2026-11-20 - Session 9: ULTRIX target restored ==
 
 User request: the build process was verified on ULTRIX (real hardware);

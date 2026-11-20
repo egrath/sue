@@ -219,7 +219,12 @@ extern	FILE	*debugterm;
 #define	DEBUGTERM	"/dev/vt04"
 #endif
 
-/* getopt() and its variables come from <unistd.h> */
+/* getopt() and its variables come from <unistd.h> - except on ULTRIX */
+#ifdef ULTRIX
+extern	char	*optarg;	/* 3 for getopt() */
+extern	int		optind;
+extern	int		opterr;
+#endif
 
 /* ================== GLOBAL FUNCTION PROTOTYPES ================ */
 

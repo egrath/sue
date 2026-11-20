@@ -14,6 +14,7 @@ LFLAGS = -lncurses
 # Detect the operating system (ULTRIX needs special curses handling)
 UNAME   = $(shell uname -s)
 ifeq ($(UNAME), ULTRIX)
+	CC        = gcc
 	CFLAGS    += -DULTRIX
 endif
 # Uncomment the following lines for the standard C compiler:

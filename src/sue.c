@@ -352,6 +352,13 @@ int main (int argc, char *argv[])
 	editwin   = newwin (editlines, COLS, helplines + 1, 0);	/* Next 2 overlap */
 	promptwin = newwin (1, COLS, helplines + 1, 0);
 
+#ifdef ULTRIX
+	/* Monochrome: ULTRIX curses has no color support */
+	STATATTR   = STATUS_VIDEO;	/* A_UNDERLINE */
+	FLAGATTR   = FLAG_VIDEO;	/* A_NORMAL */
+	PROMPTATTR = PROMPT_VIDEO;	/* A_BOLD */
+
+#else
 	/* Color terminals and curses implementations */
 	if (has_colors () && !bwopt)		/* Black & White option flag */
 	{
@@ -370,6 +377,7 @@ int main (int argc, char *argv[])
 		FLAGATTR   = FLAG_VIDEO;	/* A_NORMAL */
 		PROMPTATTR = PROMPT_VIDEO;	/* A_BOLD */
 	}
+#endif
 	BLOCKATTR  = BLOCK_VIDEO;		/* A_BOLD */
 	CNTLATTR   = CONTROL_VIDEO;		/* A_UNDERLINE */
 

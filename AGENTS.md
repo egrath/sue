@@ -67,8 +67,9 @@ marker and trailing newlines so all of the text can be treated as a string.
   UNIX: LF); `-d`/`-m`/`-u` override, and loaded files keep their detected
   endings (the file is never rewritten to a different style than it had).
 - **ULTRIX**: `make` detects the OS via `uname -s` and adds `-DULTRIX` —
-  the build then uses DEC's extended curses (`cursesX.h`) and emulates the
-  extended key codes ULTRIX curses lacks (those switch cases stay dead).
+  the build then uses DEC's extended curses (`cursesX.h`), emulates the
+  extended key codes ULTRIX curses lacks (those switch cases stay dead),
+  and runs monochrome (ULTRIX curses has no color API). Sets `CC = gcc`.
   Needs GNU make on ULTRIX. Verified by the maintainer on real hardware.
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
@@ -197,11 +198,14 @@ marker and trailing newlines so all of the text can be treated as a string.
   override, and loaded files keep their detected endings (load() preserves
   the style the file already had).
 - 2026-11-20 — ULTRIX is back as a build target (verified by the maintainer
-  on real hardware): the Makefile detects it via uname and defines -DULTRIX,
-  sue.h uses DEC's extended curses (cursesX.h) there and emulates the
-  extended key codes ULTRIX curses lacks (KEY_SLEFT/KEY_SRIGHT/KEY_SUSPEND/
-  KEY_HELP/KEY_SFIND, wechochar). Those switch cases stay dead on ULTRIX,
-  exactly like the 1995 original.
+  on real hardware): the Makefile detects it via uname, sets CC = gcc and
+  defines -DULTRIX; sue.h uses DEC's extended curses (cursesX.h) there and
+  emulates the extended key codes ULTRIX curses lacks (KEY_SLEFT/KEY_SRIGHT/
+  KEY_SUSPEND/KEY_HELP/KEY_SFIND, wechochar). Those switch cases stay dead
+  on ULTRIX, exactly like the 1995 original. ULTRIX cursesX.h has no color
+  API, so that build runs monochrome (like the 1995 original, which built
+  ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
+  variables, so sue.h declares them under #ifdef ULTRIX.
 - 2026-11-20 — Closed out the remaining review findings: find() no longer
   uppercases the search string in place (an uppercased copy is compared),
   del_line() restores the cursor position when its undo-save fails, ^P ^@
