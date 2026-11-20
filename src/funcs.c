@@ -197,6 +197,12 @@ int del_right (void)
 {
 	if (gap_end < txt_end)		/* Can't delete past end of file */
 	{
+		/* Never delete the newline that terminates the text:
+		 * the [EOF] marker must stay on its own line. */
+		if (gap_end + 1 == txt_end && *gap_end == '\n')
+		{
+			return (0);
+		}
 		if (*gap_end == '\n')
 		{
 			disp_mode = dtoeos;
@@ -281,7 +287,7 @@ int save_fname (void)
 		blk_end = gap_beg;
 	}
 
-	ioresult = save (txtname, "w");	/* Save "block" */
+	ioresult = save (txtname, "wb");	/* Save "block" */
 
 	blk_beg = old_beg;				/* Restore block pointers */
 	blk_end = old_end;
@@ -504,6 +510,13 @@ void reform (void)
 			{
 			case '\n':						/* Join lines */
 				text_move ();
+				/* Never join away the final newline of the text:
+				 * the [EOF] marker must stay on its own line. */
+				if (gap_end + 1 == txt_end)
+				{
+					txt_y = column (gap_end);
+					return;
+				}
 				/* If hard CR, move cursor & quit */
 				if ((*gap_beg != ' ') || (*(gap_end + 1) == '\n'))
 				{
@@ -653,7 +666,7 @@ void sabort (int sig)
 			sprintf (savname, "%s/SUEsaved.%ld.%d", homeptr,
 				(long) getpid (), n);
 		}
-		if ((probe = fopen (savname, "r")) == (FILE *) NULL)
+		if ((probe = fopen (savname, "rb")) == (FILE *) NULL)
 		{
 			break;		/* Name not taken */
 		}
@@ -733,9 +746,9 @@ void writeblk (void)
 			return;
 		}
 
-		if (fopen (respptr, "r") == (FILE *) NULL)	/* Exists? */
+		if (fopen (respptr, "rb") == (FILE *) NULL)	/* Exists? */
 		{
-			save (respptr, "w");						/* No */
+			save (respptr, "wb");						/* No */
 		}
 		else
 		{
@@ -748,10 +761,10 @@ void writeblk (void)
 			switch (c)
 			{
 			case 'A':
-				save (respptr, "a"); /* Append block to file */
+				save (respptr, "ab"); /* Append block to file */
 				break;
 			case 'O':				/* Overwrite file */
-				save (respptr, "w");
+				save (respptr, "wb");
 			}
 		}
 	}
@@ -883,7 +896,7 @@ int load (char *l_name)
 	enum filemodes mode = MODE_UNIX;
 	char *old_beg;
 
-	if ((l_file = fopen (l_name, "r")) == (FILE *) NULL)
+	if ((l_file = fopen (l_name, "rb")) == (FILE *) NULL)
 	{
 		return (0);
 	}
