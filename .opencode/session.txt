@@ -585,3 +585,21 @@ Session 12 addendum (user-reported -s78 segfault):
 - AGENTS.md decisions log rewritten (it had accumulated orphaned
   fragments from repeated anchored insertions - now clean and
   chronological).
+
+Session 13 (DOS startup hang resolved + cleanup):
+- User confirmed DOS now works (the built-in option parser fixed the
+  startup hang; no MARKERS build needed anymore).
+- Removed the MARKERS diagnostic build: the four #ifdef MARKERS stderr
+  blocks in main() (already gone from sue.c) and the Makefile.wcc
+  !ifdef MARKERS / CFLAGS += -dMARKERS hook.
+- Removed the last getopt remnants: the global "int opt", the
+  "optind = i" handoff (edit_init (argv[i]) takes the file index
+  directly) and the sue.h ULTRIX "extern int optind" block. Zero
+  getopt/optarg/opterr/optind references remain - SUE's option
+  handling has no unistd.h dependency on any platform.
+- Already in from the previous round, re-verified here: del_right()/
+  reform() [EOF] separator guards; binary file modes ("rb"/"wb"/"ab")
+  for load()/save()/writeblk() fixing the DOS double-CR saves.
+- Verified: make and wmake -f Makefile.wcc both zero warnings; smoke
+  tests 5/5; -s78 wrap, --help and bare -s usage errors, -bdmu -t8
+  cluster parse all correct.

@@ -75,9 +75,9 @@ marker and trailing newlines so all of the text can be treated as a string.
   almost nothing (only `initscr`/`newwin`/`subwin`/`newpad`,
   `longname`/`erasechar`/`killchar`, `wgetch`/`newterm`, plus macros).
   Sets `CC = gcc`. Needs GNU make on ULTRIX. Build and runtime verified
-  by the maintainer on real hardware. ULTRIX unistd.h also does not
-  declare `getopt` or its variables — sue.h declares all four under
-  `#ifdef ULTRIX`.
+  by the maintainer on real hardware. (ULTRIX unistd.h also does not
+  declare `getopt` or its variables — irrelevant now: SUE has no
+  `getopt` dependency at all, see the decisions log.)
 - **Runtime verification**: the UNIX build is smoke-tested on macOS; the
   DOS build (`build.dos/sue.exe`) is confirmed working on real DOS by the
   maintainer; the ULTRIX build is confirmed compiling and running on real
@@ -252,6 +252,24 @@ marker and trailing newlines so all of the text can be treated as a string.
   working on real DOS and the ULTRIX build compiles and works on real
   ULTRIX hardware (both maintainer-tested); the UNIX build is smoke-tested
   on macOS.
+- 2026-11-20 — Option parsing is a built-in parser, not `getopt()`: the
+  Watcom clib getopt hangs with an empty command line on DOS (reads past
+  `argv[1] = NULL`), and the -s option segfaulted since the session-4
+  option-string cleanup dropped a colon from the getopt string. Cluster
+  options b/d/m/u; -s/-t take attached values only (`-s78`, `-t8`); the
+  first non-option argument is the file. No getopt/optarg/opterr/optind
+  reference remains anywhere — sue.h carries no option externs (the
+  ULTRIX unistd.h gap is gone for good). MARKERS=Y stderr startup
+  markers (the diagnostic build that located the DOS hang) were removed
+  again after the fix.
+- 2026-11-20 — [EOF] separator protection: del_right() refuses to delete
+  the newline that terminates the text and reform() refuses to join it
+  away (`gap_end + 1 == txt_end`), so Ctrl-G/^B can no longer merge text
+  onto the [EOF] line and corrupt the buffer cascade.
+- 2026-11-20 — All file I/O is binary ("rb"/"wb"/"ab"): on DOS the CRLF
+  text translation no longer double-converts saves; -d/-m/-u now write
+  exact CRLF/CR/LF and load()'s own line-ending detection sees the real
+  bytes. Binary mode is a no-op on POSIX, so UNIX/macOS is unchanged.
 
 ## Known issues / notes (not yet fixed)
 
