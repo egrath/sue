@@ -3,7 +3,7 @@
 /* -------------------------------------------------
  * Main user input routine
  */
-void	Key_scan()
+void Key_scan (void)
 {
 	int	old_x;
 	int	ch;
@@ -13,57 +13,63 @@ void	Key_scan()
 
 	warnflag2 = warnflag;
 	if (warnflag)				/* Avoid instant overwrite of warnings */
-	{	ch = wgetch(promptwin);
-		wrefresh(editwin);
+	{
+		ch = wgetch (promptwin);
+		wrefresh (editwin);
 		warnflag = 0;
 	}
 	else
-		ch = wgetch(editwin);		/* Await keystroke */
-	switch (ch) {
+	{
+		ch = wgetch (editwin);		/* Await keystroke */
+	}
+	switch (ch)
+	{
 
 	/* --------- CURSOR MOVEMENT COMMANDS --------- */
 	case CNTRL_E:					/* up */
 	case KEY_UP:
-		txt_x = move_x(txt_x - 1);
+		txt_x = move_x (txt_x - 1);
 		break;
 
 	case CNTRL_X:					/* down */
 	case KEY_DOWN:
-		txt_x = move_x(txt_x + 1);
+		txt_x = move_x (txt_x + 1);
 		break;
 
 	case CNTRL_S:					/* left char */
 	case KEY_LEFT:
-		txt_y = move_y(moveback, movechar);
+		txt_y = move_y (moveback, movechar);
 		break;
 
 	case CNTRL_D:					/* right char */
 	case KEY_RIGHT:
-		txt_y = move_y(movefwd, movechar);
+		txt_y = move_y (movefwd, movechar);
 		break;
 
 	case CNTRL_A:					/* back word */
 	case KEY_SLEFT:
-		txt_y = move_y(moveback, moveword);
+		txt_y = move_y (moveback, moveword);
 		break;
 
 	case CNTRL_F:					/* forward word */
 	case KEY_SRIGHT:
-		txt_y = move_y(movefwd, moveword);
+		txt_y = move_y (movefwd, moveword);
 		break;
 
 	/* --------- SCROLLING --------- */
 
 	case CNTRL_Z: 			/* Forward line */
-    case KEY_SUSPEND:       /* Workaround: ncurses maps ^z to this */
+	case KEY_SUSPEND:       /* Workaround: ncurses maps ^z to this */
 	case KEY_SF:
 		old_x = txt_x;
 		scr_xbeg++;
-		disp_mode= dscrlup;
+		disp_mode = dscrlup;
 		if (txt_x < scr_xbeg)
-		{	txt_x = move_x(scr_xbeg);
+		{
+			txt_x = move_x (scr_xbeg);
 			if (old_x == txt_x)
-			{	scr_xbeg--;
+			{
+				scr_xbeg--;
 				disp_mode = dnothing;
 			}
 		}
@@ -72,10 +78,13 @@ void	Key_scan()
 	case CNTRL_W:			/* Back line */
 	case KEY_SR:
 		if (scr_xbeg > 1)
-		{	scr_xbeg--;
+		{
+			scr_xbeg--;
 			scr_xend--;
 			if (txt_x > scr_xend)
-				txt_x = move_x(scr_xend);
+			{
+				txt_x = move_x (scr_xend);
+			}
 			disp_mode = dscrldn;
 		}
 		break;
@@ -83,7 +92,7 @@ void	Key_scan()
 	case CNTRL_C:			/* Forward page */
 	case KEY_NPAGE:
 		old_x = txt_x;		/* old cursor line */
-		txt_x = move_x(txt_x + editlines - 1); /* calc new cursor ln */
+		txt_x = move_x (txt_x + editlines - 1); /* calc new cursor ln */
 		scr_xbeg += txt_x - old_x;	/* add lines to screen */
 		disp_mode = dpage;
 		break;
@@ -91,7 +100,7 @@ void	Key_scan()
 	case CNTRL_R:			/* Back page */
 	case KEY_PPAGE:
 		old_x = txt_x;
-		txt_x = move_x(txt_x - (editlines - 1));
+		txt_x = move_x (txt_x - (editlines - 1));
 		old_x -= txt_x;
 		scr_xbeg = (scr_xbeg <= old_x ? 1 : scr_xbeg - old_x);
 		disp_mode = dpage;
@@ -100,40 +109,44 @@ void	Key_scan()
 	/* --------- TEXT REFORMAT --------- */
 
 	case CNTRL_B:
-		reform();
+		reform ();
 		break;
 
 	/* --------- HELP --------- */
 	case CNTRL_J:
 	case KEY_HELP:
 		if (helplines)	/* Help already present */
-		{	keyerr();
+		{
+			keyerr ();
 			break;
 		}
-		dohelp(PRIMARY, editwin);
-		wattrset(editwin, PROMPTATTR);
-		wp1("Strike a MENU KEY or RETURN: ");
-		wattrset(editwin, A_NORMAL);
-		wrefresh(editwin);
-		ch = waitkey();
+		dohelp (PRIMARY, editwin);
+		wattrset (editwin, PROMPTATTR);
+		wp1 ("Strike a MENU KEY or RETURN: ");
+		wattrset (editwin, A_NORMAL);
+		wrefresh (editwin);
+		ch = waitkey ();
 		if ((ch < 255) && (ch >= '@'))
+		{
 			ch &= 0x1F;	/* mask alphabetics */
-		switch (ch) {
+		}
+		switch (ch)
+		{
 		case CNTRL_Q:
 		case KEY_HOME:
-			quickhlp();
+			quickhlp ();
 			break;
 
 		case CNTRL_K:
 		case ESC:
-			blockhlp();
+			blockhlp ();
 			break;
 
 		case CNTRL_O:
-			onscrhlp();
+			onscrhlp ();
 			break;
 		}
-		status_line();			/* Repaint status line */
+		status_line ();			/* Repaint status line */
 		disp_mode = dpage;		/* Repaint text */
 		break;
 
@@ -142,7 +155,7 @@ void	Key_scan()
 	case CNTRL_L:
 	case 0x1C:			/* "^\" in case ^L is arrow key */
 	case KEY_SFIND:
-		repfind();
+		repfind ();
 		break;
 
 	/* --------- EXTENSIONS --------- */
@@ -150,24 +163,32 @@ void	Key_scan()
 	case CNTRL_Q:				/* "Quick" commands */
 	case KEY_HOME:
 		if (ch == CNTRL_Q)
-			warning("^Q-");
-		else 
-			warning("HOME-");
-		q_key();
+		{
+			warning ("^Q-");
+		}
+		else
+		{
+			warning ("HOME-");
+		}
+		q_key ();
 		break;
 
 	case ESC:
 	case CNTRL_K:				/* Block/Saving commands */
 		if (ch == CNTRL_K)
-			warning("^K-");
-		else 
-			warning("ESC-");
-		k_key();
+		{
+			warning ("^K-");
+		}
+		else
+		{
+			warning ("ESC-");
+		}
+		k_key ();
 		break;
 
 	case CNTRL_O:				/* Onscreen commands */
-		warning("^O-");
-		o_key();
+		warning ("^O-");
+		o_key ();
 		break;
 
 	/* --------- TOGGLES --------- */
@@ -177,13 +198,17 @@ void	Key_scan()
 	case KEY_EIC:
 		insflag = !insflag;
 		if (insflag)
-			statprint(COLS-24, "INS");
+		{
+			statprint (COLS - 24, "INS", NULL, NULL);
+		}
 		else
-			statprint(COLS-24, "   ");
+		{
+			statprint (COLS - 24, "   ", NULL, NULL);
+		}
 		break;
 
 	case CASE_INVERT:		/* Change case of char. */
-		caseinvert();
+		caseinvert ();
 		break;
 
 	/* --------- TEXT DELETION --------- */
@@ -192,27 +217,29 @@ void	Key_scan()
 	case KEY_DC:
 	case BS:				/* Destructive BS */
 	case DEL:				/* delete key */
-		delleft();
+		delleft ();
 		break;
 
 	case CNTRL_G:			/* Delete character under cursor */
-		if (!undelsave(gap_end, 1, FORWARD))
+		if (!undelsave (gap_end, 1, FORWARD))
+		{
 			break;
-		delright();
+		}
+		delright ();
 		break;
 
 	case CNTRL_T:			/* Delete word right */
-		delword();
+		delword ();
 		break;
 
 	case CNTRL_Y:			/* Delete cursor line */
 	case KEY_DL:
-		delline();
+		delline ();
 		break;
 
 	/* ------- UNDO COMMAND -------- */
 	case CNTRL_U:
-		undel();
+		undel ();
 		break;
 
 	/* --------- TEXT ENTRY --------- */
@@ -220,25 +247,32 @@ void	Key_scan()
 	case KEY_ENTER:
 	case '\r':			/* RETURN key */
 		if (warnflag2)	/* CR removes warnings */
+		{
 			break;
+		}
 		ch = '\n';		/* Redefine to a newline character */
 		if (gap_beg + 1 < gap_end)
-		{	*++gap_beg = ch;
+		{
+			*++gap_beg = ch;
 			txt_x++;
 			txt_y = 1;
 			disp_mode = dinsln;
 			mod = TRUE;
 		}
 		else
-			TPAErr();
-		break;	
+		{
+			TPAErr ();
+		}
+		break;
 
 	case ' ':
 		if (warnflag2)	/* Space removes warnings */
+		{
 			break;
+		}
 		/* FALLTHRU */
 	default:
-		addtext(ch);				/* All else is text */
+		addtext (ch);				/* All else is text */
 		break;
 	}
 	warnflag2 = 0;
@@ -246,234 +280,284 @@ void	Key_scan()
 }
 
 /* --------------------------------------
+ * alarm() handlers for the timed help screens.
+ * signal() requires a void (*)(int) function; the help
+ * routines themselves take no arguments.
+ */
+static void alarm_quickhlp (int sig)
+{
+	(void) sig;		/* Unused */
+	quickhlp ();
+}
+static void alarm_blockhlp (int sig)
+{
+	(void) sig;		/* Unused */
+	blockhlp ();
+}
+static void alarm_onscrhlp (int sig)
+{
+	(void) sig;		/* Unused */
+	onscrhlp ();
+}
+
+/* --------------------------------------
  * Quick (^Q-) commands
  */
-void q_key()
+void q_key (void)
 {
 	int	keyin;
 	int	old_x;
 	char	*temp_ptr;
 
 	if (helplines)
-	{	signal(SIGALRM, quickhlp);
-		alarm(2);
+	{
+		signal (SIGALRM, alarm_quickhlp);
+		alarm (2);
 	}
-	keyin = waitkey();
+	keyin = waitkey ();
 	if (helplines)
-		if (alarm(0) == 0)		/* Clock expired */
-		{	wrefresh(helpwin);
-			wrefresh(promptwin);
-			keyin = waitkey();	/* ..so get input again */
+	{
+		if (alarm (0) == 0)		/* Clock expired */
+		{
+			wrefresh (helpwin);
+			wrefresh (promptwin);
+			keyin = waitkey ();	/* ..so get input again */
 		}
+	}
 	if ((keyin < 255) && (keyin >= '@'))
+	{
 		keyin &= 0x1F;		/* Mask alphabetics */
+	}
 
-	switch(keyin) {
+	switch (keyin)
+	{
 	case CNTRL_R:			/* To beginning of file */
 	case KEY_PPAGE:
-		txt_x = move_x(0);
+		txt_x = move_x (0);
 		break;
 
 	case CNTRL_C:			/* To end of file */
 	case KEY_NPAGE:
 		do
+		{
 			old_x = txt_x;
-		while ((txt_x = move_x(txt_x+ 999)) != old_x);
+		}
+		while ((txt_x = move_x (txt_x + 999)) != old_x);
 		break;
 
 	case CNTRL_F:			/* Find string */
-		findfunc();
+		findfunc ();
 		break;
 
 	case CNTRL_A:			/* Replace string */
-		replfunc();
+		replfunc ();
 		break;
 
 	case CNTRL_S:			/* To start of line */
 	case KEY_LEFT:
-		txt_y = line_y(1);
+		txt_y = line_y (1);
 		break;
 
 	case CNTRL_D:			/* To end of line */
 	case KEY_RIGHT:
-		txt_y = line_y(9999);	/* end of line */
+		txt_y = line_y (9999);	/* end of line */
 		break;
 
 	case CNTRL_I:			/* Seek line # */
-		gotoline();
+		gotoline ();
 		break;
 
 	case CNTRL_Y:			/* Delete to end of line */
 	case KEY_DC:
 		temp_ptr = gap_end;
 		while (*gap_end != '\n' && gap_end < txt_end)
+		{
 			gap_end++;	/* leave \n there */
-		if (!undelsave(temp_ptr, gap_end - temp_ptr, FORWARD))
-		{	gap_end = temp_ptr;
+		}
+		if (!undelsave (temp_ptr, gap_end - temp_ptr, FORWARD))
+		{
+			gap_end = temp_ptr;
 			break;
 		}
 		disp_mode = dtoeol;
-		mod=TRUE;
+		mod = TRUE;
 		break;
 
 	case ' ':
 		break;
 
 	default:
-		keyerr();
+		keyerr ();
 	}
 }
 /* ----------------------------------------------------------
  * Saving and Block (^K-) commands
  */
-void k_key()
+void k_key (void)
 {
 	int	keyin;
 
 	if (helplines)
-	{	signal(SIGALRM, blockhlp);
-		alarm(2);
+	{
+		signal (SIGALRM, alarm_blockhlp);
+		alarm (2);
 	}
-	keyin = waitkey();
+	keyin = waitkey ();
 	if (helplines)
-		if (alarm(0) == 0)		/* Clock expired */
-		{	wrefresh(helpwin);
-			wrefresh(promptwin);
-			keyin = waitkey();	/* ..so get input again */
+	{
+		if (alarm (0) == 0)		/* Clock expired */
+		{
+			wrefresh (helpwin);
+			wrefresh (promptwin);
+			keyin = waitkey ();	/* ..so get input again */
 		}
+	}
 	if ((keyin < 255) && (keyin >= '@'))
+	{
 		keyin &= 0x1F;	/* Mask alphabetics */
+	}
 	switch (keyin)
 	{
 	case CNTRL_B:		/* Begin block */
-		blockfuncs(1);
+		blockfuncs (1);
 		break;
 	case CNTRL_K:		/* End block */
-		blockfuncs(2);
+		blockfuncs (2);
 		break;
 	case CNTRL_H:		/* Clear block markers */
-		blockfuncs(3);
+		blockfuncs (3);
 		break;
 	case CNTRL_V:	/* Move */
-		blockfuncs(4);
+		blockfuncs (4);
 		break;
 	case CNTRL_C:	/* Copy */
-		blockfuncs(5);
+		blockfuncs (5);
 		break;
 	case CNTRL_Y:	/* Delete block */
-		blockfuncs(6);
+		blockfuncs (6);
 		break;
 
 	case CNTRL_L:			/* Load new file */
-		newfile();
+		newfile ();
 		break;
 
 	case CNTRL_Q:			/* Quit */
-		quitfunc();
+		quitfunc ();
 		break;
 
 	case CNTRL_R:			/* read in */
-		readblk();
+		readblk ();
 		break;
 
 	case CNTRL_S:			/* Save */
-		savefunc();
+		savefunc ();
 		break;
 
 	case CNTRL_D:			/* Done */
-		if (save_fname())
+		if (save_fname ())
 		{
 			mod = FALSE;
-			newfile();
+			newfile ();
 		}
 		break;
 
 	case CNTRL_N:			/* Specify or change fileName */
-		name();
+		name ();
 		break;
 
 	case CNTRL_W:			/* Write block */
-		if (blkerr(1))
+		if (blkerr (1))
+		{
 			break;
+		}
 		else
-			writeblk();
+		{
+			writeblk ();
+		}
 		break;
 
 	case CNTRL_X:			/* eXit */
-		exitfunc();
+		exitfunc ();
 		break;
 
 	case CNTRL_I:			/* Status */
-		infofunc();
+		infofunc ();
 		break;
 
 	case CNTRL_F:			/* Change file mode */
-		setfilemode();
+		setfilemode ();
 		break;
 
 	case '!':				/* Shell escape */
-		doshell();
+		doshell ();
 		break;
 
 	case ' ':
 		break;
 
 	default:
-		keyerr();
+		keyerr ();
 	}
 }
 /*----------------------------------------------------------
  * Onscreen (^O-) commands
  */
-void o_key()
+void o_key (void)
 {
 	int	keyin;
 
 	if (helplines)
-	{	signal(SIGALRM, onscrhlp);
-		alarm(2);
+	{
+		signal (SIGALRM, alarm_onscrhlp);
+		alarm (2);
 	}
-	keyin = waitkey();
+	keyin = waitkey ();
 	if (helplines)
-		if (alarm(0) == 0)		/* Clock expired */
-		{	wrefresh(helpwin);
-			wrefresh(promptwin);
-			keyin = waitkey();	/* ..so get input again */
+	{
+		if (alarm (0) == 0)		/* Clock expired */
+		{
+			wrefresh (helpwin);
+			wrefresh (promptwin);
+			keyin = waitkey ();	/* ..so get input again */
 		}
+	}
 	if ((keyin < 255) && (keyin >= '@'))
+	{
 		keyin &= 0x1F;				/* Mask alphabetics */
-	switch (keyin) {
+	}
+	switch (keyin)
+	{
 	case CNTRL_D:					/* Toggle cntl. code display */
 		cntlflag = !cntlflag;
-		txt_y = column(gap_end);
+		txt_y = column (gap_end);
 		disp_mode = dpage;			/* Repaint screen */
 		break;
 
 	case CNTRL_X:					/* MR toggle */
-		marrel();
+		marrel ();
 		break;
 
 	case CNTRL_R:					/* Set right margin */
-		rmset();
+		rmset ();
 		break;
 
 	case CNTRL_T:					/* set Tabs */
-		tabset();
+		tabset ();
 		break;
 
 #ifdef LOOKBUSY
 	case CNTRL_B:					/* Don't ask */
-		lookbusy();
+		lookbusy ();
 		break;
 #endif
 
 	case CNTRL_L:					/* Repaint */
-		repaint();
+		repaint ();
 		break;
 
 	case ' ':
 		break;
 	default:
-		keyerr();
+		keyerr ();
 	}
 }

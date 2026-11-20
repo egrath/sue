@@ -1,10 +1,3 @@
-/* Needed by GCC under ISC sysvr3.2: */
-
-#if (defined SUEV32 & defined __STDC__ )
-# define PATH_MAX 256
-# define SYSV
-#endif
-
 /* ================== GLOBAL INCLUDES ================= */
 
 #include <limits.h>
@@ -14,12 +7,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
-#ifdef ULTRIX
-# include <cursesX.h>
-#else
-# include <curses.h>
-# include <term.h>
-#endif
+#include <curses.h>
+#include <term.h>
 #include <signal.h>
 
 /* ===================== GLOBAL DEFINES =================== */
@@ -75,22 +64,8 @@
 
 #define	CASE_INVERT	0x1E		/* Control-^ command key */
 
-#if (defined AIX | defined ULTRIX)
-# define KEY_SLEFT 0770		/* Not available, so disable these */
-# define KEY_SRIGHT 0771
-# define KEY_HELP 0772
-# define KEY_SFIND 0773
-# define KEY_BTAB 0774
-# define KEY_END 0775
-# define wechochar(win, ch) (waddch(win,ch), wrefresh(win))
-#endif
-
 #ifndef ACS_HLINE
 # define ACS_HLINE '-'
-#endif
-
-#ifdef LINUX
-# define SIGSYS 34	/* unused */
 #endif
 
 /* ================= GLOBAL VARIABLES ================= */
@@ -149,11 +124,17 @@ extern	int		warnflag;		/* A warning is present */
 extern	int		helplines;		/* Lines of help to display */
 extern	int		editlines;		/* Varies with helplines */
 
-WINDOW	*editwin, *promptwin, 	/* Curses windows */
+extern	WINDOW	*editwin, *promptwin,	/* Curses windows */
 		*statuswin, *helpwin;
 
-enum mvmode	{moveword, movechar}; /* Global flags for move_y() */
-enum mvdir	{moveback, movefwd};
+enum mvmode	/* Global flags for move_y() */
+{
+	moveword, movechar
+};
+enum mvdir
+{
+	moveback, movefwd
+};
 
 extern	chtype	STATATTR;	/* Status window video attributes */
 extern	chtype	FLAGATTR;	/* Flag character video attributes */
@@ -179,27 +160,35 @@ enum dispmode
 extern enum dispmode disp_mode;		/* Global screen refresh flag */
 
 enum helptype
-{	REFRESH,	/* Flag refresh					*/
+{
+	REFRESH,	/* Flag refresh					*/
 	PRIMARY,	/* Initial menu					*/
 	QUICK,		/* Quick commands menu			*/
 	BLOCK,		/* Block     "      "			*/
-	ONSCREEN,	/* Onscreen  "      "			*/
+	ONSCREEN	/* Onscreen  "      "			*/
 };
 
 extern	enum	helptype	helpstate;
 
-enum	directions	{ BACKWARD, FORWARD };
+enum directions
+{
+	BACKWARD, FORWARD
+};
 
-enum	filemodes	{ UNIX, MSDOS, MACINTOSH };
+enum filemodes
+{
+	UNIX, MSDOS, MACINTOSH
+};
 extern	int	autofilemode;
 
 extern	enum	filemodes	filemode;
 
-struct	undelnode {
-	char				*text;
-	unsigned			size;
-	enum directions		direction;
-	struct undelnode	*next, *previous;
+struct undelnode
+{
+	char *text;
+	unsigned size;
+	enum directions direction;
+	struct undelnode *next, *previous;
 };
 
 extern	struct	undelnode	*undelptr;
@@ -209,48 +198,87 @@ extern	FILE	*debugterm;
 #define	DEBUGTERM	"/dev/vt04"
 #endif
 
-extern	char	*optarg;	/* 3 for getopt() */
-extern	int		optind;
-extern	int		opterr;
+/* getopt() and its variables come from <unistd.h> */
 
 /* ================== GLOBAL FUNCTION PROTOTYPES ================ */
 
-extern	int		column(), move_x(), move_y(), line_y(), undelsave();
-extern	int 	findfunc(), textins(), promptkey(), waitkey();
-extern	int		text_move(), delright(), name(), undel(), blkerr();
-extern	int		save_fname(), new_line(), load(), replace(), promptst();
-extern	int		find(), save();
+/* data.c */
+extern char * start_line (char *line);
+extern char * next_line (char *line);
+extern int new_line (int ntime);
+extern int column (char *line);
+extern int text_move (void);
+extern int line_y (int col);
+extern int move_x (int line_no);
+extern int move_y (enum mvdir direction, enum mvmode mode);
+extern void move_ptr (void);
+extern char * strtoup (char *str);
+extern char invert (char c);
+extern int undel (void);
+extern int undelsave (char *txt_start, unsigned txt_size,
+	enum directions undel_direction);
 
-extern	char	invert(), abandon();
-extern	char 	*start_line(), *next_line(), *strtoup();
+/* display.c */
+extern int blkerr (char level);
+extern char abandon (void);
+extern int waitkey (void);
+extern void outchar (char a);
+extern void statprint (int col, char *st1, char *st2, char *st3);
+extern void status (int col, char *st1, char *st2, char *st3);
+extern void status_line (void);
+extern void prompt (int col, char *st1, ...);
+extern void warning (char *strptr);
+extern int promptst (char *st1, char *st2, char *inputst, int inlen);
+extern int promptkey (char *strptr);
+extern void display (void);
+extern void xwprintw (WINDOW *xwindow, char *string1, ...);
+extern void dohelp (enum helptype helprequest, WINDOW *hwindow);
+extern void valerr (void), notfound (void), keyerr (void), TPAErr (void);
+extern void debugpr (char *str1, char *str2, char *str3);
 
-extern	void	sabort(), rmset(), valerr();
-extern	void	display(), TPAErr(), status(), quickhlp(), blockhlp();
-extern	void	onscrhlp(), status_line(), infofunc(), savefunc();
-extern	void	quitfunc(), exitfunc(), replfunc(), gotoline();
-extern	void	keyerr(), notfound(), warning(), q_key(), k_key();
-extern	void	o_key(), outchar(), newfile(), readblk(), writeblk();
-extern	void	tabset(), move_ptr(), statprint(), edit_init(), edit_exit();
-extern	void	dohelp(), blockhlp(), quickhlp(), onscrhlp();
-extern	void 	replfunc(), quitfunc(), savefunc(), exitfunc(), infofunc();
-extern	void 	Key_scan(), FKey_scan(), debugpr();
-extern	void 	togglehelp(), delword(), delline(), caseinvert(), insertline();
-extern	void	repfind(), repaint(), addtext(), delleft();
-extern	void	home_key(), setup(), block();
-extern	void	reform(), xwprintw();
-extern	void	blockfuncs(), setfilemode();
-extern	void	marrel(), prompt(), doshell();
+/* funcs.c */
+extern void blockhlp (void), quickhlp (void), onscrhlp (void);
+extern int findfunc (void);
+extern void replfunc (void), quitfunc (void), savefunc (void), exitfunc (void);
+extern void infofunc (void);
+extern int delright (void);
+extern int name (void);
+extern int save_fname (void);
+extern int find (void);
+extern int replace (void);
+extern void gotoline (void), tabset (void), rmset (void);
+extern void reform (void);
+extern void sabort (int sig);
+extern void writeblk (void), readblk (void), newfile (void);
+extern int save (char *s_name, char *s_type);
+extern int load (char *l_name);
+extern void setfilemode (void), marrel (void);
+extern void blockfuncs (int funcno);
+extern void togglehelp (void);
+extern void repfind (void), caseinvert (void);
+extern void delword (void), delline (void), insertline (void);
+extern void repaint (void), addtext (int ch), delleft (void);
+extern int textins (char *ins_beg, char *ins_end,
+	enum directions direction);
+extern void doshell (void);
+
+/* sue.c */
+extern void edit_init (char *v_name);
+extern void edit_exit (int exparm);
+extern void Key_scan (void);
+
+/* command.c */
+extern void q_key (void), k_key (void), o_key (void);
 
 #ifdef LOOKBUSY
-extern	void	lookbusy();
+extern void lookbusy (void);
 #endif
 
 /* ===================== GLOBAL MACROS ==================== */
 
-#define wp1(str1) wclrtoeol(editwin); xwprintw(editwin, str1)
-#define wp2(str1, str2) wclrtoeol(editwin); xwprintw(editwin, str1, str2)
-#define wp3(str1, str2, str3) wclrtoeol(editwin); \
-	xwprintw(editwin, str1, str2, str3)
-#define wp4(str1, str2, str3, str4) wclrtoeol(editwin); \
-	xwprintw(editwin, str1, str2, str3, str4)
-
+#define wp1(str1) wclrtoeol (editwin); xwprintw (editwin, str1)
+#define wp2(str1, str2) wclrtoeol (editwin); xwprintw (editwin, str1, str2)
+#define wp3(str1, str2, str3) wclrtoeol (editwin); \
+	xwprintw (editwin, str1, str2, str3)
+#define wp4(str1, str2, str3, str4) wclrtoeol (editwin); \
+	xwprintw (editwin, str1, str2, str3, str4)

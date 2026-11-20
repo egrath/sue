@@ -2,95 +2,69 @@
 # Makefile for Simple Unix Editor (SUE)
 # Copyright 1992, Point to Point Communications, Inc.
 #
-# @(#)$Id: Makefile,v 1.7 1996/12/16 00:54:46 carson Exp $
-#
 #--------------------- Debug flags ------------------------------
 # DFLAGS = -g -DDEBUG
 # DFLAGS = -g
 #
 #--------------------- Compiler Flags ---------------------------
-CFLAGS = -O2 -std=c89 -Wno-deprecated-declarations -Wno-deprecated-non-prototype
+CFLAGS = -O2 -std=c89 -Wpedantic -Wall -Werror
+EFLAGS = -D_DEFAULT_SOURCE
+LFLAGS = -lncurses
 #
 # Uncomment the following lines for the standard C compiler:
 CC = cc
-#
-# Uncomment the following lines for GNU C compiler
-# CC = gcc
 #
 # Target Directory for "make install"
 # BINDIR = /usr/local/bin/
 BINDIR = /lbin/
 #
+#--------------------- Directories ------------------------------
+SRCDIR = src
+BUILDDIR = build
+TARGET = ${BUILDDIR}/sue
+
+SOURCES = ${SRCDIR}/command.c ${SRCDIR}/data.c ${SRCDIR}/display.c \
+	${SRCDIR}/funcs.c ${SRCDIR}/sue.c
+
+OBJS = ${BUILDDIR}/command.o ${BUILDDIR}/data.o ${BUILDDIR}/display.o \
+	${BUILDDIR}/funcs.o ${BUILDDIR}/sue.o
 
 ################# Do not modify below this line #####################
 
-make	:
-	@echo ''
-	@echo 'Make what?  You must tell which system to make SUE for:'
-	@echo ' make aix    - IBM AIX for RS/6000'
-	@echo ' make linux  - Linux with ncurses package'
-	@echo ' make macos  - macOS'
-	@echo ' make svr32  - Generic ATT System V Release 3.2'
-	@echo ' make svr4   - Generic USL System V Release 4.0.x'
-	@echo ' make ultrix - DEC ULTRIX for DECStation'
-	@echo ''
+# One rule for all platforms: plain "make" builds SUE.
+# EFLAGS and LFLAGS are the override points for other targets,
+# e.g. make LFLAGS="-lpdcurses" for a DOS/Windows PDCurses port.
 
-SOURCES = command.c data.c display.c funcs.c sue.c
+.PHONY : sue clean install
 
-OBJS = command.o data.o display.o funcs.o sue.o
+sue	: ${TARGET}
 
-sue		: ${OBJS}
-	${CC} ${CFLAGS} -o sue ${OBJS} ${LFLAGS}
+${TARGET}	: ${OBJS}
+	${CC} ${CFLAGS} -o ${TARGET} ${OBJS} ${LFLAGS}
 
 clean	:
-	rm ${OBJS}
+	rm -f ${OBJS} ${TARGET}
 
 install :
-# Warning - this destroys SCCS id's:
-#	mcs -d sue
-	strip sue
-	mv sue ${BINDIR}
+	strip ${TARGET}
+	mv ${TARGET} ${BINDIR}
 
-lint	:
-	lint -DSUEV32 -DDOCOLOR -u "${SOURCES}"
-
-svr32	:
-	make sue "EFLAGS = -DSUEV32 -DDOCOLOR" "LFLAGS = -lcurses"
-
-svr4	:
-	make sue "EFLAGS = -DDOCOLOR" "LFLAGS = -lcurses"
-
-aix		:
-	make sue "EFLAGS = -DAIX" "LFLAGS = -lcurses"
-
-ultrix	:
-	make sue "EFLAGS = -DULTRIX" "LFLAGS = -lcursesX"
-
-linux	:
-	make sue "EFLAGS = -DLINUX -DDOCOLOR -I/usr/include/ncurses" "LFLAGS = -lncurses"
-
-# More portable Linux version (no shared libraries):
-linuxstatic	:
-	make sue "EFLAGS = -DLINUX -DDOCOLOR -I/usr/include/ncurses" "LFLAGS = -lncurses -static"
-
-linuxd	:
-	make sue "EFLAGS = -DLINUX -DDOCOLOR -I/local/home/ncurses/ncurses-1.9/src" "LFLAGS = -L/local/home/ncurses/ncurses-1.9/src -lncurses"
-
-linuxdt	:
-	make sue "EFLAGS = -DLINUX -DDOCOLOR -DTRACE -I/local/home/ncurses/ncurses-1.9/src" "LFLAGS = -L/local/home/ncurses/ncurses-1.9/src -ldcurses"
-
-macos	:
-	make sue "EFLAGS = -DMACOS -DDOCOLOR" "LFLAGS = -lncurses"
-
-.c.o	:
-	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $<
+build	:
+	mkdir -p ${BUILDDIR}
 
 # Dependencies
 
-command.o  : command.c sue.h
-data.o     : data.c sue.h
-display.o  : display.c sue.h
-fcommand.o : fcommand.c sue.h
-funcs.o    : funcs.c sue.h version.h
-sue.o	   : sue.c sue.h version.h
+${BUILDDIR}/command.o : ${SRCDIR}/command.c ${SRCDIR}/sue.h build
+	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
 
+${BUILDDIR}/data.o : ${SRCDIR}/data.c ${SRCDIR}/sue.h build
+	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+
+${BUILDDIR}/display.o : ${SRCDIR}/display.c ${SRCDIR}/sue.h build
+	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+
+${BUILDDIR}/funcs.o : ${SRCDIR}/funcs.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
+	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@
+
+${BUILDDIR}/sue.o : ${SRCDIR}/sue.c ${SRCDIR}/sue.h ${SRCDIR}/version.h build
+	${CC} -c ${CFLAGS} ${DFLAGS} ${EFLAGS} $< -o $@

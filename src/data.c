@@ -4,45 +4,71 @@
  * Return the first character in the line pointed to by line.
  * Check for gap.
  */
-char	*start_line(line)
-char	*line;
+char * start_line (char *line)
 {
 	if (line == gap_end)		/* Look at previous char */
+	{
 		line = gap_beg;
+	}
 	else
+	{
 		line--;
+	}
 	while (*line != '\n')
-	{	if (line != gap_end) line--;
-		else line = gap_beg;
+	{
+		if (line != gap_end)
+		{
+			line--;
+		}
+		else
+		{
+			line = gap_beg;
+		}
 	}
 	if (line == gap_beg)
-		return(gap_end);
+	{
+		return (gap_end);
+	}
 	else
-		return(++line);
+	{
+		return (++line);
+	}
 }
 /* -----------------------------------------------------------------
  * Return the first character in the next line pointed to by line.
  * Check for gap.
  */
-char	*next_line(line)
-char	*line;
+char * next_line (char *line)
 {
 	if (line == gap_beg)		/* Look at previous char */
+	{
 		line = gap_end;
+	}
 	else
+	{
 		line++;
+	}
 
-	while(*line != '\n')
-	{	if (line != gap_beg)
+	while (*line != '\n')
+	{
+		if (line != gap_beg)
+		{
 			line++;
+		}
 		else
+		{
 			line = gap_end;
+		}
 	}
 
 	if (line == gap_beg)
-		return(gap_end);
+	{
+		return (gap_end);
+	}
 	else
-		return(++line);
+	{
+		return (++line);
+	}
 }
 /*------------------------------------------------------------
  * Search for the ntime'th start of line starting at the cursor 
@@ -56,72 +82,92 @@ char	*line;
  * Counts from the line indicated by gap_end.
  * No check for gap.
  */
-int new_line(ntime)
-int ntime;
+int new_line (int ntime)
 {
 	int i;
 
 	if (ntime <= 0)
-	{	i = 1;
+	{
+		i = 1;
 		txt_ptr = gap_beg;
 		if (*txt_ptr == '\n')
-		{	i = 0;
+		{
+			i = 0;
 			if ((ntime == 0) || (txt_ptr <= txt_beg))
-			{	txt_ptr = gap_end;
-				return(0);
+			{
+				txt_ptr = gap_end;
+				return (0);
 			}
 			txt_ptr--;
 		}
-		for( ; i > ntime; i--, txt_ptr--)
-		{	while(*txt_ptr != '\n')
+		for ( ; i > ntime; i--, txt_ptr--)
+		{
+			while (*txt_ptr != '\n')
+			{
 				txt_ptr--;
+			}
 			if (txt_ptr <= txt_beg)
-			{	txt_ptr = txt_beg + 1;
-				return(i - 1);
+			{
+				txt_ptr = txt_beg + 1;
+				return (i - 1);
 			}
 		}
 		txt_ptr += 2;
-		return(i);
+		return (i);
 	}
 	else
-	{	/* ntime > 0 */
+	{
+		/* ntime > 0 */
 		txt_ptr = gap_end;
-		for( i = 0 ; i < ntime ; i++, txt_ptr++ )
-		{	while(*txt_ptr != '\n')
-			{	if (txt_ptr >= txt_end)
-				{	txt_ptr = txt_end;
-					return(i);
+		for (i = 0 ; i < ntime ; i++, txt_ptr++)
+		{
+			while (*txt_ptr != '\n')
+			{
+				if (txt_ptr >= txt_end)
+				{
+					txt_ptr = txt_end;
+					return (i);
 				}
 				txt_ptr++;
 			}
 		}
-		return(i);
-	}		
+		return (i);
+	}
 }
 /*------------------------------------------------------------*/
 /* Return column count to the pointer position, skipping cursor
  * gap.
  */
-int column(line)
-char	*line;
+int column (char *line)
 {
 	int i;
 
-	txt_ptr = start_line(line);
+	txt_ptr = start_line (line);
 	i = 1;
-	while(txt_ptr < line)
-	{	if (*txt_ptr == '\t')
+	while (txt_ptr < line)
+	{
+		if (*txt_ptr == '\t')
+		{
 			i = i - (i-1) % tabdef + tabdef;
-		else if (isprint(*txt_ptr))
+		}
+		else if (isprint (*txt_ptr))
+		{
 			i++;
+		}
 		else if (cntlflag)
+		{
 			i++;
+		}
 		if ((txt_ptr >= gap_beg) && (txt_ptr < gap_end))
-			txt_ptr= gap_end;
+		{
+			txt_ptr = gap_end;
+		}
 		else
+		{
 			txt_ptr++;
+		}
 	}
-	return(i);
+	return (i);
 }
 /*------------------------------------------------------------
  * Move the text in one block move while checking for over-running 
@@ -130,127 +176,170 @@ char	*line;
  *
  * Returns +/- change in line location.
  */
-int text_move()
+int text_move (void)
 {
 	int delx;
 	delx = 0;
 
 	/* Forward move */
-	while((gap_end < txt_ptr) && (gap_end < txt_end))
-	{	if (blk_end == gap_end)		/* Jump gap if necessary */
+	while ((gap_end < txt_ptr) && (gap_end < txt_end))
+	{
+		if (blk_end == gap_end)		/* Jump gap if necessary */
+		{
 			blk_end = gap_beg + 1;
+		}
 		if (blk_beg == gap_end)
+		{
 			blk_beg = gap_beg + 1;
+		}
 		if (tblk_end == gap_end)
+		{
 			tblk_end = gap_beg + 1;
+		}
 		if (tblk_beg == gap_end)
+		{
 			tblk_beg = gap_beg + 1;
+		}
 		*++gap_beg  = *gap_end++;
 		if (*gap_beg == '\n')
+		{
 			delx++;
+		}
 	}
 
 	/* Backward move */
-	while((gap_beg >= txt_ptr) && (gap_beg > txt_beg))
-	{	if (blk_end == gap_beg)		/* Jump gap if necessary */
+	while ((gap_beg >= txt_ptr) && (gap_beg > txt_beg))
+	{
+		if (blk_end == gap_beg)		/* Jump gap if necessary */
+		{
 			blk_end = gap_end - 1;
+		}
 		if (blk_beg == gap_beg)
-			blk_beg = gap_end-1;
+		{
+			blk_beg = gap_end - 1;
+		}
 		*--gap_end = *gap_beg--;
 		if (*gap_end == '\n')
+		{
 			delx--;
+		}
 	}
-	return(delx);	/* Return change to line location */
+	return (delx);	/* Return change to line location */
 }
 /* ------------------------------------------------------------
  * Do a memory move based on screen location, keeping note
  * of TABS and not exceeding \n's.
  */
-int line_y(col)
-int col;		/* Column # to move cursor to */
+int line_y (int col)		/* Column # to move cursor to */
 {
 	char	ii;
 	int	i;
 
-	col = max(col, 1);
+	col = max (col, 1);
 	if (col < txt_y)
-	{	txt_ptr = start_line(gap_end);
+	{
+		txt_ptr = start_line (gap_end);
 		if (txt_ptr == gap_end)
-			return(1);
+		{
+			return (1);
+		}
 		i = 1;
 	}
 	else if (col > txt_y)
-	{	txt_ptr = gap_end;
+	{
+		txt_ptr = gap_end;
 		i = txt_y;
 	}
 	else
-		return(txt_y);
+	{
+		return (txt_y);
+	}
 
 	/* Do column count from line beginning */
-	if (txt_ptr < txt_end )
-	{	for( ; (i < col) && (*txt_ptr != '\n') ; txt_ptr++ )
-		{	if (*txt_ptr == '\t')
-			{	ii = tabdef - (i-1) % tabdef;
+	if (txt_ptr < txt_end)
+	{
+		for ( ; (i < col) && (*txt_ptr != '\n') ; txt_ptr++)
+		{
+			if (*txt_ptr == '\t')
+			{
+				ii = tabdef - (i-1) % tabdef;
 				i  += ii;
 			}
-			else if (isprint(*txt_ptr))
+			else if (isprint (*txt_ptr))
+			{
 				i++;
+			}
 			else if (cntlflag)
+			{
 				i++;
+			}
 			if (*txt_ptr != '\t')
+			{
 				ii = 0;
+			}
 		}
-		if (i > col )
-		{	col = i- ii;	/* Correct for TAB going over */
+		if (i > col)
+		{
+			col = i - ii;	/* Correct for TAB going over */
 			txt_ptr--;
 		}
-		else col = i;
+		else
+		{
+			col = i;
+		}
 	}
 	else
-	{	col = 1;
+	{
+		col = 1;
 		txt_ptr = txt_end;
 	}
-	text_move();
-	return(col);
+	text_move ();
+	return (col);
 }
 /* ------------------------------------------------------------
  * Move cursor to line_no, positioning to the old cursor 
  * position or nearest tab or end of line, whichever applies. 
  * Return # of line it was possible to move to.
  */
-int move_x(line_no)
-int line_no;
+int move_x (int line_no)
 {
 	int old_y;
 
 	if (line_no == txt_x)
-		return(txt_x);
-	line_no = txt_x + new_line((int) line_no - txt_x);
+	{
+		return (txt_x);
+	}
+	line_no = txt_x + new_line ((int) line_no - txt_x);
 	old_y = txt_y;
 	txt_y = 1;
-	text_move();		/* Move text, preserving blocks, etc. */
-	txt_y = line_y(old_y);
+	text_move ();		/* Move text, preserving blocks, etc. */
+	txt_y = line_y (old_y);
 
-	return(line_no);
+	return (line_no);
 }
 /* ------------------------------------------------------------
  *	Logical test for y cursor movement
  */
-char	test(n, mode)
-char	n;
-enum mvmode mode;
+static char test (char n, enum mvmode mode)
 {
 	char	*prevptr;		/* Pointer to prev. char */
 
 	if (mode == movechar)	/* Character mode */
-		return(n < 1);
+	{
+		return (n < 1);
+	}
 	else					/* Word mode */
-	{	prevptr = txt_ptr - 1;
-		if ((ispunct(*prevptr) && !ispunct(*txt_ptr) && !isspace(*txt_ptr)) ||
-			(isspace(*prevptr) && !isspace(*txt_ptr)))
+	{
+		prevptr = txt_ptr - 1;
+		if ((ispunct (*prevptr) && !ispunct (*txt_ptr) && !isspace (*txt_ptr)) ||
+			(isspace (*prevptr) && !isspace (*txt_ptr)))
+		{
 			return (0);
+		}
 		else
+		{
 			return (1);
+		}
 	}
 }
 /* ------------------------------------------------------------
@@ -263,57 +352,76 @@ enum mvmode mode;
  *   non-alphanumeric.
  * Keep track of new lines as they occur.
  */
-int move_y(direction, mode)
-enum mvdir direction;
-enum mvmode mode;
+int move_y (enum mvdir direction, enum mvmode mode)
 {
 	char	n;
 
 	if ((direction == moveback) && gap_beg > txt_beg)
-	{	n = 1;
+	{
+		n = 1;
 		txt_ptr = gap_beg;
 		if (*txt_ptr == '\n')
+		{
 			txt_x--;
-		while((txt_ptr > txt_beg+1) && test(n, mode))
-		{	txt_ptr--;
+		}
+		while ((txt_ptr > txt_beg + 1) && test (n, mode))
+		{
+			txt_ptr--;
 			if (*txt_ptr == '\n')
+			{
 				txt_x--;
+			}
 		}
 	}
 	else if (direction == movefwd)
-	{	n = 0;
+	{
+		n = 0;
 		txt_ptr = gap_end;
 		if (mode == moveword)	/* only look for word above gap_end */
-		{	if (*txt_ptr == '\n')
+		{
+			if (*txt_ptr == '\n')
+			{
 				txt_x++;
+			}
 			txt_ptr++;
 		}
-		while((txt_ptr < txt_end) && test(n, mode))
-		{	if (*txt_ptr == '\n')
+		while ((txt_ptr < txt_end) && test (n, mode))
+		{
+			if (*txt_ptr == '\n')
+			{
 				txt_x++;
+			}
 			txt_ptr++;
 			n = 1;
 		}
 	}
 	if (txt_ptr <= txt_beg)
-	{	if (txt_beg == gap_beg)
+	{
+		if (txt_beg == gap_beg)
+		{
 			txt_ptr = gap_end;
+		}
 		else
-			txt_ptr = txt_beg+ 1;
+		{
+			txt_ptr = txt_beg + 1;
+		}
 	}
 	else if (txt_ptr > txt_end)
+	{
 		txt_ptr = txt_end;
-	text_move();
-	return(column(gap_end));
+	}
+	text_move ();
+	return (column (gap_end));
 }
 /* ------------------------------------------------------------
  * Move text indicated by pointer, adjusting x,y cursor positions.
  */
-void	move_ptr()
+void move_ptr (void)
 {
 	if (txt_ptr > txt_beg && txt_ptr <= txt_end)
-	{	txt_x += text_move();
-		txt_y = column(gap_end);
+	{
+		txt_x += text_move ();
+		txt_y = column (gap_end);
 	}
 }
 /*---------------------------------------------------------------------
@@ -321,14 +429,14 @@ void	move_ptr()
  *   the string [ str ]. 
  * Return pointer to string
  */
-char	*strtoup(str)
-char	*str;
+char * strtoup (char *str)
 {
 	char	*s;
 
 	s = str;
-	while (*s != '\0' )
-	{	*s = toupper(*s);
+	while (*s != '\0')
+	{
+		*s = toupper (*s);
 		s++;
 	}
 	return str;
@@ -336,75 +444,89 @@ char	*str;
 /* ------------------------------------------------
  * Invert case of ASCII character
  */
-char invert(c)
-char c;
+char invert (char c)
 {
-	if (isupper(c))
-		return tolower(c);
-	if (islower(c))
-		return toupper(c);
+	if (isupper (c))
+	{
+		return tolower (c);
+	}
+	if (islower (c))
+	{
+		return toupper (c);
+	}
 	return c;
 }
 /*-------------------------------------------------
  * Undelete text
  */
-int	undel()
+int undel (void)
 {
-	struct	undelnode	*nodeptr;
+	struct undelnode *nodeptr;
 
 	if (undelptr != NULL)
-	{	textins(undelptr->text, undelptr->text + undelptr->size, undelptr->direction);
+	{
+		textins (undelptr->text, undelptr->text + undelptr->size,
+			undelptr->direction);
 		/* Free previously allocated memory */
 		nodeptr	= undelptr;
 		undelptr = undelptr->previous;
-		free(nodeptr->text);
-		free(nodeptr);
-		return(1);
+		free (nodeptr->text);
+		free (nodeptr);
+		return (1);
 	}
 	else
+	{
 		return (0);
+	}
 }
 /*------------------------------------------------------------
  * Save text to undelete buffer (before deleting)
  */
-int	undelsave(txt_start, txt_size, undel_direction)
-char		*txt_start;
-/*int			txt_size;*/
-unsigned	txt_size;
-enum		directions	undel_direction;
+int undelsave (char *txt_start, unsigned txt_size,
+	enum directions undel_direction)
 {
-	struct	undelnode	*nodeptr;
+	struct undelnode *nodeptr;
 	char	*txtptr;
 	int	c;
 
 	if (txt_size < 1)
+	{
 		return (1);
+	}
 
-	if (((nodeptr = (struct undelnode *) 
-			malloc(sizeof(struct undelnode))) != NULL) &&
-		((txtptr = malloc(txt_size)) != NULL))
-	{	nodeptr->text = txtptr;
-		strncpy(nodeptr->text, txt_start, txt_size);
+	if (((nodeptr = (struct undelnode *)
+			malloc (sizeof (struct undelnode))) != NULL) &&
+		((txtptr = malloc (txt_size)) != NULL))
+	{
+		nodeptr->text = txtptr;
+		strncpy (nodeptr->text, txt_start, txt_size);
 		nodeptr->size		= txt_size;
 		nodeptr->direction	= undel_direction;
 		nodeptr->next		= NULL;		/* End of 2x linked list */
 		if (undelptr == NULL)			/* Start of 2x linked list */
+		{
 			nodeptr->previous	= NULL;
+		}
 		else
-		{	undelptr->next		= nodeptr;
+		{
+			undelptr->next		= nodeptr;
 			nodeptr->previous	= undelptr;
 		}
 		undelptr = nodeptr;
 		return (1);
 	}
 	else
-	{	beep();
-		c = toupper(promptkey("Can't save text; delete anyway (Y/N)? N\b"));
+	{
+		beep ();
+		c = toupper (promptkey ("Can't save text; delete anyway (Y/N)? N\b"));
 		if (c == 'Y')
-		{	wechochar(promptwin,c);
+		{
+			wechochar (promptwin, c);
 			return (1);
 		}
 		else
+		{
 			return (0);
+		}
 	}
 }

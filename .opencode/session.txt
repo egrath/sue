@@ -1,0 +1,177 @@
+SUE project — session log (.opencode/session.txt)
+Started: 2026-11-20
+
+== 2026-11-20 — Session 1: K&R -> strict C89 overhaul ==
+
+User requests:
+1. Maintain AGENTS.md (project decisions) and .opencode/session.txt (this log,
+   incl. agent thoughts).
+2. Analyze all source code.
+3. Convert the entire codebase from K&R C-style to strict C89 (no GNU
+   extensions); zero warnings under -Wall -Wpedantic.
+
+Agent analysis / thoughts:
+- ~3,240 LOC: sue.c (main/globals), data.c (gap-buffer primitives),
+  display.c (curses rendering), funcs.c (commands), command.c (input dispatch),
+  sue.h (shared decls). Editor stores text in a gap buffer; block markers and
+  cursor jump the gap via text_move().
+- Measured warnings (cc -std=c89 -Wpedantic -Wall, macOS clang):
+  488x -Wstrict-prototypes (K&R prototypes in sue.h + all ~83 definitions),
+  201x -Wdeprecated-non-prototype (consequence of missing prototypes),
+  5x -Wc99-extensions (trailing comma after ONSCREEN in enum helptype),
+  4x -Wunused-variable (eargv, i in sue.c; retcode in display.c; c in funcs.c),
+  1x -Wimplicit-int (main without return type), 1x tempnam deprecation.
+- Hidden dangers beyond -Wall:
+  * ~12 call sites pass fewer args than the declared params of
+    prompt/statprint/status/xwprintw (legal under K&R, compile errors once
+    prototypes exist). Located all of them.
+  * signal(SIGALRM, quickhlp) passes void(*)(void) where void(*)(int) is
+    required -> needs trampolines.
+  * WINDOW *editwin/... were tentative definitions in the header -> breaks
+    with -fno-common (modern default).
+  * status() used a char loop counter over COLS -> UB on >127-col terminals;
+    same class in disp_page() (char row counter over editlines).
+  * sabort(): tempnam() deprecated; strcat(homeptr, "/SUEsaved") wrote into
+    the HOME environment string (environ overflow).
+
+Decisions (user confirmed via questions):
+- Fix the latent bugs too (status/disp_page overflow, strcat-HOME, tempnam).
+- Fix helper call sites with NULL fillers; do NOT rewrite with <stdarg.h>.
+- Add -Werror to the Makefile after the build is clean.
+- Make single-file helpers static (test, dsp_lne, disp_page, status_linecol,
+  doalloc) and drop them from sue.h.
+
+Implementation progress:
+- [x] AGENTS.md created (architecture, conventions, decision log).
+- [x] .opencode/session.txt created; .opencode/ gitignored.
+- [x] sue.h: full C89 prototypes, enum comma, SIGSYS #ifndef guard, WINDOW
+      globals -> extern, wp1-wp4 macros, removed optarg/optind/opterr externs
+      and dead F-key prototypes. (Build pass 1 revealed q_key/k_key/o_key were
+      missing from the rewritten prototype block -> added.)
+- [x] sue.c: prototype-form definitions, int main(), unused vars removed,
+      WINDOW globals defined here, prompt() call fixed.
+- [x] data.c: all 14 definitions converted (test -> static).
+- [x] display.c: all 22 definitions converted (dsp_lne/disp_page/
+      status_linecol -> static; status/disp_page counters char -> int;
+      unused retcode removed; VARARGS comments dropped).
+- [x] funcs.c: all 39 definitions converted; sabort() rewritten (portable
+      unique filename loop replaces tempnam/strcat-HOME); unused c removed.
+- [x] command.c: Key_scan/q_key/k_key/o_key converted; alarm_*hlp trampolines
+      added; statprint call sites fixed.
+- [x] Makefile: -Werror added; linux targets get -D_DEFAULT_SOURCE;
+      clean uses rm -f.
+
+Agent thoughts mid-implementation:
+- Build pass 2 exposed the deepest K&R artifact: 10 call sites pass INT/LONG
+  printf-arguments through char* parameters (wp2/wp3/wp4 -> xwprintw with
+  baudrate/txt_x/txt_y/memory sizes; promptst with txt_x/tabdef/rt_marg).
+  Under K&R this only "worked" because unprototyped calls never checked types.
+  A fixed-signature design cannot legally carry these, so xwprintw and prompt
+  became variadic using <stdarg.h> + vsprintf (fully standard C89); promptst
+  kept fixed args and its 3 int-passing call sites pre-format the prompt
+  string. statprint/status stay fixed-signature (all their sites are char*/NULL).
+- The WINDOW* extern move paid off immediately: link succeeded under modern
+  -fno-common defaults.
+
+Verification:
+- [x] make clean && make macos: ZERO warnings under -std=c89 -Wpedantic -Wall
+      -Werror (full log checked, grep -ci warning == 0).
+- [x] Smoke test 1 (expect + pty, TERM=vt100): editor starts, status line
+      renders (L 1 C 1, INS, ^J for help), [EOF] marker, "New file" warning;
+      ^K q exits cleanly (code 0).
+- [x] Smoke test 2: typed "hello", ^K s -> named /tmp/sue_smoke.txt, ^K q;
+      file written byte-perfect ("hello\n"); clean exit.
+
+== 2026-11-20 — Session 2: src/ + build/ restructure, unified build rule ==
+
+User requests:
+1. Move all sources (*.c, *.h) into src/, objects + executable into build/,
+   adopt the top-level Makefile.
+2. Drop the 1990s platform targets (svr32/svr4/aix/ultrix) AND purge their
+   platform-specific code from the sources. Future targets: Windows,
+   Macintosh, Linux, DOS (Solaris "comes free" if it compiles cleanly).
+3. One build rule for all platforms — no macos/linux differentiation.
+4. make clean keeps an empty build/ directory.
+5. Remove the DOCOLOR define: color everywhere nowadays; -b flag handles
+   disabling color at runtime.
+
+Agent thoughts / decisions:
+- git mv preserves rename history; quoted includes make the move transparent
+  (version.h resolves relative to the including file).
+- The .c.o suffix rule cannot express src -> build, so 5 explicit per-object
+  rules were written (portable $< / $@, no GNU pattern rules); the build dir
+  is a prerequisite target created with mkdir -p.
+- Platform purge inventory: sue.h (SUEV32/SYSV/PATH_MAX hack, ULTRIX cursesX
+  branch, AIX|ULTRIX fake key defines + wechochar macro, LINUX SIGSYS hack),
+  sue.c (three AIX termio/ioctl blocks — also removes a latent implicit
+  ioctl() declaration), funcs.c (AIX block in doshell), display.c (dead
+  xLINUX ncurses-1.8.5 workaround, stale AIX comments).
+- One platform means one code path: the #ifdef LINUX touchwin in dohelp() is
+  now unconditional (standard, cheap curses call). After this, ZERO platform
+  ifdefs remain — only feature flags: DEBUG, TRACE, LOOKBUSY.
+- DOCOLOR unwrap: color path unconditional, mono path kept as the runtime
+  else-branch (has_colors() failure or -b flag). Dropped the stale
+  "curses bug precludes this" comment from 1995.
+- Unified flags: CFLAGS (-Werror enforced), EFLAGS=-D_DEFAULT_SOURCE (glibc
+  getopt/popen under strict C89; no-op elsewhere), LFLAGS=-lncurses. EFLAGS/
+  LFLAGS are the documented extension points for PDCurses/DOS/Windows ports.
+- Default goal is now the build itself: plain "make" builds build/sue; the
+  old help-menu default target is gone; .PHONY added for sue/clean/install.
+
+Implementation:
+- [x] Stale root artifacts removed; git mv of 7 files to src/.
+- [x] Platform code purged (sue.h, sue.c, funcs.c, display.c).
+- [x] DOCOLOR removed (sue.c unwrap; Makefile EFLAGS reduced to
+      -D_DEFAULT_SOURCE).
+- [x] Makefile rewritten (unified rule, src/build layout, .PHONY).
+- [x] .gitignore -> /build/; AGENTS.md source map + build section + decision
+      log updated.
+
+Verification:
+- [x] Plain "make": all 5 objects in build/, build/sue linked, ZERO warnings
+      with -Werror, no artifacts left in the project root.
+- [x] Smoke test via expect/pty on build/sue: type "hello", ^K s save as
+      /tmp/sue_smoke2.txt, ^K q quit -> byte-perfect "hello\n", clean exit 0.
+- [x] grep sweep: no AIX/ULTRIX/SUEV32/SYSV/xLINUX/termio/TCGETA/TCSETA/
+      cursesX/MACOS/LINUX/DOCOLOR references left in src/ or Makefile.
+- [x] make clean empties build/ but keeps the directory.
+
+== 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
+
+User request: reformat all code to their personal style. Example given:
+Allman braces, `char * function (int a, char *b)`, locals at top, tabs.
+
+Style rulings (user confirmed via questions):
+- Space between function name and paren: EVERYWHERE (definitions, prototypes,
+  and all call sites including library/curses calls).
+- Pointer style asymmetric, as in the example: floating `*` in return types
+  (`char * function (...)`), name-glued `*` in params/locals/members.
+- Always braces: all ~40 braceless single-statement bodies got braced.
+- switch/case: Allman braces, case labels one tab deeper than switch.
+- (agent default, stated in plan) `return (x);` spaced; parenless `return x;`
+  kept as-is; casts and keywords untouched; macro DEFINITIONS keep glued paren
+  (#define wp1(str1) - a space would break the macro); macro CALLS get space.
+
+Implementation:
+- [x] Backup taken (opencode temp dir sue_before_style) before rewriting.
+- [x] sue.h, data.c, display.c, funcs.c, sue.c, command.c rewritten file by
+      file; each compiled immediately after its rewrite.
+- [x] AGENTS.md: full style guide added to Conventions (incl. the #define
+      paren exception) + decisions-log entry.
+
+Agent thoughts:
+- Verification trick: strip ALL whitespace and braces from old and new files
+  and compare token streams - catches any accidental token change while the
+  expected diff is empty by construction (call spacing etc. is whitespace-only,
+  added braces are stripped).
+- Result: sue.h (one intentional enum-comment relocation), data.c, display.c,
+  sue.c, command.c token-identical. funcs.c: exactly one token change - the
+  redundant parens in `(*gap_beg = '\n');` removed (2 bytes, semantics equal).
+
+Verification:
+- [x] Per-file compile checks during the pass, then full make clean && make:
+      ZERO warnings under -std=c89 -Wpedantic -Wall -Werror.
+- [x] Smoke test 1 (expect/pty): start, render, ^K q quit - clean exit.
+- [x] Smoke test 2: type "hello", ^K s -> /tmp/sue_smoke3.txt, ^K q ->
+      byte-perfect "hello\n" round-trip, clean exit.
+- [x] git diff overview: sources reformatted, no logic drift.

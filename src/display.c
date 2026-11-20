@@ -1,100 +1,105 @@
 #include "sue.h"
+#include <stdarg.h>
 
 /* -----------------------------------------------
  * Tell user he entered bad value
  */
-void valerr()
+void valerr (void)
 {
-	beep();
-	promptkey("Value error ");
+	beep ();
+	promptkey ("Value error ");
 }
 
-void notfound()		/* user's string search fails */
+void notfound (void)		/* user's string search fails */
 {
-	beep();
-	promptkey("Text not found ");
+	beep ();
+	promptkey ("Text not found ");
 }
 /* -----------------------------------------------
  * Check for and report block errors
  */
-int blkerr(level)
-char	level;
+int blkerr (char level)
 {
 	if (((level > 1) &&
 	     (gap_end > blk_beg) &&
 	     (gap_end <= blk_end))	|| 					/* In block */
 	    (blk_beg < txt_beg) || (blk_end > txt_end))	/* No block */
-	{	beep();
-		promptkey("Block error ");
+	{
+		beep ();
+		promptkey ("Block error ");
 		return (1);
 	}
 	else
+	{
 		return (0);	/* no errors */
-}	
+	}
+}
 /* ----------------------------------------------
  * User entered unknown command
  */
-void keyerr()
+void keyerr (void)
 {
-	beep();
-	promptkey("Unknown command ");
-}	
+	beep ();
+	promptkey ("Unknown command ");
+}
 /* -------------------------------------------------
  */
-void TPAErr()
+void TPAErr (void)
 {
-	beep();
-	promptkey("Out of memory! ");
-}	
+	beep ();
+	promptkey ("Out of memory! ");
+}
 /* -----------------------------------------------
  * Confirm before abandoning text
  */
-char abandon()
+char abandon (void)
 {
 	int	c;
 
-	c = toupper(promptkey("File modified; Abandon (Y/N)? N\b"));
+	c = toupper (promptkey ("File modified; Abandon (Y/N)? N\b"));
 	if (c == 'Y')
-		wechochar(promptwin,c);
+	{
+		wechochar (promptwin, c);
+	}
 	return (c);
 }
 /* ---------------------------------------------------
  * Await keystroke from prompt window
  */
-int	waitkey()
+int waitkey (void)
 {
-	return (wgetch(promptwin));
-}	
+	return (wgetch (promptwin));
+}
 /* ----------------------------------------------------
  *	Output a single character to the screen.
  */
-void outchar(a)
-char a;
+void outchar (char a)
 {
 	if ((blk_beg <= gap_beg) && (blk_end > gap_beg))
+	{
 		/* Must highlight if within block */
-	/*	wattron(editwin, BLOCKATTR);*/
-		waddch(editwin, (chtype) a | BLOCKATTR);
+		/*	wattron(editwin, BLOCKATTR);*/
+		waddch (editwin, (chtype) a | BLOCKATTR);
+	}
 	else
-	/*	wattroff(editwin, BLOCKATTR);*/
-		waddch(editwin, a);
+	{
+		/*	wattroff(editwin, BLOCKATTR);*/
+		waddch (editwin, a);
+	}
 }
 /* --------------------------------------------
  * Print to status line
  */
-/* VARARGS 2 */
-void statprint(col, st1, st2, st3)
-int col;
-char *st1, *st2, *st3;
+void statprint (int col, char *st1, char *st2, char *st3)
 {
-	mvwprintw(statuswin, 0, col, st1, st2, st3);
-	wrefresh(statuswin);
+	mvwprintw (statuswin, 0, col, st1, st2, st3);
+	wrefresh (statuswin);
 }
 
 /* ----------------------------------------------
  * print line number and column in the status line
  */
-void status_linecol ()
+static void status_linecol (void)
 {
 	char label_pos[16];
 
@@ -105,102 +110,115 @@ void status_linecol ()
 /* ---------------------------------------------
  * Redisplay status line
  */
-/* VARARGS 2 */
-void status(col, st1, st2, st3)
-int col;
-char *st1, *st2, *st3;
+void status (int col, char *st1, char *st2, char *st3)
 {
-	char colcnt;
+	int colcnt;
 
-	werase(statuswin);
+	werase (statuswin);
 	/* Restore video attributes: */
 	for (colcnt = COLS; (colcnt) ; colcnt--)
-		waddch(statuswin, ' ');
-	statprint(col, st1, st2, st3);
+	{
+		waddch (statuswin, ' ');
+	}
+	statprint (col, st1, st2, st3);
 }
 /* ---------------------------------------------------
  * Restore status line
  */
-void status_line()
+void status_line (void)
 {
 	char	*nameptr;
 
 	/* Find last '/' */
-	if ((nameptr = strrchr(txtname, '/')) != NULLCHARPTR)
-		status(0, "...\"%s\"", nameptr + 1, NULL);
+	if ((nameptr = strrchr (txtname, '/')) != NULLCHARPTR)
+	{
+		status (0, "...\"%s\"", nameptr + 1, NULL);
+	}
 	else
-		status(0, "\"%s\"",txtname, NULL);
+	{
+		status (0, "\"%s\"", txtname, NULL);
+	}
 
 	/* Show cursor position */
 	status_linecol ();
 
 	/* Show toggle status */
 	if (MRflag)
-		statprint(COLS - 27, "MR", NULL, NULL);			/* Margin Release */
+	{
+		statprint (COLS - 27, "MR", NULL, NULL);			/* Margin Release */
+	}
 	if (insflag)
-		statprint(COLS - 24, "INS", NULL, NULL);		/* INSert status */
+	{
+		statprint (COLS - 24, "INS", NULL, NULL);		/* INSert status */
+	}
 
 	if (helplines)		/* Don't show redundant msg */
+	{
 		return;
+	}
 	else
-		statprint(COLS - 11, "^J for help", NULL, NULL);
+	{
+		statprint (COLS - 11, "^J for help", NULL, NULL);
+	}
 }
 /* -----------------------------------------------------
  * Prompt user for string
  */
-/* VARARGS 2 */
-void prompt(col, st1, st2, st3, st4)
-int col;
-char *st1, *st2, *st3, *st4;
+void prompt (int col, char *st1, ...)
 {
-	wattrset(promptwin, A_NORMAL);
-	/* For AIX; this affects NEXT overwrite only. */
-	overwrite(editwin, promptwin);
-	wattrset(promptwin, PROMPTATTR);
-	mvwprintw(promptwin, 0, col, st1, st2, st3, st4);
-	wclrtoeol(promptwin);
-	wrefresh(promptwin);
+	va_list	args;
+	char	pbuf[256];
+
+	va_start (args, st1);
+	vsprintf (pbuf, st1, args);
+	va_end (args);
+
+	wattrset (promptwin, A_NORMAL);
+	/* Copy editwin background under the prompt; affects the next overwrite only. */
+	overwrite (editwin, promptwin);
+	wattrset (promptwin, PROMPTATTR);
+	mvwprintw (promptwin, 0, col, "%s", pbuf);
+	wclrtoeol (promptwin);
+	wrefresh (promptwin);
 	/* touchwin() instead of touchline() is needed for DEC */
-	touchwin(editwin);			/* Tell curses to redraw */
+	touchwin (editwin);			/* Tell curses to redraw */
 								/* ..on next 'refresh' call */
 }
 /* -------------------------------------------------------
  * Show warning message at right edge
  */
-void warning(strptr)
-char *strptr;
+void warning (char *strptr)
 {
-	prompt(COLS - strlen(strptr) - 3, "  %s", strptr, NULL, NULL);
+	prompt (COLS - strlen (strptr) - 3, "  %s", strptr, NULL, NULL);
 }
 /* -------------------------------------------------------
  * Prompt for and return string
  * Returns length of input string, or -1 if aborted. (12/15/92-crw)
  */
-int promptst(st1, st2, inputst, inlen)
-char *st1, *st2, *inputst;
-int inlen;
+int promptst (char *st1, char *st2, char *inputst, int inlen)
 {
 	int		scresult;
-	int		retcode;
 	int		abortflag;
 	int		keyin;
 	int		cury, curx;
 	char	editing;
 
-	wattron(statuswin, A_BOLD);
-	status(0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
-	statprint(COLS-18, "F1 or ^U to abort", NULL, NULL);
-	wattrset(statuswin, STATATTR);
+	wattron (statuswin, A_BOLD);
+	status (0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
+	statprint (COLS - 18, "F1 or ^U to abort", NULL, NULL);
+	wattrset (statuswin, STATATTR);
 
-	prompt(0, st1, st2, NULL, NULL);			/* Prompt user */
-	wattrset(promptwin, 0);			/* Don't hilite user text */
+	prompt (0, st1, st2, NULL, NULL);			/* Prompt user */
+	wattrset (promptwin, 0);			/* Don't hilite user text */
 	editing   = 1;
 	scresult  = 0;
 	abortflag = 0;
 
 	while (editing)
-	{	keyin = waitkey();
-		switch (keyin) {
+	{
+		keyin = waitkey ();
+		switch (keyin)
+		{
 		case KEY_ENTER:
 		case '\r':
 			editing = 0;
@@ -211,10 +229,11 @@ int inlen;
 		case BS:
 		case DEL:
 			if (scresult)
-			{	scresult--;
-				getyx(promptwin, cury, curx);
+			{
+				scresult--;
+				getyx (promptwin, cury, curx);
 				curx--;
-				mvwdelch(promptwin, cury, curx);
+				mvwdelch (promptwin, cury, curx);
 			}
 			break;
 
@@ -227,51 +246,60 @@ int inlen;
 
 		case CNTRL_P:			/* Allows ESC, ^M, ^U, ^P */
 			if (scresult >= inlen)
-			{	beep();		/* Buffer overflow error */
-				sleep(1);  	/* For slow terminals */
+			{
+				beep ();		/* Buffer overflow error */
+				sleep (1);  	/* For slow terminals */
 				break;
 			}
-			keyin = (waitkey() & 0x1F);		/* Xlate to ctl-code */
+			keyin = (waitkey () & 0x1F);		/* Xlate to ctl-code */
 			/* FALLTHRU */
 		default:
 			if (scresult >= inlen)
-			{	beep();
-				sleep(1);
+			{
+				beep ();
+				sleep (1);
 				break;
 			}
 			if (keyin == 0)	/* Not compatible with */
-			{	beep();			/* standard C functions */
+			{
+				beep ();			/* standard C functions */
 				break;
 			}
-			if (iscntrl(keyin))
-			{	wattron(promptwin, A_UNDERLINE);
-				waddch(promptwin, (chtype) keyin | '@');
-				wattroff(promptwin, A_UNDERLINE);
+			if (iscntrl (keyin))
+			{
+				wattron (promptwin, A_UNDERLINE);
+				waddch (promptwin, (chtype) keyin | '@');
+				wattroff (promptwin, A_UNDERLINE);
 			}
 			else
-				waddch(promptwin, (chtype) keyin);
+			{
+				waddch (promptwin, (chtype) keyin);
+			}
 			*(inputst + scresult++) = keyin;
 			break;
 		}
 		/* Needed for earlier curses releases: */
-		wrefresh(promptwin);
+		wrefresh (promptwin);
 	}
 	*(inputst + scresult) = '\0';	/* Terminator */
-	wattrset(promptwin, A_BOLD);	/* Restore hilite */
-	status_line();					/* Restore status line */
+	wattrset (promptwin, A_BOLD);	/* Restore hilite */
+	status_line ();					/* Restore status line */
 	if (abortflag)
+	{
 		return (-1);
+	}
 	else
+	{
 		return scresult;				/* No. chars stored */
+	}
 }
 /* -----------------------------------------------------------
  * Prompt for and return keystroke
  */
-int	promptkey(strptr)
-char *strptr;
+int promptkey (char *strptr)
 {
-	warning(strptr);	/* Show prompt at right edge */
-	return (waitkey());
+	warning (strptr);	/* Show prompt at right edge */
+	return (waitkey ());
 }
 
 /* ---------------------------------------------------------------
@@ -279,9 +307,8 @@ char *strptr;
  *   return a pointer to the char AFTER the \n.
  * The line is displayed on the jTH line of the screen.
  */
-char	*dsp_lne(line, row)
-char	*line;	/* Pointer to first character to display   */
-int		row;	/* Screen X position */
+static char * dsp_lne (char *line, int row)
+/* line: Pointer to first character to display; row: Screen X position */
 {
 	int		i;			/* Column counter */
 	int		ii;			/* Tab column counter */
@@ -289,86 +316,121 @@ int		row;	/* Screen X position */
 	int		j;
 	chtype	attributes = 0;
 	char	hardflag;	/* Hard CR flag */
-	
-	i = column(line);	/* Present column no */
-	wmove(editwin, row - 1, i > scr_ybeg ? i - scr_ybeg : 0);
-	wclrtoeol(editwin);
+
+	i = column (line);	/* Present column no */
+	wmove (editwin, row - 1, i > scr_ybeg ? i - scr_ybeg : 0);
+	wclrtoeol (editwin);
 
 	/* Start highlight at start of each line */
 	if ((line >= blk_beg) && (line <= blk_end))
+	{
 		attributes = BLOCKATTR;
 		/*wattron(editwin, A_BOLD);*/
+	}
 
 	ii = 0;
 	hardflag = FALSE;
 	while (*line != '\n')
-	{	i += ii;		/* Need to look at previous char */
-		switch(*line) {
+	{
+		i += ii;		/* Need to look at previous char */
+		switch (*line)
+		{
 		case '\t':
 			tmp = ' ';
 			ii = tabdef - (i-1) % tabdef;
 			break;
 		default:
 			tmp = *line;
-			if (isprint(*line) || (cntlflag))
+			if (isprint (*line) || (cntlflag))
+			{
 				ii = 1;
+			}
 			else
+			{
 				ii = 0;
+			}
 			break;
 		}
 		if (line == blk_beg)
+		{
 			/*wattron(editwin, A_BOLD);*/
 			attributes = BLOCKATTR;
+		}
 		for (j = i; j < i+ii; j++)	/* Display char. or TAB */
-		{	if (j >= scr_ybeg)		/* if not scrolled right */
-			{	if (isprint(tmp))
-					waddch(editwin, (chtype) tmp | attributes);
+		{
+			if (j >= scr_ybeg)		/* if not scrolled right */
+			{
+				if (isprint (tmp))
+				{
+					waddch (editwin, (chtype) tmp | attributes);
+				}
 				else if (cntlflag)	/* User toggle */
 				/* Display control chars, DEL as underlined CAPS */
-				{	/*wattron(editwin, A_UNDERLINE);*/
-					waddch(editwin, (chtype) tmp | '@' | CNTLATTR );
+				{
+					/*wattron(editwin, A_UNDERLINE);*/
+					waddch (editwin, (chtype) tmp | '@' | CNTLATTR);
 					/*wattroff(editwin, A_UNDERLINE);*/
 				}
 				if (j >= scr_yend)
-				{	/*wattroff(editwin, A_BOLD);*/
+				{
+					/*wattroff(editwin, A_BOLD);*/
 					attributes = 0;
-					line = (next_line(line)); /* Quit @ RM */
+					line = (next_line (line)); /* Quit @ RM */
 					goto dsp_exit;
 				}
 			}
 		}
 		if (line == blk_end)
+		{
 			attributes = 0;
 			/*wattroff(editwin, A_BOLD);*/
+		}
 		if ((line >= gap_beg) && (line < gap_end))
+		{
 			line = gap_end;
+		}
 		else
+		{
 			line++;
+		}
 	}
 	/* Newline reached */ 
 
 	/*wattroff(editwin, A_BOLD);*/ 		/* End highlight at end of line */
 
 	if ((line >= gap_beg) && (line < gap_end))
+	{
 		line = gap_end;
+	}
 	else
+	{
 		line++;
+	}
 
 	if (line == txt_beg)
+	{
 		hardflag = TRUE;
+	}
 	else if (line == gap_end)
+	{
 		hardflag = (*(gap_beg - 1) != ' ');
+	}
 	else if (line == gap_end + 1)
+	{
 		hardflag = (*gap_beg != ' ');
+	}
 	else
+	{
 		hardflag = (*(line - 2) != ' ');
+	}
 
 	dsp_exit:
 	if ((hardflag) && (disp_mode > dtoeol) && (cntlflag))
+	{
 		/* If displaying ^chars */
- 	{	/*wattron(editwin, FLAGATTR);*/
+		/*wattron(editwin, FLAGATTR);*/
 		/* Hard CR indicator */
-		mvwaddch(editwin, row - 1, COLS - 1, (chtype) '<' | FLAGATTR );
+		mvwaddch (editwin, row - 1, COLS - 1, (chtype) '<' | FLAGATTR);
 		/*wattroff(editwin, FLAGATTR);*/
 	}
 	return (line);
@@ -376,129 +438,132 @@ int		row;	/* Screen X position */
 /* ---------------------------------------------------
  * Rewrite screen from xtop to xbot.
  */
-void	disp_page(x_top, x_bot)
-int x_top, x_bot;
+static void disp_page (int x_top, int x_bot)
 {
 	char	*line;
-	char	i;
+	int	i;
 
 	/* Set pointer to first line */
 
-	if (new_line(x_top - txt_x) < (x_top - txt_x))	/* at [EOF] marker? */
+	if (new_line (x_top - txt_x) < (x_top - txt_x))	/* at [EOF] marker? */
+	{
 		line = txt_ptr + 5;			/* Skip past if so */
+	}
 	else
+	{
 		line = txt_ptr;
+	}
 
 	x_top = x_top - scr_xbeg + 1;	/* Relative to top of page */
 	x_bot = x_bot - scr_xbeg + 1;	/*    "      "  "  "    "  */
 
 	for (i = x_top; i <= x_bot; i++)
-		line = dsp_lne(line, i);
-	wrefresh(editwin);
+	{
+		line = dsp_lne (line, i);
+	}
+	wrefresh (editwin);
 }
 /* -----------------------------------------------------
  * Global screen update routine.
  * Redisplays the screen per global disp_mode variable.
  */
-void	display()
+void display (void)
 {
-	scr_xend = scr_xbeg + editlines - 1;	
+	scr_xend = scr_xbeg + editlines - 1;
 	scr_yend = scr_ybeg + COLS  - 1;
 
 	/* New screen limits */
 	if ((disp_mode == dpages) &&	/* Force 1/2 screen scroll (for search) */
 		(txt_x < (scr_xbeg) || txt_x > (scr_xend)))
-	{	scr_xbeg = txt_x <= (editlines)/2 ? 1 : txt_x - (editlines)/2;
-		scr_xend = scr_xbeg + editlines - 1;	
+	{
+		scr_xbeg = txt_x <= (editlines)/2 ? 1 : txt_x - (editlines)/2;
+		scr_xend = scr_xbeg + editlines - 1;
 	}
 	else if (txt_x < scr_xbeg)		/* Cursor past top of screen? */
-	{	if (scr_xbeg == txt_x + 1)	/* 1 line? */
+	{
+		if (scr_xbeg == txt_x + 1)	/* 1 line? */
+		{
 			disp_mode = dscrldn;	/* Scroll down */
+		}
 		else
+		{
 			disp_mode = dpage;
+		}
 		scr_xbeg = txt_x;
 		scr_xend = scr_xbeg + editlines - 1;
 	}
 	else if (txt_x > scr_xend)		/* Cursor past end of screen? */
-	{	disp_mode = dpage;
+	{
+		disp_mode = dpage;
 		scr_xend = txt_x;
 		scr_xbeg = scr_xend - editlines + 1;
 	}
 
-	if (txt_y < scr_ybeg )			/* Cursor to left of screen? */
-	{	scr_ybeg = txt_y - (txt_y-1) % (COLS/2);
+	if (txt_y < scr_ybeg)			/* Cursor to left of screen? */
+	{
+		scr_ybeg = txt_y - (txt_y-1) % (COLS/2);
 		disp_mode = dpage;
 	}
 	else if (txt_y > scr_yend)		/* Cursor to right of screen? */
-	{	scr_ybeg = txt_y - COLS/2 - (txt_y-1) % (COLS/2);
+	{
+		scr_ybeg = txt_y - COLS/2 - (txt_y-1) % (COLS/2);
 		disp_mode = dpage;
 	}
 	scr_yend = scr_ybeg + COLS - 1;
 
-	idlok(editwin, TRUE);	/* Default: allow hardware scrolling */
+	idlok (editwin, TRUE);	/* Default: allow hardware scrolling */
 
-#ifndef TRACE
-#ifdef xLINUX		/* New bug starting with ncurses 1.8.5 :-( */
-	switch(disp_mode) {
-	case dinsln:
-	case dscrldn:
-	case dtoeos:
-		disp_mode = dpage;
-		break;
-	}
-#endif
-#endif
-
-	switch(disp_mode) {
+	switch (disp_mode)
+	{
 	case dtoeol:			/* Display to end of line */
 	case dtoeolhc:			/* Same, but flags redisplay of "<" */
-		dsp_lne(gap_end, txt_x - scr_xbeg+1);
+		dsp_lne (gap_end, txt_x - scr_xbeg + 1);
 		break;
 
 	case dtoeos:			/* Delete line or redisplay from line down */
-		wmove(editwin, txt_x - scr_xbeg + 1, 0);
-		wdeleteln(editwin);
-		disp_page(txt_x, scr_xend);
+		wmove (editwin, txt_x - scr_xbeg + 1, 0);
+		wdeleteln (editwin);
+		disp_page (txt_x, scr_xend);
 		break;
 
 	case dinsln:  			/* Insert new line or redisplay from ln. above */
-		wmove(editwin, txt_x - scr_xbeg, 0);
-		winsertln(editwin);
-		dsp_lne(gap_beg, txt_x - scr_xbeg);
-		dsp_lne(gap_end, txt_x - scr_xbeg + 1);
-		wrefresh(editwin);
+		wmove (editwin, txt_x - scr_xbeg, 0);
+		winsertln (editwin);
+		dsp_lne (gap_beg, txt_x - scr_xbeg);
+		dsp_lne (gap_end, txt_x - scr_xbeg + 1);
+		wrefresh (editwin);
 		break;
 
 	case dpage:					/* Display new page */
 	case dpages:				/* Same, but flags 1/2 screen scroll */
-		idlok(editwin, FALSE);	/* Curses bug: hardware codes bad here */
-		disp_page(scr_xbeg, scr_xend);
+		idlok (editwin, FALSE);	/* Curses bug: hardware codes bad here */
+		disp_page (scr_xbeg, scr_xend);
 		break;
 
 	case dscrlup:				/* Scroll up */
-		wmove(editwin, 0, 0);
-		wdeleteln(editwin);
-		disp_page(scr_xend, scr_xend);
+		wmove (editwin, 0, 0);
+		wdeleteln (editwin);
+		disp_page (scr_xend, scr_xend);
 		break;
 
 	case dscrldn:				/* Scroll down */
-		wmove(editwin, 0, 0);
-		winsertln(editwin);
-		disp_page(scr_xbeg, scr_xbeg);
+		wmove (editwin, 0, 0);
+		winsertln (editwin);
+		disp_page (scr_xbeg, scr_xbeg);
 		break;
 
 	case dnothing:
 		break;
 	}
-	idlok(editwin, FALSE);		/* Disable hardware scrolling for help, etc.*/
+	idlok (editwin, FALSE);		/* Disable hardware scrolling for help, etc.*/
 
 	/* update cursor position in status line */
 	status_linecol ();
 
 	/* Restore cursor */
-	wmove(editwin, txt_x - scr_xbeg, txt_y - scr_ybeg);
+	wmove (editwin, txt_x - scr_xbeg, txt_y - scr_ybeg);
 	/* Needed for earlier curses implementations: */
-	wrefresh(editwin);
+	wrefresh (editwin);
 }
 
 /* ================= HELP SCREEN DEFINITIONS & ROUTINES ================== */
@@ -546,47 +611,53 @@ void	display()
  *  Uses FLAGATTR | A_BOLD to highlight.
  *  Side-effect: always sets attributes for designated window to A_NORMAL.
  */
-/* VARARGS 1 */
-void	xwprintw(xwindow, string1, string2, string3, string4)
-WINDOW	*xwindow;
-char	*string1, *string2, *string3, *string4;
+void xwprintw (WINDOW *xwindow, char *string1, ...)
 {
+	va_list	args;
 	int		On = 0;
 	char	strbuf[2000];
 	char	*xstring = strbuf;
 
-	sprintf(xstring, string1, string2, string3, string4);
-	for ( ; *xstring ; xstring++ )
+	va_start (args, string1);
+	vsprintf (xstring, string1, args);
+	va_end (args);
+	for ( ; *xstring ; xstring++)
+	{
 		if (*xstring == '`')
-		{	if (On)
-			{	wattrset(xwindow, A_NORMAL);
+		{
+			if (On)
+			{
+				wattrset (xwindow, A_NORMAL);
 				On = 0;
 			}
-			else	
+			else
 			/* Note: A_BOLD needed for b/w systems: */
-			{	wattrset(xwindow, FLAGATTR | A_BOLD);
+			{
+				wattrset (xwindow, FLAGATTR | A_BOLD);
 				On = 1;
 			}
 		}
 		else
-			waddch(xwindow, *xstring);
+		{
+			waddch (xwindow, *xstring);
+		}
+	}
 
-	wattrset(xwindow, A_NORMAL);
+	wattrset (xwindow, A_NORMAL);
 }
 /* -----------------------------------------------------------------
  *	Display help in help window.
  */
-void	dohelp(helprequest, hwindow)
-enum helptype	helprequest;
-WINDOW			*hwindow;
+void dohelp (enum helptype helprequest, WINDOW *hwindow)
 {
 	chtype	ULchar = ACS_HLINE;	/* From curses.h */
 	int		i;
 	char	*hline0, *hline1, *hline2, *hline3, *hline4, *hline5, *hline6;
 
 	hline0 = hline1 = hline2 = hline3 = hline4 = hline5 = hline6 = NULL;
-	
-	switch (helprequest) {
+
+	switch (helprequest)
+	{
 	case PRIMARY:
 		hline0 = CP0;
 		hline1 = CP1;
@@ -624,73 +695,75 @@ WINDOW			*hwindow;
 		hline6 = CO6;
 		break;
 	default:
-		warning("Internal error!");
+		warning ("Internal error!");
 		return;
 		/*NOTREACHED*/
 		break;
 	}
-#ifdef LINUX
 	if (hwindow == helpwin)
-/*		wclear(hwindow);*/
-		touchwin(hwindow);
+	{
+		touchwin (hwindow);
+	}
 
-#endif
-	wmove(hwindow, 0, 0);
-	wclrtoeol(hwindow);
-	wmove(hwindow, 0, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-	xwprintw(hwindow, hline0, NULL, NULL, NULL);
-	wmove(hwindow, 1, 0);
-	wclrtoeol(hwindow);
-	wmove(hwindow, 1, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-	xwprintw(hwindow, hline1, NULL, NULL, NULL);
+	wmove (hwindow, 0, 0);
+	wclrtoeol (hwindow);
+	wmove (hwindow, 0, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+	xwprintw (hwindow, hline0, NULL, NULL, NULL);
+	wmove (hwindow, 1, 0);
+	wclrtoeol (hwindow);
+	wmove (hwindow, 1, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+	xwprintw (hwindow, hline1, NULL, NULL, NULL);
 	if (hline2 != NULL)
-	{	wmove(hwindow, 2, 0);
-		wclrtoeol(hwindow);
-		wmove(hwindow, 2, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline2, NULL, NULL, NULL);
-		wmove(hwindow, 3, 0);
-		wclrtoeol(hwindow);
-		wmove(hwindow, 3, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline3, NULL, NULL, NULL);
-		wmove(hwindow, 4, 0);
-		wclrtoeol(hwindow);
-		wmove(hwindow, 4, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline4, NULL, NULL, NULL);
-		wmove(hwindow, 5, 0);
-		wclrtoeol(hwindow);
-		wmove(hwindow, 5, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline5, NULL, NULL, NULL);
-		wmove(hwindow, 6, 0);
-		wclrtoeol(hwindow);
-		wmove(hwindow, 6, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0 );
-		xwprintw(hwindow, hline6, NULL, NULL, NULL);
+	{
+		wmove (hwindow, 2, 0);
+		wclrtoeol (hwindow);
+		wmove (hwindow, 2, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+		xwprintw (hwindow, hline2, NULL, NULL, NULL);
+		wmove (hwindow, 3, 0);
+		wclrtoeol (hwindow);
+		wmove (hwindow, 3, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+		xwprintw (hwindow, hline3, NULL, NULL, NULL);
+		wmove (hwindow, 4, 0);
+		wclrtoeol (hwindow);
+		wmove (hwindow, 4, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+		xwprintw (hwindow, hline4, NULL, NULL, NULL);
+		wmove (hwindow, 5, 0);
+		wclrtoeol (hwindow);
+		wmove (hwindow, 5, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+		xwprintw (hwindow, hline5, NULL, NULL, NULL);
+		wmove (hwindow, 6, 0);
+		wclrtoeol (hwindow);
+		wmove (hwindow, 6, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
+		xwprintw (hwindow, hline6, NULL, NULL, NULL);
 	}
 
 	helpstate = helprequest;	/* Global flag */
 
 	if (hwindow == helpwin)
-	{	wmove(hwindow, helplines-1, 0);
-		wattron(hwindow, STATATTR);
+	{
+		wmove (hwindow, helplines - 1, 0);
+		wattron (hwindow, STATATTR);
 		if (STATATTR == A_UNDERLINE)
+		{
 			ULchar = ' ';
+		}
 		for (i = 0; i < COLS ; i++)
-			waddch(hwindow, ULchar);	/* Underline screen width */
-		wattroff(hwindow, STATATTR);
-		wrefresh(hwindow);
+		{
+			waddch (hwindow, ULchar);	/* Underline screen width */
+		}
+		wattroff (hwindow, STATATTR);
+		wrefresh (hwindow);
 	}
 	else
-/*Gives spurious "^M" on AIX:
-		waddstr(hwindow, "\n\r");*/		/* Next line */
-
-		waddstr(hwindow, "\n");		/* Next line */
+	{
+		waddstr (hwindow, "\n");		/* Next line */
+	}
 }
 /* ================= DEBUG ROUTINE ================== */
 
-/* VARARGS 1 */
-void	debugpr(str1, str2, str3)
-char	*str1, *str2, *str3;
+void debugpr (char *str1, char *str2, char *str3)
 {
 #ifdef DEBUG
-	fprintf(debugterm, str1, str2, str3);
+	fprintf (debugterm, str1, str2, str3);
 #endif
 }
