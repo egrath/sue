@@ -69,7 +69,9 @@ marker and trailing newlines so all of the text can be treated as a string.
 - **ULTRIX**: `make` detects the OS via `uname -s` and adds `-DULTRIX` —
   the build then uses DEC's extended curses (`cursesX.h`), emulates the
   extended key codes ULTRIX curses lacks (those switch cases stay dead),
-  and runs monochrome (ULTRIX curses has no color API). Sets `CC = gcc`.
+  runs monochrome (ULTRIX curses has no color API), and declares
+  `wrefresh`/`wattrset`/`wclrtoeol` itself — ULTRIX cursesX.h does not
+  provide prototypes for them. Sets `CC = gcc`.
   Needs GNU make on ULTRIX. Verified by the maintainer on real hardware.
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
@@ -206,6 +208,10 @@ marker and trailing newlines so all of the text can be treated as a string.
   API, so that build runs monochrome (like the 1995 original, which built
   ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
   variables, so sue.h declares them under #ifdef ULTRIX.
+- 2026-11-20 — ULTRIX cursesX.h also lacks prototypes for wrefresh/
+  wattrset/wclrtoeol — sue.h declares them under #ifdef ULTRIX after the
+  include (reported from the maintainer's real ULTRIX build; the same
+  header declares wgetch etc., so the gap is partial).
 - 2026-11-20 — Closed out the remaining review findings: find() no longer
   uppercases the search string in place (an uppercased copy is compared),
   del_line() restores the cursor position when its undo-save fails, ^P ^@
@@ -238,6 +244,13 @@ marker and trailing newlines so all of the text can be treated as a string.
 
 ## Known issues / notes (not yet fixed)
 
+- **ULTRIX build quirks** (compiles and links with gcc on real ULTRIX
+  hardware): cursesX.h declares `wgetch`/`wmove`/etc. but NOT
+  `wrefresh`/`wattrset`/`wclrtoeol` — sue.h prototypes them under
+  `#ifdef ULTRIX`. It also has no color API (mono build) and no
+  `KEY_SLEFT`/`KEY_SRIGHT`/`KEY_SUSPEND`/`KEY_HELP`/`KEY_SFIND` codes
+  (emulated, dead cases). More missing declarations may surface — same
+  one-line fix pattern.
 - `sabort()` runs after `endwin()`, so its `beep()`/`prompt_key()` calls operate
   on dead windows (original behavior, intentionally kept).
 - `load()` returns lines+1 — only truthiness is used by callers, so this is

@@ -268,6 +268,31 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
+== 2026-11-20 - Session 11: Makefile CC override fix + ULTRIX prototypes ==
+
+Makefile CC fix (user-reported logical error):
+- The ULTRIX branch set CC = gcc, but a later unconditional "CC = cc"
+  clobbered it back (assignment order bug, introduced with the uname block
+  in session 9). Fix: CC = cc moved BEFORE the uname detection block.
+- User also re-reported the wrefresh/wattrset/wclrtoeol implicit warnings -
+  those were from a build of the pre-582fad5 tree; 582fad5 restored
+  cursesX.h which declares wgetch etc. (verified: their line numbers
+  matched the old state).
+- Verified: make -n shows cc normally; make -n UNAME=ULTRIX shows gcc +
+  -DULTRIX; rebuild + smoke 5/5.
+
+ULTRIX cursesX.h prototypes (user-reported from real ULTRIX hardware):
+- cursesX.h declares wgetch/wmove/etc. but NOT wrefresh/wattrset/wclrtoeol
+  -> sue.h declares them under #ifdef ULTRIX after the include.
+- Gotchas: first block-level edit failed on invisible whitespace -> redone
+  as anchored edits; a planned known-issues edit assumed text that was
+  never written -> read the section first.
+
+Verification:
+- [x] make: zero warnings; DOS rebuild: zero warnings; smoke 5/5.
+- [x] Full ULTRIX build log still pending from the maintainer - more
+      missing cursesX.h declarations may surface (same one-line pattern).
+
 == 2026-11-20 - Session 11: Makefile CC override fix ==
 
 User request: the Makefile had a logical error - the ULTRIX branch set

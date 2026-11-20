@@ -9,6 +9,10 @@
 #include <ctype.h>
 #ifdef ULTRIX
 #include <cursesX.h>
+/* ULTRIX cursesX.h does not declare these basic routines */
+extern int wrefresh (WINDOW *);
+extern int wattrset (WINDOW *, int);
+extern int wclrtoeol (WINDOW *);
 #else
 #include <curses.h>
 #endif
