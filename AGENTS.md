@@ -38,6 +38,8 @@ deletions grow it, `text_move()` relocates it. Block markers (`blk_beg`/`blk_end
 and the `t*` temporaries) must "jump the gap" when the gap moves past them.
 `txt_beg`/`txt_end` bound the buffer; the buffer always ends with an `[EOF]`
 marker and trailing newlines so all of the text can be treated as a string.
+The final newline of the text is protected: `del_right()`/`reform()` never
+delete or join it away — the `[EOF]` marker must stay on its own line.
 
 ## Build
 
@@ -49,21 +51,25 @@ marker and trailing newlines so all of the text can be treated as a string.
   `~/opt/pdcurses`, library `dos/pdcurses.lib`).
 - Flags: `-O2 -std=c89 -Wpedantic -Wall -Werror` — **zero warnings is a hard
   requirement**; do not weaken the flags to hide problems.
-- DOS CFLAGS: `-bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s` — maximum speed
-  optimization for 386+ systems (`-oneatx` incl. aliasing relaxation, `-s`
-  no stack checks, `-3` 386 instruction set). PDCurses' own library is built
-  with the same `-oneatx`.
+- DOS CFLAGS: `-bt=dos4g -mf -dDOS -wx -zq -oneatx` (plus the PDCurses/src
+  include paths) — the optimizer set for 386+ systems. Note: `-3 -s` were
+  tried on top (`-3` explicit 386 codegen, `-s` no stack checks) and
+  **reverted** — the binary built with them hung at startup on DOSBox and a
+  real 386; faster DOS startup flags remain a pending idea. PDCurses' own
+  library is built with the same `-oneatx`.
 - `EFLAGS` (currently `-DUNIX -D_DEFAULT_SOURCE`) and `LFLAGS` (`-lncurses`)
   are the override points for other targets.
 - `make clean` empties `build/` but keeps the directory; `make install`
   strips + moves the binary to `BINDIR`.
 - Smoke tests: `sh tests/smoke.sh` (expect + xxd) — runs five pty-driven
   round-trip tests against `build/sue`; run after every change.
-- **Future targets: Windows, Macintosh, Linux, DOS** — and Solaris should
-  "come free" if it compiles cleanly on the others. Add no per-platform
-  `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and the `KEY_RESIZE`
-  capability check — feature flags (`DEBUG`, `TRACE`, `LOOKBUSY`) were
-  removed entirely in the cleanup; do not reintroduce them.
+- **Future targets: Windows, Macintosh, Linux** — and Solaris should
+  "come free" if it compiles cleanly on the others (UNIX, DOS and ULTRIX
+  are done). Add no per-platform
+  `#ifdef`s beyond the platform trio (`UNIX`/`DOS`/`ULTRIX`) and the
+  `KEY_RESIZE` capability check — feature flags (`DEBUG`, `TRACE`,
+  `LOOKBUSY`) were removed entirely in the cleanup; do not reintroduce
+  them.
 - **New files are saved with the platform's line endings** (DOS: CRLF,
   UNIX: LF); `-d`/`-m`/`-u` override, and loaded files keep their detected
   endings (the file is never rewritten to a different style than it had).
@@ -94,6 +100,11 @@ marker and trailing newlines so all of the text can be treated as a string.
   macros, and the platform defines themselves (`-DUNIX`/`-dDOS`) — which is
   why the `enum filemodes` members are `MODE_UNIX`/`MODE_MSDOS`/
   `MODE_MACINTOSH`.
+- **No `getopt()` dependency.** Command-line parsing is the built-in parser
+  in `main()` (cluster flags b/d/m/u, `-s`/`-t` with attached values). Do not
+  reintroduce `getopt()`/`optarg`/`opterr`/`optind` anywhere: the Watcom clib
+  getopt hangs with an empty command line on DOS, and ULTRIX's minimal
+  unistd.h does not declare it.
 - **Strict C89, no GNU extensions.** Function definitions in prototype form;
   all declarations at the top of a block.
 - Single-file helpers are `static` and kept out of `sue.h` (currently:
@@ -252,6 +263,13 @@ marker and trailing newlines so all of the text can be treated as a string.
   working on real DOS and the ULTRIX build compiles and works on real
   ULTRIX hardware (both maintainer-tested); the UNIX build is smoke-tested
   on macOS.
+- 2026-11-20 — DOS speed flags reverted: `-3 -s` on top of `-oneatx`
+  produced a binary that hung at startup on DOSBox and a real 386
+  (maintainer-tested); CFLAGS are back to `-bt=dos4g -mf -dDOS -wx -zq
+  -oneatx`. A MARKERS=Y stderr-startup-marker build (Makefile hook +
+  #ifdef MARKERS blocks in main()) was added to isolate the hang and
+  later removed again once the cause was found (see the option-parser
+  entry). Faster startup flags remain a pending idea.
 - 2026-11-20 — Option parsing is a built-in parser, not `getopt()`: the
   Watcom clib getopt hangs with an empty command line on DOS (reads past
   `argv[1] = NULL`), and the -s option segfaulted since the session-4

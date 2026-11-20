@@ -309,35 +309,6 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
-== 2026-11-20 - Session 13: DOS startup hang + built-in option parser ==
-
-User reports (rebuilt from current HEAD):
-- The DOS build hangs immediately after the DOS/4GW banner (DOSBox AND a
-  real 386; screen stays on the banner, cursor blinks, Ctrl-Break ignored).
-- MARKERS=Y: only "startup A (main entered)" prints -> the hang is in the
-  option-parsing loop: Watcom's clib getopt() called with argc = 1 and
-  argv[1] = NULL reads past the argument list (on DOS: the interrupt
-  vector table -> garbage "options" -> endless loop). The 1995 code never
-  hit this because old compilers accepted implicit declarations silently.
-
-Fix: replaced getopt() with a built-in option parser in main() (~40
-lines, cluster options b/d/m/u + s/t with attached values, the first
-non-option argument = the file). No getopt/optarg/opterr/optind
-dependency at any level; the sue.h ULTRIX extern block is reduced to
-extern int optind (used for edit_init (argv[optind])). The -s/-t values
-are attached-only (-s78, -t8) as the usage [-sn][-tn] documents; the
-separate-value form (-t 8) is no longer accepted (documented behavior
-change). --help now correctly produces the usage error.
-
-Verification:
-- [x] make: zero warnings; smoke 5/5.
-- [x] wmake -f Makefile.wcc: zero warnings; LE exe ok.
-- [x] ./build/sue -s78 + 130-char line + save: no crash, wrap at the
-      word boundary <= 78 (lines 75 + 54).
-- [x] ./build/sue --help: usage error, clean exit.
-- [x] ASan/UBSan run clean (the parse loop + the edit session).
-- ULTRIX/DOS rebuilds pending on the maintainer's side (the same source).
-
 == 2026-11-20 — Session 6: F-key leftovers ==
 
 User request: check for F-key references (like "F1 or ^U to abort") - F-keys
@@ -491,25 +462,6 @@ Verification:
       (the cursesX.h compile itself can only succeed on ULTRIX).
 - [x] DOS rebuild after the sue.c/sue.h changes: zero warnings, LE exe ok.
 
-Session 11 addendum 2 (ULTRIX round 3):
-- getopt itself is undeclared on ULTRIX (unistd.h is minimal). sue.h now
-  prototypes it under #ifdef ULTRIX: int getopt (int, char **, char *) -
-  the plain BSD form, so passing char ** argv and the string literal
-  optstring produces no pointer warnings on old GCC.
-- Verified: UNIX build zero warnings, smoke 5/5; DOS rebuild zero
-  warnings. Further ULTRIX diagnostics -> same loop.
-
-Session 11 addendum (user supplied the real cursesX.h):
-- Confirms the analysis: cursesX.h declares ONLY initscr/newwin/subwin/
-  newpad/longname/erasechar/killchar/wgetch/newterm (+ stdscr macros and
-  KEY_* codes). It also #defines bool=char and reg=register (our code uses
-  neither identifier) and includes stdio/unctrl/termio itself.
-- sue.h prototype block expanded from the 3 reported to the FULL set of
-  curses routines SUE calls (~25, standard signatures, placed after the
-  include so WINDOW/chtype are known). mvwaddch/mvwdelch/getyx are macros
-  in the header - no prototypes needed for them.
-- Both builds re-verified: zero warnings, smoke 5/5.
-
 == 2026-11-20 - Session 11: Makefile CC override fix + ULTRIX prototypes ==
 
 Makefile CC fix (user-reported logical error):
@@ -540,6 +492,27 @@ Verification:
       use). Fixed with an initializer (char ii = 0), zero behavior change.
       Further ULTRIX gcc rounds may surface the same class in files not
       yet reached (display.c/funcs.c/sue.c compile after data.c).
+
+Session 11 addendum (user supplied the real cursesX.h):
+- Confirms the analysis: cursesX.h declares ONLY initscr/newwin/subwin/
+  newpad/longname/erasechar/killchar/wgetch/newterm (+ stdscr macros and
+  KEY_* codes). It also #defines bool=char and reg=register (our code uses
+  neither identifier) and includes stdio/unctrl/termio itself.
+- sue.h prototype block expanded from the 3 reported to the FULL set of
+  curses routines SUE calls (~25, standard signatures, placed after the
+  include so WINDOW/chtype are known). mvwaddch/mvwdelch/getyx are macros
+  in the header - no prototypes needed for them.
+- Both builds re-verified: zero warnings, smoke 5/5.
+
+Session 11 addendum 2 (ULTRIX round 3):
+- getopt itself is undeclared on ULTRIX (unistd.h is minimal). sue.h now
+  prototypes it under #ifdef ULTRIX: int getopt (int, char **, char *) -
+  the plain BSD form, so passing char ** argv and the string literal
+  optstring produces no pointer warnings on old GCC.
+- Verified: UNIX build zero warnings, smoke 5/5; DOS rebuild zero
+  warnings. Further ULTRIX diagnostics -> same loop.
+  (Superseded in session 13: the getopt dependency was removed
+  entirely, so this prototype is gone again.)
 
 == 2026-11-20 - Session 12: remove DEBUG/TRACE/LOOKBUSY feature flags ==
 
@@ -586,20 +559,62 @@ Session 12 addendum (user-reported -s78 segfault):
   fragments from repeated anchored insertions - now clean and
   chronological).
 
-Session 13 (DOS startup hang resolved + cleanup):
-- User confirmed DOS now works (the built-in option parser fixed the
-  startup hang; no MARKERS build needed anymore).
-- Removed the MARKERS diagnostic build: the four #ifdef MARKERS stderr
-  blocks in main() (already gone from sue.c) and the Makefile.wcc
-  !ifdef MARKERS / CFLAGS += -dMARKERS hook.
-- Removed the last getopt remnants: the global "int opt", the
-  "optind = i" handoff (edit_init (argv[i]) takes the file index
-  directly) and the sue.h ULTRIX "extern int optind" block. Zero
-  getopt/optarg/opterr/optind references remain - SUE's option
-  handling has no unistd.h dependency on any platform.
-- Already in from the previous round, re-verified here: del_right()/
-  reform() [EOF] separator guards; binary file modes ("rb"/"wb"/"ab")
-  for load()/save()/writeblk() fixing the DOS double-CR saves.
-- Verified: make and wmake -f Makefile.wcc both zero warnings; smoke
-  tests 5/5; -s78 wrap, --help and bare -s usage errors, -bdmu -t8
-  cluster parse all correct.
+== 2026-11-20 - Session 13: DOS startup hang, built-in option parser, [EOF]/binary I/O ==
+
+User report: the DOS build hangs immediately after the DOS/4GW banner
+(DOSBox AND a real 386; screen stays on the banner, cursor blinks,
+Ctrl-Break ignored).
+
+Diagnosis (via the MARKERS=Y stderr-marker build):
+- Only "startup A (main entered)" printed -> the hang was after main()
+  entered. Two independent causes were fixed in order:
+  1. The -3 -s speed flags (session 8) produced a hanging binary;
+     reverted to the known-working -oneatx set (commit 107f585, which
+     also added the MARKERS diagnostic build).
+  2. With markers narrowing it to the option-parsing loop: Watcom's
+     clib getopt() called with argc = 1 and argv[1] = NULL reads past
+     the argument list (on DOS: the interrupt vector table -> garbage
+     "options" -> endless loop). The 1995 code never hit this because
+     old compilers accepted implicit declarations silently.
+
+Fix: replaced getopt() with a built-in option parser in main() (~40
+lines, cluster options b/d/m/u + s/t with attached values, the first
+non-option argument = the file). No getopt/optarg/opterr/optind
+dependency at any level; sue.h carries no option externs (the ULTRIX
+minimal-unistd.h gap is gone for good). The -s/-t values are
+attached-only (-s78, -t8) as the usage [-sn][-tn] documents; the
+separate-value form (-t 8) is no longer accepted (documented behavior
+change). Commit d1df652 also fixed the -s segfault root cause: the
+getopt string had lost the colon after 's' in the session 4 cleanup
+("bdmns:t:u" -> "bdmst:u").
+
+User confirmed DOS works -> cleanup (commit 5abefce):
+- MARKERS diagnostic build removed (sue.c markers + Makefile.wcc hook).
+- Last getopt remnants removed: the "int opt" global, the
+  "optind = i" handoff (edit_init takes argv[i] directly), the sue.h
+  ULTRIX "extern int optind" block.
+
+User-reported [EOF] corruption + DOS double-CR saves fixed (commit
+70c3444):
+- del_right() refuses to delete the newline that terminates the text;
+  reform() refuses to join it away (gap_end + 1 == txt_end). The
+  Ctrl-G/^B cascade that could merge text onto the [EOF] line is gone.
+- All file I/O binary ("rb"/"wb"/"ab"): load(), all save() call sites,
+  writeblk() probe. On DOS the CRLF text translation no longer
+  double-converts saves (the 0x0D 0x0D 0x0A bug); -d/-m/-u write exact
+  CRLF/CR/LF. No-op on POSIX, UNIX/macOS unchanged.
+
+Verification:
+- [x] make and wmake -f Makefile.wcc: zero warnings.
+- [x] smoke tests 5/5.
+- [x] ./build/sue -s78 + 130-char line + save: wrap at the word
+      boundary <= 78 (lines 75 + 69), byte-perfect.
+- [x] --help and bare -s: usage error, exit 1.
+- [x] -bdmu -t8 cluster: parses, edits, saves.
+- [x] ASan/UBSan run clean (parse loop + edit session).
+- Note: "./build/sue < /dev/null" hangs in curses getch (EOF spin) -
+  a test-harness artifact, not an editor bug; use pty-driven checks.
+
+Commits this session (chronological): 107f585 (flags revert + MARKERS),
+d1df652 (option parser + -s fix), 5abefce (MARKERS/getopt cleanup),
+70c3444 ([EOF] guards + binary I/O).
