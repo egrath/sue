@@ -1,3 +1,16 @@
+/* #######################################################################
+ * ts.c - TextStar: program startup and teardown.
+ * purpose:
+ *     Defines every global variable of the editor and holds the program
+ *     entry point: command-line parsing, curses setup, text-buffer
+ *     allocation (do_alloc), file loading (edit_init) and the main edit
+ *     loop, which alternates between display() and key_scan() forever.
+ * notes:
+ *     The other files: data.c holds the gap-buffer primitives, display.c
+ *     all curses output, funcs.c the editor commands and command.c the
+ *     key dispatch. See ts.h for the gap-buffer layout.
+ * ####################################################################### */
+
 #include "version.h"
 #include "ts.h"
 
@@ -64,7 +77,8 @@ int		editlines;			/* Lines in edit window; varies with helplines */
 
 char	*bufptr;			/* Buffer ptr. for malloc */
 
-int		optresult;
+int	optresult;				/* Usage-error counter: any bad command */
+					/* line option makes main() print usage */
 
 int		warnflag = 0;		/* A warning is present */
 
@@ -87,19 +101,47 @@ WINDOW	*editwin, *promptwin,	/* Curses windows */
 
 struct undelnode *undelptr;
 
-/*----------------------------------------
- * Exit TextStar
- */
+/* #######################################################################
+ * void edit_exit (int exparm)
+ * purpose:
+ *     Shut the editor down: leave curses screen mode and exit the
+ *     process. Used by the normal quit paths and by the error and
+ *     signal handlers.
+ * returns:
+ *     Does not return.
+ * parameters:
+ *     int exparm: the process exit status (0 = ok, 1 = error,
+ *     3 = terminal too small).
+ * ###################################################################### */
 void edit_exit (int exparm)
 {
 	endwin ();
 	printf ("\n");
 	exit (exparm);
 }
-/* ---------------------------------------------
- * Allocate memory (allocsize + EXTRAMEM)
- * Return 1 if OK, 0 if overflow.
- */
+/* #######################################################################
+ * static int do_alloc (long allocsize)
+ * purpose:
+ *     (Re-)allocate the text buffer with room for allocsize bytes of
+ *     file plus EXTRAMEM of working space, and lay out its fixed
+ *     furniture: from the top of the buffer, the terminating NUL,
+ *     LINES-1 padding newlines and the "[EOF]" marker; txt_beg gets
+ *     an opening newline. The gap initially spans the whole free
+ *     area, so the cursor starts on the "[EOF]" marker.
+ * returns:
+ *     1 on success. 0 if the size does not fit an unsigned (80286
+ *     truncation guard) or malloc fails - in both cases the old
+ *     buffer stays valid and the editor can continue.
+ * parameters:
+ *     long allocsize: file size in bytes to make room for (0 for an
+ *     empty buffer).
+ * notes:
+ *     The new buffer is allocated BEFORE the old one is freed, so an
+ *     out-of-memory failure never leaves dangling gap pointers.
+ *     txt_end ends up pointing at the '[' of "[EOF]" - the marker,
+ *     the padding newlines and the NUL all live above txt_end and are
+ *     never part of the user's text.
+ * ###################################################################### */
 static int do_alloc (long allocsize)
 {
 	long	allocwork;
@@ -150,9 +192,23 @@ static int do_alloc (long allocsize)
 	gap_end = txt_end;
 	return (1);			/* Success */
 }
-/* ----------------------------------------------
- * Set up buffers & pointers for new file
- */
+/* #######################################################################
+ * void edit_init (char *v_name)
+ * purpose:
+ *     Prepare a fresh editing session: reset the undo list, block
+ *     markers and cursor, allocate the empty buffer, and - if a file
+ *     name was given - stat the file and load it into a right-sized
+ *     buffer. A new file gets one newline created and a "New file"
+ *     warning; a loaded file has its text moved to the start of the
+ *     working area.
+ * parameters:
+ *     char *v_name: the file to edit, or NULLCHARPTR for an unnamed
+ *     new buffer.
+ * notes:
+ *     On load failure the file name is dropped and the session
+ *     continues as a new file. Leaves disp_mode = dpage so the first
+ *     display() in main() repaints the whole screen.
+ * ###################################################################### */
 void edit_init (char *v_name)
 {
 	struct stat filestat;
@@ -220,11 +276,29 @@ void edit_init (char *v_name)
 		}
 	}
 }
-/*
- ****************************************
- * 				MAIN PROGRAM			*
- ****************************************
- */
+/* #######################################################################
+ * int main (int argc, char *argv[])
+ * purpose:
+ *     Program entry point. Initializes the global pointer/size pairs,
+ *     parses the command line with the built-in parser, sets up curses
+ *     (windows, monochrome attributes, extended keys, signal traps),
+ *     sizes the right margin and calls edit_init(). Then runs the main
+ *     edit loop: display() + key_scan() forever - key_scan dispatches
+ *     every keystroke to the command handlers; the loop is only left
+ *     via edit_exit() from inside a command.
+ * returns:
+ *     Never returns normally. exit(1) on a usage error, exit(3) on a
+ *     terminal below 80 columns.
+ * parameters:
+ *     int argc, char *argv[]: as usual. Options may be clustered and
+ *     take attached values only: -d/-m/-u file mode, -s78 right
+ *     margin, -t8 tab width; the first non-option argument is the
+ *     file to edit.
+ * notes:
+ *     The option parser is built in deliberately: the Watcom clib
+ *     getopt() hangs on an empty command line under DOS, and ULTRIX's
+ *     minimal unistd.h does not declare getopt at all.
+ * ###################################################################### */
 int main (int argc, char *argv[])
 {
 	int i;

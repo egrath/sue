@@ -147,10 +147,10 @@ extern	int	scr_length;		/* Screen height */
 extern	int	scr_width ;		/*   "    width */
 
 						/* Screen coordinates */
-extern	int scr_ybeg;	/* top row */
-extern	int scr_yend;	/* bottom row */
-extern	int scr_xbeg;	/* first column */
-extern	int scr_xend;	/* last column */
+extern	int scr_ybeg;	/* first column */
+extern	int scr_yend;	/* last column */
+extern	int scr_xbeg;	/* first text row */
+extern	int scr_xend;	/* last text row */
 
 extern	int txt_x;		/* Current cursor row */
 extern	int txt_y;		/*   "       "    column */
