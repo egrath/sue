@@ -49,6 +49,10 @@ marker and trailing newlines so all of the text can be treated as a string.
   `~/opt/pdcurses`, library `dos/pdcurses.lib`).
 - Flags: `-O2 -std=c89 -Wpedantic -Wall -Werror` — **zero warnings is a hard
   requirement**; do not weaken the flags to hide problems.
+- DOS CFLAGS: `-bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s` — maximum speed
+  optimization for 386+ systems (`-oneatx` incl. aliasing relaxation, `-s`
+  no stack checks, `-3` 386 instruction set). PDCurses' own library is built
+  with the same `-oneatx`.
 - `EFLAGS` (currently `-DUNIX -D_DEFAULT_SOURCE`) and `LFLAGS` (`-lncurses`)
   are the override points for other targets.
 - `make clean` empties `build/` but keeps the directory; `make install`

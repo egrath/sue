@@ -267,6 +267,27 @@ Verification:
 - [x] Runtime on real DOS/DOSBox not possible from here - manual test pass
       requested from user.
 
+== 2026-11-20 — Session 8: DOS maximum speed optimization ==
+
+User request: Makefile.wcc should do maximum speed optimization for 386
+systems.
+
+Implementation:
+- CFLAGS now -bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s ...
+  -oneatx was already present (max optimizer set incl. -oa aliasing
+  relaxation, matching PDCurses' own watcom.mif).
+  Added: -3 (explicit 386 instruction set - runs on every 386+ machine)
+  and -s (no runtime stack checks; DOS/4GW flat stack + non-recursive code
+  make the checks pure overhead).
+
+Verification:
+- [x] wmake rebuild: zero warnings/errors; sue.exe still DOS/4GW LE.
+- [x] UNIX build unaffected (zero warnings).
+- Size delta: 115596 -> 115760 bytes (LE image; -s trims call overhead,
+  -3 changes codegen slightly - speed, not size, is the goal).
+
+Commit: "DOS build: maximum speed optimization for 386 (-oneatx -s -3)".
+
 == 2026-11-20 — Session 7: platform-default file mode ==
 
 User request: DOS version should default to DOS file mode (CRLF), UNIX

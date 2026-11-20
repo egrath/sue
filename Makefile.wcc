@@ -12,7 +12,7 @@ PDCURSES = $(%HOME)/opt/pdcurses
 
 CC      = wcc386
 LINK    = wlink
-CFLAGS  = -bt=dos4g -mf -dDOS -wx -zq -oneatx -i=$(PDCURSES) -i=$(SRCDIR)
+CFLAGS  = -bt=dos4g -mf -3 -dDOS -wx -zq -oneatx -s -i=$(PDCURSES) -i=$(SRCDIR)
 LDFLAGS = op q sys dos4g
 
 TARGET  = $(BUILDDIR)/sue.exe
