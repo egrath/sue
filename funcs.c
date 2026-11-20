@@ -1,17 +1,3 @@
-/*
-Project:	SUE, a Simple Unix Editor
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-File:		funcs.c
-Routines:	User functions & file i/o.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-*/
-
-static	char	rcsid[] = "@(#)$Id: funcs.c,v 1.3 1995/03/09 13:19:58 carson Exp $";
-
 #include "sue.h"
 #include "version.h"
 
@@ -22,10 +8,7 @@ void blockhlp()
 {
 	enum	helptype	htype;
 
-	if (restrict)
-		htype = RBLOCK;
-	else
-		htype = BLOCK;
+	htype = BLOCK;
 
 	if (helplines)
 		dohelp(htype, helpwin);		/* Show it in separate window */
@@ -185,8 +168,6 @@ void infofunc()
 	wmove(editwin, 0,0);
 	wp4("           Editing: `%s` at line `%u` column `%u`\n", txtname, txt_x, txt_y);		/* show full name */
 	wp2("          Modified: `%s`\n", mod ? "Yes" : "No");
-	wp2("            Access: `%s`\n",
-	      (restrict) ? "Restricted" : "Unrestricted");
 	wp2("         File mode: `%s`\n", modestr);
 	wp2("      Right margin: `%d`\n", rt_marg);
 	wp2("    Hard tab width: `%d`\n", tabdef);
@@ -369,7 +350,6 @@ int replace()
 		break;
 
 	case ESC:			/* Abort replace operation */
-	case KEY_F(1):
 	case CNTRL_U:
 		return (0);
 
@@ -899,10 +879,8 @@ void	togglehelp()
 		delwin(helpwin);
 	}
 	else
-	{	if (cmd_mode == CKey)	
-			helplines = 8;
-		else
-			helplines = 3;
+	{
+		helplines = 8;
 	}
 	delwin(editwin);			/* Kill current curses windows */
 	delwin(promptwin);
@@ -914,10 +892,6 @@ void	togglehelp()
 	wattrset(promptwin, A_BOLD);
 	keypad(editwin, TRUE);		/* Interpret extended keycodes */
 	keypad(promptwin, TRUE);
-	if (helplines)
-	{	helpwin = newwin(helplines, COLS, 1, 0); /* Novice help */
-		helpstate = REFRESH;		/* Tell display() to refresh */
-	}
 	prompt(1,"");				/* Avoid autoclear */
 	status_line();				/* Clear expert help message */
 	disp_mode = dpage;
@@ -1033,10 +1007,7 @@ int		ch;
 
 	switch (ch) {
 	case CNTRL_P:				/* Enter a control char. */
-		if (cmd_mode == CKey)
-			warning("^P-");
-		else
-			warning("HOME-P-");
+		warning("^P-");
 		ch = (waitkey() & 0x1F);
 #if 0
 		if (ch == 0)			/* Allow this? (search() won't find ^@) */

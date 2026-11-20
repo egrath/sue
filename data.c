@@ -1,17 +1,3 @@
-/*
-Project:	SUE, a Simple Unix Editor
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-File:		data.c
-Routines:	Data manipulation.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-*/
-
-static	char	rcsid[] = "@(#)$Id: data.c,v 1.3 1995/03/09 13:19:58 carson Exp $";
-
 #include "sue.h"
 
 /*------------------------------------------------------------

@@ -1,20 +1,3 @@
-/*
-Project:	SUE, a Simple Unix Editor
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-File:		sue.h
-Routines:	Global include file.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-			If you are using ncurses, you may need to link 
-			  /usr/include/curses.h to 
-			  /usr/include/ncurses/curses.h.
-
-Version:	@(#)$Id: sue.h,v 1.5 1996/12/17 01:01:03 carson Exp $
-*/
-
 /* Needed by GCC under ISC sysvr3.2: */
 
 #if (defined SUEV32 & defined __STDC__ )
@@ -116,8 +99,6 @@ extern	int	tabdef;			/* Default tab width */
 extern	int	scr_length;		/* Screen height */
 extern	int	scr_width ;		/*   "    width */
 
-extern	int	restrict;		/* Restricted mode */
-
 						/* Screen coordinates */
 extern	int scr_ybeg;	/* top row */
 extern	int scr_yend;	/* bottom row */
@@ -197,28 +178,12 @@ enum dispmode
 };
 extern enum dispmode disp_mode;		/* Global screen refresh flag */
 
-enum comdmode
-{
-	CKey,		/* Control-key mode		*/
-	FKey		/* Function-key mode	*/
-};
-
-extern enum comdmode cmd_mode;		/* Global command mode flag */
-
 enum helptype
 {	REFRESH,	/* Flag refresh					*/
 	PRIMARY,	/* Initial menu					*/
 	QUICK,		/* Quick commands menu			*/
 	BLOCK,		/* Block     "      "			*/
 	ONSCREEN,	/* Onscreen  "      "			*/
-	RBLOCK,		/* Restricted block menu		*/
-	FKEYMENU,	/* Function key menu			*/
-	SETUPMENU,	/*    "      "  setup menu		*/
-	BLOCKMENU,	/*    "      "  block menu		*/
-	RFKEYMENU,	/* Restricted function key menu	*/
-	RSETUPMENU,	/*    "		setup menu			*/
-	RBLOCKMENU,	/*    "     block menu			*/
-	HOME		/* Function key HOME- help		*/
 };
 
 extern	enum	helptype	helpstate;
@@ -268,7 +233,7 @@ extern	void	o_key(), outchar(), newfile(), readblk(), writeblk();
 extern	void	tabset(), move_ptr(), statprint(), edit_init(), edit_exit();
 extern	void	dohelp(), blockhlp(), quickhlp(), onscrhlp();
 extern	void 	replfunc(), quitfunc(), savefunc(), exitfunc(), infofunc();
-extern	void 	CKey_scan(), FKey_scan(), debugpr();
+extern	void 	Key_scan(), FKey_scan(), debugpr();
 extern	void 	togglehelp(), delword(), delline(), caseinvert(), insertline();
 extern	void	repfind(), repaint(), addtext(), delleft();
 extern	void	home_key(), setup(), block();

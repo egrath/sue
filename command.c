@@ -1,23 +1,9 @@
-/*
-Project:	SUE, a Simple Unix Editor
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-File:		ccommand.c
-Routines:	Control key mode user commands.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-*/
-
-static	char	rcsid[] = "@(#)$Id: ccommand.c,v 1.4 1996/12/17 01:01:30 carson Exp carson $";
-
 #include "sue.h"
 
 /* -------------------------------------------------
  * Main user input routine
  */
-void	CKey_scan()
+void	Key_scan()
 {
 	int	old_x;
 	int	ch;
@@ -120,7 +106,6 @@ void	CKey_scan()
 	/* --------- HELP --------- */
 	case CNTRL_J:
 	case KEY_HELP:
-	case KEY_F(3):
 		if (helplines)	/* Help already present */
 		{	keyerr();
 			break;
@@ -204,12 +189,12 @@ void	CKey_scan()
 	/* --------- TEXT DELETION --------- */
 
 	case KEY_BACKSPACE:
+	case KEY_DC:
 	case BS:				/* Destructive BS */
 	case DEL:				/* delete key */
 		delleft();
 		break;
 
-	case KEY_DC:
 	case CNTRL_G:			/* Delete character under cursor */
 		if (!undelsave(gap_end, 1, FORWARD))
 			break;
@@ -380,10 +365,7 @@ void k_key()
 		break;
 
 	case CNTRL_L:			/* Load new file */
-		if (restrict)
-			keyerr();
-		else
-			newfile();
+		newfile();
 		break;
 
 	case CNTRL_Q:			/* Quit */
@@ -391,10 +373,7 @@ void k_key()
 		break;
 
 	case CNTRL_R:			/* read in */
-		if (restrict)
-			keyerr();
-		else
-			readblk();
+		readblk();
 		break;
 
 	case CNTRL_S:			/* Save */
@@ -402,32 +381,22 @@ void k_key()
 		break;
 
 	case CNTRL_D:			/* Done */
-		if (restrict)
-			keyerr();
-		else
-			if (save_fname())
-			{
-				mod = FALSE;
-				newfile();
-			}
+		if (save_fname())
+		{
+			mod = FALSE;
+			newfile();
+		}
 		break;
 
 	case CNTRL_N:			/* Specify or change fileName */
-		if (restrict)
-			keyerr();
-		else
-			name();
+		name();
 		break;
 
 	case CNTRL_W:			/* Write block */
-		if (restrict)
-			keyerr();
+		if (blkerr(1))
+			break;
 		else
-		{	if (blkerr(1))
-				break;
-			else
-				writeblk();
-		}
+			writeblk();
 		break;
 
 	case CNTRL_X:			/* eXit */
@@ -439,17 +408,11 @@ void k_key()
 		break;
 
 	case CNTRL_F:			/* Change file mode */
-		if (restrict)
-			keyerr();
-		else
-			setfilemode();
+		setfilemode();
 		break;
 
 	case '!':				/* Shell escape */
-		if (restrict)
-			keyerr();
-		else
-			doshell();
+		doshell();
 		break;
 
 	case ' ':
@@ -506,10 +469,6 @@ void o_key()
 
 	case CNTRL_L:					/* Repaint */
 		repaint();
-		break;
-
-	case CNTRL_J:					/* Toggle help display */
-		togglehelp();
 		break;
 
 	case ' ':

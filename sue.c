@@ -1,17 +1,3 @@
-/*
-Project:	SUE, a Simple Unix Editor
-File:		sue.c
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-Routines:	Main, initialization, and exit routines.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-*/
-
-static	char	rcsid[] = "(#)$Id: sue.c,v 1.4 1995/03/19 17:01:58 carson Exp $";
-
 #include "version.h"
 #include "sue.h"
 
@@ -81,9 +67,6 @@ char	*bufptr;			/* Buffer ptr. for malloc */
 int		opt;				/* Results from getopt() */
 int		optresult;
 
-enum
-  comdmode cmd_mode;		/* Command mode */
-int		restrict;			/* Secure mode flag */
 int		noF5 = 0;			/* F5 key present? */
 int		bwopt;				/* Force black & white display */
 int		warnflag = 0;		/* A warning is present */
@@ -257,74 +240,17 @@ char	*argv[];
 	r_strsiz = sizeof(r_str) - 1;
 
 	opterr = 0;			/* Suppress getopt() error message */
-	bwopt = optresult = helplines = restrict = 0;	/* Option defaults */
+	bwopt = optresult = helplines = 0;	/* Option defaults */
 	autofilemode = 1;	/* Default to file mode autodetect */
 	filemode = UNIX;	/* Default to Unix file type */
-	cmd_mode = CKey;	/* Default to control-key mode */
 
 
-	/* First, check for $SUE environment variable */
-	if ( (txt_ptr = getenv("SUE")) != NULLCHARPTR)
-	{	eargv[1] = txt_ptr;
-		while ((opt = getopt(2, eargv, "bfdmnrs:t:u")) != -1)
-			switch (opt) {
-			case 'b' :
-				bwopt = 1;
-				break;
-			case 'f' :
-				cmd_mode = FKey;
-				break;
-			case 'd' :
-				autofilemode = 0;
-				filemode = MSDOS;
-				break;
-			case 'm' :
-				autofilemode = 0;
-				filemode = MACINTOSH;
-				break;
-			case 'n' :
-				helplines = 8;
-				break;
-			case 'r' :
-				restrict = 1;
-				break;
-			case 's' :
-				if (atoi(optarg) > 1)
-					rt_marg = atoi(optarg);
-				else
-					optresult++;
-				break;
-			case 't' :
-				if (atoi(optarg) > 0)
-					tabdef = atoi(optarg);
-				else
-					optresult++;
-				break;
-			case 'u' :
-				autofilemode = 0;
-				filemode = UNIX;
-				break;
-			default  :
-				optresult++;
-			}
-		if (optresult)
-		{	fprintf(stderr, "\n%s: option error in SUE environment variable.\n\n", argv[0]);
-			exit (2);
-		}
-	}
-
-	/* Process command line options (override environment options) */
+	/* Process command line options */
 	optind = 1;
-	while ( (opt = getopt(argc, argv, "bcfdmnrs:t:u")) != -1)
+	while ( (opt = getopt(argc, argv, "bdmns:t:u")) != -1)
 		switch (opt) {
 		case 'b' :
 			bwopt = !bwopt;
-			break;
-		case 'c' :				/* Override ENV setting */
-			cmd_mode = CKey;
-			break;
-		case 'f' :
-			cmd_mode = FKey;
 			break;
 		case 'd' :
 			autofilemode = 0;
@@ -333,15 +259,6 @@ char	*argv[];
 		case 'm' :
 			autofilemode = 0;
 			filemode = MACINTOSH;
-			break;
-		case 'n' :
-			if (helplines)			/* Toggle off */
-				helplines = 0;
-			else
-				helplines = 8;
-			break;
-		case 'r' :
-			restrict = !restrict;
 			break;
 		case 's' :
 			if (atoi(optarg) > 1)
@@ -369,12 +286,8 @@ char	*argv[];
 		fprintf(stderr, "    %s [-bcfdmnru][-sn][-tn] [file]\n", argv[0]);
 		fprintf(stderr, "  Options:\n");
 		fprintf(stderr, "    -b  for black & white operation\n");
-		fprintf(stderr, "    -c  control key mode\n");
-		fprintf(stderr, "    -f  function key mode\n");
 		fprintf(stderr, "    -d  MSDOS file mode\n");
 		fprintf(stderr, "    -m  Macintosh file mode\n");
-		fprintf(stderr, "    -n  novice mode\n");
-		fprintf(stderr, "    -r  restricted mode\n");
 		fprintf(stderr, "    -sn set right margin to n\n");
 		fprintf(stderr, "    -tn set tab spacing to n\n");
 		fprintf(stderr, "    -u  Unix file mode\n\n");
@@ -401,36 +314,6 @@ char	*argv[];
 		exit(3);
 	}
 
-	if (cmd_mode == FKey)
-	{	if (tgetstr("k;", NULL) == /*(char *)*/ NULL)
-		{	endwin();
-			fprintf(stderr, "SUE: your current terminal definition is: %s\n", longname());
-			fprintf(stderr, "This terminal definition does not include enough function keys\n");
-			fprintf(stderr, "for function key mode.  I need definitions for at least the first\n");
-			fprintf(stderr, "10 function keys in order to operate properly.\n");
-			fprintf(stderr, "Would you like to use control key mode instead (y/N)? ");
-			i = fgetc(stdin);
-			if (i == 'Y' || i == 'y')
-			{	fflush(stdin);	/* Remove \r */
-				cmd_mode = CKey;
-				fprintf(stderr, "You have selected control key mode.\n");
-				fprintf(stderr, "To select it from the command line, use option -c.\n");
-				fprintf(stderr, "Press RETURN: ");
-				fgetc(stdin);
-			}
-			else
-			{	fprintf(stderr, "SUE aborting.\n");
-				exit(4);
-			}
-		}
-		else
-		{	if (helplines)
-				helplines = 3;
-			/* Do we have F5 key definition (vt220 lacks) */
-			noF5 = (tgetstr("k5", NULL) == NULL);
-		}
-	}
-
 	noecho();	/* Do not echo characters typed at keyboard */
 	nonl();		/* Pass ^M thru to SUE as-is */
 	raw();
@@ -448,9 +331,6 @@ char	*argv[];
 	editlines = LINES - helplines - 1;
 
 	/* Set up 'curses' windows: */
-
-	if (helplines)
-		helpwin   = newwin(helplines, COLS, 1, 0);		/* Novice help */
 	statuswin = newwin(1, COLS, 0, 0);					/* Top line */
 	editwin   = newwin(editlines, COLS, helplines+1, 0);	/* Next 2 overlap */
 	promptwin = newwin(1, COLS, helplines+1, 0);
@@ -486,17 +366,6 @@ char	*argv[];
 	if (rt_marg < 2)
 		rt_marg = COLS - 5;		/* Set default right margin */
 
-	if (helplines)				/* Initialize novice help */
-	{	if (cmd_mode == CKey)
-			dohelp(PRIMARY, helpwin);
-		else if (cmd_mode == FKey)
-		{	if (restrict)
-				dohelp(RFKEYMENU, helpwin);
-			else
-				dohelp(FKEYMENU, helpwin);
-		}
-	}
-
 	/* Trap signals to our exit routine that preserves user text */
 	signal(SIGINT,  sabort);
 	signal(SIGHUP,  sabort);
@@ -516,16 +385,11 @@ char	*argv[];
 	/* Load file and/or prepare to edit */
 	edit_init(argv[optind]);
 	/* Main edit loop - should never exit */
-	for ( ; ; )
-	{	if (!warnflag)
+	for ( ;; )
+	{
+		if (!warnflag)
 			display();		/* Don't erase warnings */
-		switch (cmd_mode) {
-		case CKey :			/* Control key mode */
-			CKey_scan();
-			break;
-		case FKey :			/* Function key mode */
-			FKey_scan();
-			break;
-		}
+
+		Key_scan();
 	}
 }

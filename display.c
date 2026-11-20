@@ -1,17 +1,3 @@
-/*
-Project:	SUE, a Simple Unix Editor
-Copyright:	SUE is copyright 1992 by Point to Point Communications.
-File:		display.c
-Routines:	Display.
-Author:		Carson Wilson
-				Apt. 1D
-				1359 W. Greenleaf, Chicago, IL 60626
-				internet:	carson@mcs.com
-Notes:		Edit with hard tab stops set to 4.
-*/
-
-static	char	rcsid[] = "@(#)$Id: display.c,v 1.8 1995/03/19 17:01:58 carson Exp $";
-
 #include "sue.h"
 
 /* -----------------------------------------------
@@ -157,11 +143,7 @@ void status_line()
 	if (helplines)		/* Don't show redundant msg */
 		return;
 	else
-	{	if (cmd_mode == CKey)
-			statprint(COLS - 11, "^J for help", NULL, NULL);
-		else
-			statprint(COLS - 11, "F3 for help", NULL, NULL);
-	}
+		statprint(COLS - 11, "^J for help", NULL, NULL);
 }
 /* -----------------------------------------------------
  * Prompt user for string
@@ -236,7 +218,6 @@ int inlen;
 			}
 			break;
 
-		case KEY_F(1):			/* Cancel */
 		case CNTRL_U:
 		case ESC:
 			editing = 0;
@@ -511,20 +492,6 @@ void	display()
 	}
 	idlok(editwin, FALSE);		/* Disable hardware scrolling for help, etc.*/
 
-	/* Restore novice mode user help */
-	if (helplines)
-	{	if ((cmd_mode == CKey) && (helpstate != PRIMARY))
-			dohelp(PRIMARY, helpwin);
-		else if ((cmd_mode == FKey) &&
-				 (helpstate != FKEYMENU) &&
-				 (helpstate != RFKEYMENU))
-		{
-			if (restrict)
-				dohelp(RFKEYMENU, helpwin);
-			else
-				dohelp(FKEYMENU, helpwin);
-		}
-	}
 	/* update cursor position in status line */
 	status_linecol ();
 
@@ -564,57 +531,15 @@ void	display()
 #define CB4 " `^K-D`=save & load new     `^K-W`=write to file        `^K-I`=file information   "
 #define CB5 " `^K-!`=shell escape        `^K-R`=read in a file                                 "
 #define CB6 "        [ `ESC` key may be substituted for `control-K` ]                          "
-/* Same, restricted mode version */
-#define RCB0 "      SAVE/EXIT                 BLOCKS                    FILES               "
-#define RCB1 " `^K-S`=save & resume       `^K-B`=begin  `^K-K`=end                                "
-#define RCB2 " `^K-X`=save & exit         `^K-C`=copy   `^K-V`=move                               "
-#define RCB3 " `^K-Q`=quit                `^K-Y`=erase  `^K-H`=hide                               "
-#define RCB4 "                                                    `^K-I`=file information   "
-#define RCB5 "                                                                              "
-#define RCB6 "        [ `ESC` key may be substituted for `control-K` ]                          "
 
 /* Onscreen help screen */
 #define CO0 "              MARGINS & TABS                          SCREEN DISPLAY          "
 #define CO1 "           `^O-X`=margin release                  `^O-D`=control code display     "
-#define CO2 "           `^O-R`=set right margin                `^O-J`=novice mode toggle       "
-#define CO3 "           `^O-T`=set hard tab spacing            `^O-L`=refresh screen           "
+#define CO2 "           `^O-R`=set right margin                `^O-L`=refresh screen.          "
+#define CO3 "           `^O-T`=set hard tab spacing                                            "
 #define CO4 "                                                                              "
 #define CO5 "                                                                              "
-#define CO6 "                                                                              "
-
-/* Function key mode primary screen */
-#define FP0  "[`F1`]    [`F2`]    [`F3`]    [`F4`]    [`F5`]    [`F6`]    [`F7`]    [`F8`]    [`F9`]    [`F10`] "
-#define FP0F12  "[`F1`]    [`F2`]    [`F3`]    [`F4`]    [`F12`]    [`F6`]    [`F7`]    [`F8`]    [`F9`]    [`F10`] "
-/*            [F1]    [F2]    [F3]    [F4]    [F5]    [F6]    [F7]    [F8]    [F9]    [F10] */
-#define FP1  "Cancel  Search  Help    Block   Setup  Replace  Exit  Retrieve  Reform  Save  "
-/* Same, restricted mode version */
-#define RFP0 "[`F1`]    [`F2`]    [`F3`]    [`F4`]    [`F5`]    [`F6`]    [`F7`]            [`F9`]    [`F10`] "
-#define RFP0F12 "[`F1`]    [`F2`]    [`F3`]    [`F4`]    [`F12`]    [`F6`]    [`F7`]            [`F9`]    [`F10`] "
-#define RFP1 "Cancel  Search  Help    Block   Setup  Replace  Exit            Reform  Save  "
-
-/* Function key mode setup menu */
-#define FS0 "  `1` - reveal `C`odes   `3` - `M`argin set     `5` - file `N`ame      `7` - program `I`nfo    "
-#define FS1 "  `2` - `F`ile mode      `4` - margin `R`elease `6` - `T`ab display                        "
-/* Same, restricted mode version */
-#define RFS0 "  `1` - reveal `C`odes   `3` - `M`argin set                        `7` - program `I`nfo    "
-#define RFS1 "                     `4` - margin `R`elease `6` - `T`ab display                        "
-
-/* Function key mode block menu */
-#define FB0 "  `1` - `B`egin block    `3` - `C`opy block     `5` - `W`rite block    `7` - `D`elete block    "
-#define FB1 "  `2` - `E`nd block      `4` - `M`ove block     `6` - `H`ide block     `8` - `R`ead block      "
-/* Same, restricted mode version */
-#define RFB0 "  `1` - `B`egin block    `3` - `C`opy block                        `7` - `D`elete block    "
-#define RFB1 "  `2` - `E`nd block      `4` - `M`ove block     `6` - `H`ide block                         "
-
-/* Function key mode home key menu */
-/*
-#define FH0 "`up`,`down`=begin,end file;  `b`=-word; `t`=del.word;  `n`=insert line; `p`=code; `o`=refresh"
-#define FH1 "`<--`,`-->`=begin,end line;  `f`=+word; `y`=del.line;  `l`=next search; `c`=case; `i`=to line"
-*/
-
-#define  FH0 "`up`,`dn`=begin,end text; `b`=-word; `t`=del.word; `n`=ins.line; `p`=code; `c`=case; `!`=shell"
-#define RFH0 "`up`,`dn`=begin,end text; `b`=-word; `t`=del.word; `n`=insert line; `p`=code;    `c`=case;   "
-#define  FH1 "`<-`,`->`=begin,end line; `f`=+word; `y`=del.line; `l`=next search; `o`=refresh; `i`=to line "
+#define CO6 "                                                                              "            "           "
 
 /* -----------------------------------------------------------------
  *	Add strings to window, highlighting sections enclosed in `reverse quotes`
@@ -689,15 +614,6 @@ WINDOW			*hwindow;
 		hline5 = CB5;
 		hline6 = CB6;
 		break;
-	case RBLOCK:
-		hline0 = RCB0;
-		hline1 = RCB1;
-		hline2 = RCB2;
-		hline3 = RCB3;
-		hline4 = RCB4;
-		hline5 = RCB5;
-		hline6 = RCB6;
-		break;
 	case ONSCREEN:
 		hline0 = CO0;
 		hline1 = CO1;
@@ -706,43 +622,6 @@ WINDOW			*hwindow;
 		hline4 = CO4;
 		hline5 = CO5;
 		hline6 = CO6;
-		break;
-	case FKEYMENU:
-		if (noF5)
-			hline0 = FP0F12;
-		else
-			hline0 = FP0;
-		hline1 = FP1;
-		break;
-	case RFKEYMENU:
-		if (noF5)
-			hline0 = RFP0F12;
-		else
-			hline0 = RFP0;
-		hline1 = RFP1;
-		break;
-	case BLOCKMENU:
-		hline0 = FB0;
-		hline1 = FB1;
-		break;
-	case RBLOCKMENU:
-		hline0 = RFB0;
-		hline1 = RFB1;
-		break;
-	case SETUPMENU:
-		hline0 = FS0;
-		hline1 = FS1;
-		break;
-	case RSETUPMENU:
-		hline0 = RFS0;
-		hline1 = RFS1;
-		break;
-	case HOME:
-		if (restrict)
-			hline0 = RFH0;
-		else
-			hline0 = FH0;
-		hline1 = FH1;
 		break;
 	default:
 		warning("Internal error!");

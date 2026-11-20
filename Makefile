@@ -35,9 +35,9 @@ make	:
 	@echo ' make ultrix - DEC ULTRIX for DECStation'
 	@echo ''
 
-SOURCES = ccommand.c data.c display.c fcommand.c funcs.c sue.c
+SOURCES = command.c data.c display.c funcs.c sue.c
 
-OBJS = ccommand.o data.o display.o fcommand.o funcs.o sue.o
+OBJS = command.o data.o display.o funcs.o sue.o
 
 sue		: ${OBJS}
 	${CC} ${CFLAGS} -o sue ${OBJS} ${LFLAGS}
@@ -87,7 +87,7 @@ macos	:
 
 # Dependencies
 
-ccommand.o : ccommand.c sue.h
+command.o  : command.c sue.h
 data.o     : data.c sue.h
 display.o  : display.c sue.h
 fcommand.o : fcommand.c sue.h
