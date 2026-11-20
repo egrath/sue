@@ -151,6 +151,27 @@ cursor clamps at the marker start and nothing can be written behind it.
     namespace with terminfo capability macros (`insert_line`, `delete_line`,
     `set_tab`, ...) — a new name must not collide (that is why the insert-a-
     newline function is `insert_newline`).
+  - **Function documentation**: every function definition carries a
+    `#`-bordered block directly above it, with the signature repeated
+    inside and the sections `purpose:` (always), `returns:` (omit for
+    void), `parameters:` (omit when none) and `notes:` (only when it
+    aids understanding). Everything else — variables, constructs, file
+    banners — uses plain `/* ... */` comments. Never `//`. Template:
+
+        /* ###################################################################
+         * int xyz (int x, char y)
+         * purpose:
+         *     What the function does; can span multiple lines.
+         * returns:
+         *     The result and what it means.
+         * parameters:
+         *     int x: description of x
+         *     char y: description of y
+         * notes:
+         *     Anything a reader needs beyond the above.
+         * ################################################################### */
+
+    New or changed functions must adhere to this style.
 - `wp1`–`wp4` macros wrap `xw_printw`; keep their args in sync with
   `xw_printw`'s signature.
 
