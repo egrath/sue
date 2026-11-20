@@ -205,12 +205,12 @@ void	CKey_scan()
 
 	case KEY_BACKSPACE:
 	case BS:				/* Destructive BS */
+	case DEL:				/* delete key */
 		delleft();
 		break;
 
 	case KEY_DC:
 	case CNTRL_G:			/* Delete character under cursor */
-	case DEL:				/* delete key */
 		if (!undelsave(gap_end, 1, FORWARD))
 			break;
 		delright();
