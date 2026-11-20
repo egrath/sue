@@ -232,7 +232,7 @@ int text_move (void)
  */
 int line_y (int col)		/* Column # to move cursor to */
 {
-	char	ii;
+	char	ii = 0;
 	int	i;
 
 	col = max (col, 1);

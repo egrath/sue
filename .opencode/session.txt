@@ -292,6 +292,12 @@ Verification:
 - [x] make: zero warnings; DOS rebuild: zero warnings; smoke 5/5.
 - [x] Full ULTRIX build log still pending from the maintainer - more
       missing cursesX.h declarations may surface (same one-line pattern).
+      Round 2 done: gcc 2.x also flagged `ii` in line_y() as "might be
+      used uninitialized" (conservative dataflow - ii is assigned on every
+      loop iteration, but the loop can run zero times before the post-loop
+      use). Fixed with an initializer (char ii = 0), zero behavior change.
+      Further ULTRIX gcc rounds may surface the same class in files not
+      yet reached (display.c/funcs.c/sue.c compile after data.c).
 
 == 2026-11-20 - Session 11: Makefile CC override fix ==
 
