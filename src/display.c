@@ -542,7 +542,10 @@ void display (void)
 	case dinsln:  			/* Insert new line or redisplay from ln. above */
 		wmove (editwin, txt_x - scr_xbeg, 0);
 		winsertln (editwin);
-		dsp_line (gap_beg, txt_x - scr_xbeg);
+		if (txt_x > scr_xbeg)	/* Nothing above to redraw at row 0 */
+		{
+			dsp_line (gap_beg, txt_x - scr_xbeg);
+		}
 		dsp_line (gap_end, txt_x - scr_xbeg + 1);
 		wrefresh (editwin);
 		break;

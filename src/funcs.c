@@ -318,11 +318,13 @@ int save_fname (void)
 int find (void)
 {
 	char fbuf[70], *fbufptr;
+	char sup[60];
 	int	s_strlen;
 
-	fbufptr = &fbuf[0];
-
 	s_strlen = strlen (sptr);
+	strcpy (sup, sptr);
+	strtoup (sup);
+	fbufptr = &fbuf[0];
 
 	while (txt_ptr <= txt_end)
 	{
@@ -336,9 +338,8 @@ int find (void)
 			fbuf[s_strlen] = '\0';
 			/* Case-insensitive search: */
 			strtoup (fbufptr);
-			strtoup (sptr);
 
-			if (strcmp (fbufptr, sptr) == 0)
+			if (strcmp (fbufptr, sup) == 0)
 			/* match */
 			{
 				move_ptr ();
@@ -1227,7 +1228,9 @@ void del_word (void)
 void del_line (void)
 {
 	char	*tmp_ptr;
+	int	old_y;
 
+	old_y = txt_y;		/* Remember cursor column */
 	line_y (1);			/* Shift gap backward (left) to BOL */
 	if (gap_end < txt_end)
 	{
@@ -1239,7 +1242,10 @@ void del_line (void)
 		}
 		if (!undel_save (tmp_ptr, gap_end - tmp_ptr, FORWARD))
 		{
-			gap_end = tmp_ptr;	/* BUG - cursor jumps to col. 1 */
+			gap_end = tmp_ptr;	/* Restore the line ... */
+			txt_y = 1;			/* ... and the cursor position */
+			txt_y = line_y (old_y);
+			return;
 		}
 		txt_y = 1;			/* txt_x unchanged */
 		disp_mode = dtoeos;
@@ -1284,13 +1290,11 @@ void add_text (int ch)
 	case CNTRL_P:				/* Enter a control char. */
 		warning ("^P-");
 		ch = (wait_key () & 0x1F);
-#if 0
-		if (ch == 0)			/* Allow this? (search() won't find ^@) */
+		if (ch == 0)			/* Reject ^@: a NUL would break find() */
 		{
 			beep ();
-			break ();
+			break;
 		}
-#endif
 		if (ch == '\t')
 		{
 			goto addtab;
