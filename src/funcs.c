@@ -373,7 +373,7 @@ int replace (void)
 	{
 		wattron (statuswin, A_BOLD);
 		status (0, "Change (Y/N/*)? ", NULL, NULL);
-		stat_print (COLS - 18, "F1 or ^U to abort", NULL, NULL);
+		stat_print (COLS - 12, "^U to abort", NULL, NULL);
 		wattroff (statuswin, A_BOLD);
 		disp_mode = dpages;
 		display ();

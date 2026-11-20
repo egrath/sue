@@ -67,7 +67,6 @@ char	*bufptr;			/* Buffer ptr. for malloc */
 int		opt;				/* Results from getopt() */
 int		optresult;
 
-int		noF5 = 0;			/* F5 key present? */
 int		bwopt;				/* Force black & white display */
 int		warnflag = 0;		/* A warning is present */
 

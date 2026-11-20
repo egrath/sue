@@ -267,6 +267,41 @@ Verification:
 - [x] Runtime on real DOS/DOSBox not possible from here - manual test pass
       requested from user.
 
+== 2026-11-20 — Session 6: F-key leftovers ==
+
+User request: check for F-key references (like "F1 or ^U to abort") - F-keys
+are unsupported. User reported F-keys entering trash in input fields.
+
+Findings:
+- "F1 or ^U to abort" hint in prompt_st() and replace() - F1 does nothing
+  anymore, only ^U aborts.
+- dead noF5 global (sue.c/sue.h, "F5 key present?") - unreferenced.
+- THE reported trash: prompt_st() had no extended-key filter - its default
+  case stored any keyin (KEY_F(1)=265 -> truncated to byte 9 = TAB) into the
+  input string. key_scan() was already filtered (session 4 B3), but the
+  input-field reader was not. Also prompt_key() returned F-key codes to
+  toupper() callers (out-of-domain; benign outcome).
+
+Implementation (user chose beep over silent ignore):
+- prompt_st() default case: keyin > 255 -> beep + drop, before the length
+  check. Covers all ten prompt sites (filename, find, change-to, goto line,
+  tab width, right margin, write/read block, load file, shell command).
+- prompt_key(): keys > 255 -> beep + return 0 (Y/N/U/D/M prompts take their
+  "no"/default path; no out-of-domain toupper).
+- Hints -> "^U to abort" at COLS - 12 (was "F1 or ^U to abort" at COLS - 18).
+- noF5 removed from sue.c/sue.h.
+
+Verification:
+- [x] Both builds zero warnings (make + wmake -f Makefile.wcc).
+- [x] Regression proof: filename prompt, type "test.txt", press F1
+      (TERM=xterm, \033OP -> keypad decodes KEY_F(1)=265), ENTER -> saved
+      file has NO junk byte. Gotcha during testing: the saved file landed in
+      the editor's working directory (relative name typed), not /tmp where I
+      first looked. Content 0a = correct empty-new-file save.
+- [x] Smoke test byte-perfect.
+
+Commit: "Ignore F-key presses in input fields; drop stale F1 hints".
+
 == 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
 
 User request: reformat all code to their personal style. Example given:

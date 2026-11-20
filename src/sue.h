@@ -114,7 +114,6 @@ extern	int		repkey;			/* ..and ("*") key flag */
 extern	char	repflag;		/* ..and find or replace flag */
 
 extern	char	mod;			/* File modified flag */
-extern	int		noF5;			/* F5 key present? (vt220 lacks this) */
 
 extern	char	response[];		/* Response buffer */
 extern	char	*respptr;		/* pointer to same */

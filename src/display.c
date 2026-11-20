@@ -205,7 +205,7 @@ int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 
 	wattron (statuswin, A_BOLD);
 	status (0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
-	stat_print (COLS - 18, "F1 or ^U to abort", NULL, NULL);
+	stat_print (COLS - 12, "^U to abort", NULL, NULL);
 	wattrset (statuswin, STATATTR);
 
 	prompt (0, st1, st2, NULL, NULL);			/* Prompt user */
@@ -254,6 +254,11 @@ int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 			keyin = (wait_key () & 0x1F);		/* Xlate to ctl-code */
 			/* FALLTHRU */
 		default:
+			if (keyin > 255)	/* Unhandled extended key (F-Keys etc.) */
+			{
+				beep ();
+				break;
+			}
 			if (scresult >= inlen)
 			{
 				beep ();
@@ -298,8 +303,16 @@ int prompt_st (char *st1, char *st2, char *inputst, int inlen)
  */
 int prompt_key (char *strptr)
 {
+	int keyin;
+
 	warning (strptr);	/* Show prompt at right edge */
-	return (wait_key ());
+	keyin = wait_key ();
+	if (keyin > 255)	/* Unhandled extended key (F-Keys etc.) */
+	{
+		beep ();
+		return (0);
+	}
+	return (keyin);
 }
 
 /* ---------------------------------------------------------------
