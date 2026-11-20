@@ -643,3 +643,36 @@ Session 13 addendum (user-reported: writing behind the [EOF] marker):
   (split-marker) occurrence in the pty stream; verified it FAILS on
   the pre-fix binary and passes on the fixed one. Suite is now 6 tests.
 - Both builds warning-free; smoke 6/6.
+
+== 2026-11-20 - Session 14: color support removed ==
+
+User request: remove the color option and everything associated with it;
+the editor should behave like -b did.
+
+Implementation (minimal-diff plan, approved):
+- sue.c: the color init block (has_colors()/start_color()/init_pair x3
+  and its #ifdef ULTRIX guard) replaced by the unconditional mono
+  assignments (STATATTR/FLAGATTR/PROMPTATTR = the *_VIDEO defines).
+  One platform ifdef fewer; ULTRIX always ran this path anyway.
+- sue.c: bwopt global, its default, the -b parse case removed; usage
+  is "[-dmstu]" (the -b line dropped). Scripts passing -b now get the
+  usage error.
+- sue.h: the five *_VIDEO defines stay (they ARE the attributes); the
+  comment no longer mentions -b.
+- README.md: -b bullet removed, usage updated.
+- The STATATTR/FLAGATTR/PROMPTATTR/BLOCKATTR/CNTLATTR globals stay as
+  the display-attribute abstraction: zero changes in display.c,
+  command.c, funcs.c (~30 wattrset/wattron call sites untouched).
+
+Verification:
+- [x] grep: zero bwopt/has_colors/start_color/init_pair/COLOR_* refs.
+- [x] make + wmake -f Makefile.wcc: zero warnings; smoke 6/6.
+- [x] BYTE-EQUIVALENCE PROOF: pty session (load, type, ^O, ^Q D, ^S,
+      save, quit) captured for HEAD with -b vs the stripped build with
+      no flag: 1372 bytes of terminal output, byte-identical.
+      (Harness gotcha: expect log_file APPENDS - rm the logs first;
+      "-dmstu" as a cluster correctly errors since s/t need attached
+      values; < /dev/null still hangs curses getch - use ptys.)
+- [x] Pristine 0.7i checked: the ORIGINAL had color too (start_color
+      in _original sue.c) - removal is a deliberate divergence from
+      0.7i, documented in AGENTS.md conventions ("monochrome only").

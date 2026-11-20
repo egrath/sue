@@ -66,7 +66,6 @@ char	*bufptr;			/* Buffer ptr. for malloc */
 
 int		optresult;
 
-int		bwopt;				/* Force black & white display */
 int		warnflag = 0;		/* A warning is present */
 
 enum dispmode disp_mode;	/* Global screen refresh flag */
@@ -240,7 +239,7 @@ int main (int argc, char *argv[])
 	rptr = &r_str[0];
 	r_strsiz = sizeof (r_str) - 1;
 
-	bwopt = optresult = helplines = 0;	/* Option defaults */
+	optresult = helplines = 0;	/* Option defaults */
 	autofilemode = 1;	/* Default to file mode autodetect */
 #ifdef DOS
 	filemode = MODE_MSDOS;	/* Default to Dos file type */
@@ -261,9 +260,6 @@ int main (int argc, char *argv[])
 		{
 			switch (*arg)
 			{
-			case 'b':
-				bwopt = !bwopt;
-				break;
 			case 'd':
 				autofilemode = 0;
 				filemode = MODE_MSDOS;
@@ -318,9 +314,8 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "\nSUE - a Simple Unix Editor, version %s", suerev);
 		fprintf (stderr, "\nCopyright 1995 by Point to Point Communications\n");
 		fprintf (stderr, "  Usage:\n");
-		fprintf (stderr, "    %s [-bdmstu][-sn][-tn] [file]\n", argv[0]);
+		fprintf (stderr, "    %s [-dmstu][-sn][-tn] [file]\n", argv[0]);
 		fprintf (stderr, "  Options:\n");
-		fprintf (stderr, "    -b  for black & white operation\n");
 		fprintf (stderr, "    -d  MSDOS file mode\n");
 		fprintf (stderr, "    -m  Macintosh file mode\n");
 		fprintf (stderr, "    -sn set right margin to n\n");
@@ -354,32 +349,10 @@ int main (int argc, char *argv[])
 	editwin   = newwin (editlines, COLS, helplines + 1, 0);	/* Next 2 overlap */
 	promptwin = newwin (1, COLS, helplines + 1, 0);
 
-#ifdef ULTRIX
-	/* Monochrome: ULTRIX curses has no color support */
+	/* Monochrome video attributes for all platforms */
 	STATATTR   = STATUS_VIDEO;	/* A_UNDERLINE */
 	FLAGATTR   = FLAG_VIDEO;	/* A_NORMAL */
 	PROMPTATTR = PROMPT_VIDEO;	/* A_BOLD */
-
-#else
-	/* Color terminals and curses implementations */
-	if (has_colors () && !bwopt)		/* Black & White option flag */
-	{
-		start_color (); /* Initialize color routines */
-		init_pair (1, COLOR_GREEN, COLOR_BLACK);
-		STATATTR = COLOR_PAIR (1);
-		init_pair (2, COLOR_BLUE, COLOR_BLACK);
-		FLAGATTR = COLOR_PAIR (2);
-		init_pair (3, COLOR_YELLOW, COLOR_BLACK);
-		PROMPTATTR = COLOR_PAIR (3) | A_BOLD;
-	}
-	else
-	/* Monochrome terminals (or '-b' option) */
-	{
-		STATATTR   = STATUS_VIDEO;	/* A_UNDERLINE */
-		FLAGATTR   = FLAG_VIDEO;	/* A_NORMAL */
-		PROMPTATTR = PROMPT_VIDEO;	/* A_BOLD */
-	}
-#endif
 	BLOCKATTR  = BLOCK_VIDEO;		/* A_BOLD */
 	CNTLATTR   = CONTROL_VIDEO;		/* A_UNDERLINE */
 

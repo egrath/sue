@@ -44,7 +44,7 @@ extern int wrefresh (WINDOW *);
 
 /* ===================== GLOBAL DEFINES =================== */
 
-/* Video attributes for monochrome monitors or '-b' option */
+/* Video attributes (monochrome) */
 
 #define	STATUS_VIDEO	A_UNDERLINE	/* Status line	*/
 #define	CONTROL_VIDEO	A_UNDERLINE	/* Control characters */

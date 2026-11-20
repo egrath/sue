@@ -38,9 +38,8 @@ produces `build.dos/sue.exe`. Requires PDCurses built for DOS/4GW in
 
 ## Usage
 
-    sue [-bdmstu] [-sn] [-tn] [file]
+    sue [-dmstu] [-sn] [-tn] [file]
 
-- `-b` black & white mode
 - `-d` / `-m` / `-u` force DOS/Macintosh/Unix line endings
 - `-sn` set the right margin to n
 - `-tn` set the tab width to n (1..32)

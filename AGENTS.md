@@ -122,8 +122,10 @@ cursor clamps at the marker start and nothing can be written behind it.
   routines get static trampolines (`alarm_*_hlp`) in `command.c`.
 - No deprecated APIs: crash-save filenames are generated with `getpid()`-based
   unique names instead of `tempnam()`.
-- Color support is always compiled in (the `DOCOLOR` build flag was removed);
-  runtime selection happens via `has_colors()` and the `-b` command line flag.
+- **Monochrome only — no color support.** The color code (has_colors/
+  start_color/init_pair, the `-b` flag) was removed: the display uses the
+  fixed `*_VIDEO` attributes (A_UNDERLINE/A_BOLD) on every platform. Do not
+  reintroduce curses color calls.
 - **Code style** (do not mix styles):
   - Allman braces: every `{` / `}` on its own line — functions, `if`/`else`,
     `switch`, loops, `struct`/`enum`. `else` on its own line.
@@ -290,6 +292,15 @@ cursor clamps at the marker start and nothing can be written behind it.
   text translation no longer double-converts saves; -d/-m/-u now write
   exact CRLF/CR/LF and load()'s own line-ending detection sees the real
   bytes. Binary mode is a no-op on POSIX, so UNIX/macOS is unchanged.
+- 2026-11-20 — Color support removed entirely: the display uses the fixed
+  monochrome `*_VIDEO` attributes (A_UNDERLINE/A_BOLD) on every platform -
+  what `-b` did is now the only behavior. The has_colors()/start_color()/
+  init_pair() block and its `#ifdef ULTRIX` guard are gone (one platform
+  ifdef fewer; ULTRIX ran this path already), as are the `bwopt` global and
+  the `-b` option (usage is `[-dmstu]`; scripts passing -b get a usage
+  error). The STATATTR/FLAGATTR/PROMPTATTR/BLOCKATTR/CNTLATTR globals stay
+  as the single display-attribute abstraction (the pristine 0.7i original
+  had the same mono fallback via the *_VIDEO defines).
 - 2026-11-20 — line_y() clamps the cursor at the [EOF] marker: its
   forward scan loop was the one scan without a txt_end bound, so ^Q D
   (end of line) on the marker line walked the cursor through the marker
