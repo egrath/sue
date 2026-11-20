@@ -53,6 +53,8 @@ marker and trailing newlines so all of the text can be treated as a string.
   are the override points for other targets.
 - `make clean` empties `build/` but keeps the directory; `make install`
   strips + moves the binary to `BINDIR`.
+- Smoke tests: `sh tests/smoke.sh` (expect + xxd) — runs five pty-driven
+  round-trip tests against `build/sue`; run after every change.
 - **Future targets: Windows, Macintosh, Linux, DOS** — and Solaris should
   "come free" if it compiles cleanly on the others. Add no per-platform
   `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and feature flags
@@ -186,6 +188,14 @@ marker and trailing newlines so all of the text can be treated as a string.
   save with CRLF (MODE_MSDOS), UNIX builds with LF (MODE_UNIX); -d/-m/-u
   override, and loaded files keep their detected endings (load() preserves
   the style the file already had).
+- 2026-11-20 — Closed out the remaining review findings: find() no longer
+  uppercases the search string in place (an uppercased copy is compared),
+  del_line() restores the cursor position when its undo-save fails, ^P ^@
+  (NUL) is rejected with a beep, and the dinsln redraw at the top screen
+  line no longer writes at row -1. Added tests/smoke.sh (expect-based
+  round-trip tests) and refreshed README.md. Kept: sabort() curses-after-
+  endwin messages (intentional), load() reporting lines+1 (only truthiness
+  is used), the 80286 truncation loop in do_alloc() (vestigial but harmless).
 - 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
   braces, always-braced bodies, space between function name and paren
   everywhere, floating `*` in return types, name-glued `*` in declarations).
@@ -210,12 +220,15 @@ marker and trailing newlines so all of the text can be treated as a string.
 
 ## Known issues / notes (not yet fixed)
 
-- `del_line()` (funcs.c): on failed `undel_save` the cursor jumps to column 1
-  (original author's BUG note).
-- `find()` (funcs.c) uppercases the search string in place (`strtoup(sptr)`),
-  destroying it as typed.
-- `sabort()` runs after `endwin()`, so its `beep()`/`promptkey()` calls operate
+- `sabort()` runs after `endwin()`, so its `beep()`/`prompt_key()` calls operate
   on dead windows (original behavior, intentionally kept).
+- `load()` returns lines+1 — only truthiness is used by callers, so this is
+  harmless; changing it would need care with the empty-file case.
+- `prompt()`/`xw_printw()` format via unbounded `sprintf`/`vsprintf` into
+  local buffers — safe with the current internal callers, but new call sites
+  must keep format strings and argument types bounded.
+- The alarm-based timed help calls curses from signal context — technically
+  non-reentrant; works in practice (original design, kept).
 - Buffer arithmetic assumes 7-bit text (`c &= 0x7F` on load) — no UTF-8 support.
 - The Linux target was updated for strict-C89 feature macros but is only
   build-verified on macOS.

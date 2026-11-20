@@ -1,19 +1,51 @@
 # SUE text editor
-A very old text editor (latest version from 1995) for even older Unices (ULTRIX, ...) with a WordStar like keybinding.
 
-![SUE running on ULTRIX](https://github.com/user-attachments/assets/8943d69c-95bb-4d81-bc1a-a78880458588)
+SUE — the "Simple Unix Editor" — is a small full-screen text editor with
+WordStar-style keybindings, originally written 1992–1995 by Point to Point
+Communications for old Unices (ULTRIX, AIX, SVR3/4). This fork modernizes the
+code (strict C89, warning-free) and brings it to modern systems — and back
+to DOS.
 
-SUE running on ULTRIX
+![SUE running on ULTRIX](https://github.com/user-attachments/assets/8943d69c-95bb-4d81-bc1a-a78880458585)
 
-## Changes
-We implemented a few changes, some of them minor, some of them major:
+## Features
 
-### Major
-- Remove the F-Key mode and focus on WordStar keybindings
-- Remove the novice mode
-- Remove configuration via environment variable
+- WordStar-style keybindings — `^J` opens the built-in help screens
+- Gap-buffer editing core, block operations, search & replace, paragraph
+  reform, shell escape
+- UNIX/DOS/Macintosh line-ending handling: auto-detected when loading, new
+  files use the platform default (LF on UNIX, CRLF on DOS)
 
-### Minor
-- Compile cleanly on more modern systems (Macintosh, Linux)
-- Add line / column indicator in the status line
+## Removed from the original
 
+- The F-key mode (WordStar keys only; F-keys are ignored)
+- The novice mode
+- Configuration via environment variables
+
+## Building
+
+### UNIX / macOS / Linux (ncurses)
+
+    make
+
+produces `build/sue`.
+
+### DOS (OpenWatcom, DOS/4GW 32-bit, PDCurses)
+
+    source ~/opt/openwatcom/env.txt
+    wmake -f Makefile.wcc
+
+produces `build.dos/sue.exe`. Requires PDCurses built for DOS/4GW in
+`~/opt/pdcurses` (library `dos/pdcurses.lib`).
+
+## Usage
+
+    sue [-bdmstu] [-sn] [-tn] [file]
+
+- `-b` black & white mode
+- `-d` / `-m` / `-u` force DOS/Macintosh/Unix line endings
+- `-sn` set the right margin to n
+- `-tn` set the tab width to n (1..32)
+
+New files are saved with the platform's line endings; loaded files keep the
+endings detected from their content.
