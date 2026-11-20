@@ -1,23 +1,64 @@
+/* #######################################################################
+ * display.c - TextStar curses output.
+ * purpose:
+ *     Everything the user sees: the status line (file name, cursor
+ *     position, toggles), the prompt/warning line, the text repaint
+ *     machinery (dsp_line/disp_page/display driven by the disp_mode
+ *     ordinal), the help screens and the small user-feedback helpers
+ *     (beep-and-message errors).
+ * notes:
+ *     Commands never paint text themselves; they set disp_mode (an
+ *     ORDERED enum - higher values mean bigger repaints) and the main
+ *     loop calls display(), which decides between one-line updates,
+ *     line inserts/deletes, scrolls and full pages.
+ * ####################################################################### */
+
 #include "ts.h"
 #include <stdarg.h>
 
-/* -----------------------------------------------
- * Tell user he entered bad value
- */
+/* #######################################################################
+ * void val_err (void)
+ * purpose:
+ *     Feedback for an invalid numeric value typed by the user
+ *     (goto line, margin, tab width).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void val_err (void)
 {
 	beep ();
 	prompt_key ("Value error ");
 }
 
-void not_found (void)		/* user's string search fails */
+/* #######################################################################
+ * void not_found (void)
+ * purpose:
+ *     Feedback for a failed string search.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
+void not_found (void)
 {
 	beep ();
 	prompt_key ("Text not found ");
 }
-/* -----------------------------------------------
- * Check for and report block errors
- */
+/* #######################################################################
+ * int blk_err (char level)
+ * purpose:
+ *     Check that a block operation may run: either no block is marked
+ *     (markers outside the text) or - for operations that act at the
+ *     cursor (level > 1) - the cursor sits inside the marked block.
+ *     Beeps and reports "Block error" when the operation must not run.
+ * returns:
+ *     1 = error, refuse the operation; 0 = ok.
+ * parameters:
+ *     char level: 1 = only check the markers' validity; 2+ = also
+ *     reject when the cursor is inside the block.
+ * ####################################################################### */
 int blk_err (char level)
 {
 	if (((level > 1) &&
@@ -34,24 +75,49 @@ int blk_err (char level)
 		return (0);	/* no errors */
 	}
 }
-/* ----------------------------------------------
- * User entered unknown command
- */
+/* #######################################################################
+ * void key_err (void)
+ * purpose:
+ *     Feedback for an unrecognized command key.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void key_err (void)
 {
 	beep ();
 	prompt_key ("Unknown command ");
 }
-/* -------------------------------------------------
- */
+/* #######################################################################
+ * void tpa_err (void)
+ * purpose:
+ *     Feedback for out-of-memory conditions (buffer allocation, text
+ *     insertion with no gap space left).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None.
+ * ####################################################################### */
 void tpa_err (void)
 {
 	beep ();
 	prompt_key ("Out of memory! ");
 }
-/* -----------------------------------------------
- * Confirm before abandoning text
- */
+/* #######################################################################
+ * char abandon (void)
+ * purpose:
+ *     Ask the user whether modified text may be abandoned (quit, new
+ *     file). Prompts "File modified; Abandon (Y/N)?", defaulting to N.
+ * returns:
+ *     'Y' when the user confirmed (uppercased), any other character
+ *     (typically N) otherwise.
+ * parameters:
+ *     None.
+ * notes:
+ *     Callers compare the result against 'Y'; echoing the confirmed
+ *     Y keeps the prompt line honest.
+ * ####################################################################### */
 char abandon (void)
 {
 	int	c;
@@ -63,16 +129,35 @@ char abandon (void)
 	}
 	return (c);
 }
-/* ---------------------------------------------------
- * Await keystroke from prompt window
- */
+/* #######################################################################
+ * int wait_key (void)
+ * purpose:
+ *     Await one keystroke, reading from the prompt window.
+ * returns:
+ *     The key code as curses reports it (ASCII or extended KEY_*).
+ * parameters:
+ *     None.
+ * notes:
+ *     The two-key menus (^Q/^K/^O) take their second key here so the
+ *     help-window repaint does not steal focus.
+ * ####################################################################### */
 int wait_key (void)
 {
 	return (wgetch (promptwin));
 }
-/* ----------------------------------------------------
- *	Output a single character to the screen.
- */
+/* #######################################################################
+ * void out_char (char a)
+ * purpose:
+ *     Output one character to the edit window, using the block
+ *     attribute when the position falls inside the marked block.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     char a: the character to display.
+ * notes:
+ *     The block test uses gap_beg (the cursor side of the gap) - the
+ *     character being painted is the one at the cursor.
+ * ####################################################################### */
 void out_char (char a)
 {
 	if ((blk_beg <= gap_beg) && (blk_end > gap_beg))
@@ -87,18 +172,38 @@ void out_char (char a)
 		waddch (editwin, a);
 	}
 }
-/* --------------------------------------------
- * Print to status line
- */
+/* #######################################################################
+ * void stat_print (int col, char *st1, char *st2, char *st3)
+ * purpose:
+ *     Print a fragment into the status line at column "col" without
+ *     erasing the rest of it, then refresh.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int col: 0-based status-line column to start at.
+ *     char *st1: the text (a printf format, usually plain text).
+ *     char *st2, char *st3: optional printf arguments - pass NULL
+ *     when unused (the trailing-NULL convention of this codebase).
+ * ####################################################################### */
 void stat_print (int col, char *st1, char *st2, char *st3)
 {
 	mvwprintw (statuswin, 0, col, st1, st2, st3);
 	wrefresh (statuswin);
 }
 
-/* ----------------------------------------------
- * print line number and column in the status line
- */
+/* #######################################################################
+ * static void status_linecol (void)
+ * purpose:
+ *     Refresh only the "L n C n" cursor-position fragment of the
+ *     status line (at column COLS - 49).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; reads txt_x/txt_y.
+ * notes:
+ *     The label buffer holds files with 100000+ lines (sized
+ *     accordingly - an older fixed-width version overflowed).
+ * ####################################################################### */
 static void status_linecol (void)
 {
 	char label_pos[32];
@@ -107,9 +212,22 @@ static void status_linecol (void)
 	stat_print (COLS - 49, label_pos, NULL, NULL);
 }
 
-/* ---------------------------------------------
- * Redisplay status line
- */
+/* #######################################################################
+ * void status (int col, char *st1, char *st2, char *st3)
+ * purpose:
+ *     Clear and redraw the WHOLE status line, then print the given
+ *     text at column "col". Used for transient messages like "SUE
+ *     loading..." / "TextStar writing ...".
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int col: column for the message.
+ *     char *st1: printf-style format (the message).
+ *     char *st2, char *st3: printf arguments or NULL.
+ * notes:
+ *     The line is erased by painting COLS blanks (older curses have
+ *     no reliable wclrtoeol on a cleared window), restoring STATATTR.
+ * ####################################################################### */
 void status (int col, char *st1, char *st2, char *st3)
 {
 	int colcnt;
@@ -122,9 +240,20 @@ void status (int col, char *st1, char *st2, char *st3)
 	}
 	stat_print (col, st1, st2, st3);
 }
-/* ---------------------------------------------------
- * Restore status line
- */
+/* #######################################################################
+ * void status_line (void)
+ * purpose:
+ *     Rebuild the standard status line: current file name (shortened
+ *     to its basename), "L n C n" cursor position, the MR/INS toggle
+ *     indicators when set, and the "^J for help" hint (suppressed
+ *     while a help window is open).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; reads txtname, txt_x/txt_y, MRflag, insflag, helplines.
+ * notes:
+ *     Called after every command that changes the cursor or state.
+ * ####################################################################### */
 void status_line (void)
 {
 	char	*nameptr;
@@ -161,9 +290,24 @@ void status_line (void)
 		stat_print (COLS - 11, "^J for help", NULL, NULL);
 	}
 }
-/* -----------------------------------------------------
- * Prompt user for string
- */
+/* #######################################################################
+ * void prompt (int col, char *st1, ...)
+ * purpose:
+ *     Show a prompt on the prompt line (the same row the edit window
+ *     overlaps): copy the edit-window background under it, print the
+ *     formatted text in PROMPTATTR and tell curses to repaint the edit
+ *     window on the next refresh so the prompt is only an overlay.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int col: 0-based column for the prompt.
+ *     char *st1: printf-style format string.
+ *     ...: printf arguments for st1.
+ * notes:
+ *     Variadic on purpose: several call sites pass int/long printf
+ *     arguments. The formatting goes through vsprintf into a local
+ *     buffer - keep the format bounded.
+ * ####################################################################### */
 void prompt (int col, char *st1, ...)
 {
 	va_list	args;
@@ -184,17 +328,42 @@ void prompt (int col, char *st1, ...)
 	touchwin (editwin);			/* Tell curses to redraw */
 								/* ..on next 'refresh' call */
 }
-/* -------------------------------------------------------
- * Show warning message at right edge
- */
+/* #######################################################################
+ * void warning (char *strptr)
+ * purpose:
+ *     Show a short warning/prompt right-aligned on the prompt line
+ *     ("New file", "^K-", "Block error", ...).
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     char *strptr: the message.
+ * notes:
+ *     Sets warnflag state via the caller (main's loop suppresses the
+ *     next repaint so the warning stays readable until any key).
+ * ####################################################################### */
 void warning (char *strptr)
 {
 	prompt (COLS - strlen (strptr) - 3, "  %s", strptr, NULL, NULL);
 }
-/* -------------------------------------------------------
- * Prompt for and return string
- * Returns length of input string, or -1 if aborted. (12/15/92-crw)
- */
+/* #######################################################################
+ * int prompt_st (char *st1, char *st2, char *inputst, int inlen)
+ * purpose:
+ *     The full-screen string input line: prompt, then edit a string
+ *     with backspace delete, ^P to enter literal control codes and ^U
+ *     (or ESC) to abort. Control characters are displayed as
+ *     underlined "@letter".
+ * returns:
+ *     The number of characters stored, or -1 when the user aborted.
+ * parameters:
+ *     char *st1: prompt format string (printed via prompt()).
+ *     char *st2: its printf argument (or NULL).
+ *     char *inputst: the caller's buffer to fill (NUL-terminated).
+ *     int inlen: capacity of inputst.
+ * notes:
+ *     A NUL byte cannot be entered (rejected with a beep); keys above
+ *     255 (F-keys etc.) are ignored. Restores the status line and the
+ *     prompt attributes before returning.
+ * ####################################################################### */
 int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 {
 	int		scresult;
@@ -298,9 +467,16 @@ int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 		return scresult;				/* No. chars stored */
 	}
 }
-/* -----------------------------------------------------------
- * Prompt for and return keystroke
- */
+/* #######################################################################
+ * int prompt_key (char *strptr)
+ * purpose:
+ *     Show a warning-style prompt and wait for ONE keystroke. Used by
+ *     all the beep-and-message error helpers and the Y/N questions.
+ * returns:
+ *     The keystroke (0 for unhandled extended keys, with a beep).
+ * parameters:
+ *     char *strptr: the prompt text (shown via warning()).
+ * ####################################################################### */
 int prompt_key (char *strptr)
 {
 	int keyin;
@@ -315,11 +491,27 @@ int prompt_key (char *strptr)
 	return (keyin);
 }
 
-/* ---------------------------------------------------------------
- * Display a line from present pointer up to \n and
- *   return a pointer to the char AFTER the \n.
- * The line is displayed on the jTH line of the screen.
- */
+/* #######################################################################
+ * static char * dsp_line (char *line, int row)
+ * purpose:
+ *     Paint ONE text line on screen row "row" starting from buffer
+ *     position "line": expand TABs to tab stops, render control
+ *     characters as underlined "@letter" when cntlflag is set, apply
+ *     the BLOCKATTR highlight inside the marked block, stop at the
+ *     newline or the right margin, and mark hard-carriage lines with
+ *     a '<' flag at the right edge.
+ * returns:
+ *     Pointer to the first character AFTER the newline (the start of
+ *     the next line to paint).
+ * parameters:
+ *     char *line: first character of the line to display.
+ *     int row: 1-based screen row to paint on.
+ * notes:
+ *     Skips the gap transparently while walking. The hard-CR flag is
+ *     only shown when cntlflag is set and disp_mode requests it
+ *     (disp_mode > dtoeol). The goto dsp_exit handles the right-margin
+ *     early stop; the scan stops at the newline reached.
+ * ####################################################################### */
 static char * dsp_line (char *line, int row)
 /* line: Pointer to first character to display; row: Screen X position */
 {
@@ -448,9 +640,21 @@ static char * dsp_line (char *line, int row)
 	}
 	return (line);
 }
-/* ---------------------------------------------------
- * Rewrite screen from xtop to xbot.
- */
+/* #######################################################################
+ * static void disp_page (int x_top, int x_bot)
+ * purpose:
+ *     Repaint the text lines from row x_top through row x_bot: locate
+ *     the buffer position of x_top with new_line() (skipping the
+ *     "[EOF]" marker if the scan lands on it), then walk dsp_line()
+ *     down the screen.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     int x_top, int x_bot: first and last absolute text rows
+ *     (1-based) to repaint.
+ * notes:
+ *     Refreshes the edit window once at the end.
+ * ####################################################################### */
 static void disp_page (int x_top, int x_bot)
 {
 	char	*line;
@@ -476,10 +680,28 @@ static void disp_page (int x_top, int x_bot)
 	}
 	wrefresh (editwin);
 }
-/* -----------------------------------------------------
- * Global screen update routine.
- * Redisplays the screen per global disp_mode variable.
- */
+/* #######################################################################
+ * void display (void)
+ * purpose:
+ *     The global screen update, called from the main loop. Reads
+ *     disp_mode (the ORDERED repaint request set by the last command)
+ *     and adjusts the scroll position first: re-center the window when
+ *     the cursor left the visible rows/columns, possibly downgrading
+ *     a full repaint to a one-line scroll. Then performs the cheapest
+ *     repaint that satisfies the request: single line, end-of-line,
+ *     line insert/delete with curses hardware support, scroll, or full
+ *     page. Ends by updating the status line and restoring the cursor.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; everything comes from disp_mode/txt_x/txt_y and the
+ *     scr_* window limits.
+ * notes:
+ *     The disp_mode enum is ORDINAL on purpose: "disp_mode > dtoeol"
+ *     means "this command changed enough state to need the hard-CR
+ *     flags repainted". Hardware scrolling (idlok) is enabled for the
+ *     scroll modes and disabled for full pages - an old curses bug.
+ * ####################################################################### */
 void display (void)
 {
 	scr_xend = scr_xbeg + editlines - 1;
@@ -622,11 +844,24 @@ void display (void)
 #define CO5 "                                                                              "
 #define CO6 "                                                                              "            "           "
 
-/* -----------------------------------------------------------------
- *	Add strings to window, highlighting sections enclosed in `reverse quotes`
- *  Uses FLAGATTR | A_BOLD to highlight.
- *  Side-effect: always sets attributes for designated window to A_NORMAL.
- */
+/* #######################################################################
+ * void xw_printw (WINDOW *xwindow, char *string1, ...)
+ * purpose:
+ *     printf-style output to a curses window with inline highlighting:
+ *     sections enclosed in backquotes (`like this`) are printed in
+ *     FLAGATTR | A_BOLD - the help screens mark their command keys
+ *     that way.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     WINDOW *xwindow: the curses window to print into.
+ *     char *string1: printf-style format string.
+ *     ...: printf arguments for string1.
+ * notes:
+ *     Variadic (help texts substitute numbers). Formats via vsprintf
+ *     into a local buffer sized from TXTNAME_SIZE - keep formats
+ *     bounded. Leaves the window attributes at A_NORMAL.
+ * ####################################################################### */
 void xw_printw (WINDOW *xwindow, char *string1, ...)
 {
 	va_list	args;
@@ -661,9 +896,25 @@ void xw_printw (WINDOW *xwindow, char *string1, ...)
 
 	wattrset (xwindow, A_NORMAL);
 }
-/* -----------------------------------------------------------------
- *	Display help in help window.
- */
+/* #######################################################################
+ * void do_help (enum helptype helprequest, WINDOW *hwindow)
+ * purpose:
+ *     Paint one of the help screens (primary menu, ^Q quick, ^K block,
+ *     ^O onscreen) - the seven-line texts are #defined above, command
+ *     keys highlighted through xw_printw's backquote mechanism. A
+ *     separator line (underline or horizontal rule) closes the screen.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     enum helptype helprequest: which screen (PRIMARY/QUICK/BLOCK/
+ *     ONSCREEN).
+ *     WINDOW *hwindow: the window to paint into (helpwin for the
+ *     persistent top help, editwin for the timed menus).
+ * notes:
+ *     Centers the HWIDTH-wide text on wider terminals. On the persistent
+ *     helpwin the separator follows helplines; the alarm() timeout of
+ *     the timed menus re-enters this via the alarm_*_hlp trampolines.
+ * ####################################################################### */
 void do_help (enum helptype helprequest, WINDOW *hwindow)
 {
 	chtype	ULchar = ACS_HLINE;	/* From curses.h */
