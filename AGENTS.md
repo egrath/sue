@@ -39,7 +39,9 @@ and the `t*` temporaries) must "jump the gap" when the gap moves past them.
 `txt_beg`/`txt_end` bound the buffer; the buffer always ends with an `[EOF]`
 marker and trailing newlines so all of the text can be treated as a string.
 The final newline of the text is protected: `del_right()`/`reform()` never
-delete or join it away — the `[EOF]` marker must stay on its own line.
+delete or join it away — the `[EOF]` marker must stay on its own line. Every
+forward cursor scan is bounded by `txt_end` (`move_y()`, `line_y()`), so the
+cursor clamps at the marker start and nothing can be written behind it.
 
 ## Build
 
@@ -61,7 +63,7 @@ delete or join it away — the `[EOF]` marker must stay on its own line.
   are the override points for other targets.
 - `make clean` empties `build/` but keeps the directory; `make install`
   strips + moves the binary to `BINDIR`.
-- Smoke tests: `sh tests/smoke.sh` (expect + xxd) — runs five pty-driven
+- Smoke tests: `sh tests/smoke.sh` (expect + xxd) — runs six pty-driven
   round-trip tests against `build/sue`; run after every change.
 - **Future targets: Windows, Macintosh, Linux** — and Solaris should
   "come free" if it compiles cleanly on the others (UNIX, DOS and ULTRIX
@@ -288,6 +290,14 @@ delete or join it away — the `[EOF]` marker must stay on its own line.
   text translation no longer double-converts saves; -d/-m/-u now write
   exact CRLF/CR/LF and load()'s own line-ending detection sees the real
   bytes. Binary mode is a no-op on POSIX, so UNIX/macOS is unchanged.
+- 2026-11-20 — line_y() clamps the cursor at the [EOF] marker: its
+  forward scan loop was the one scan without a txt_end bound, so ^Q D
+  (end of line) on the marker line walked the cursor through the marker
+  into the sentinel padding and typing then wrote behind [EOF], splitting
+  the marker on screen ("A[[EOF]" — the user-reported "[[[[[[EOF]"
+  garbage). WordStar semantics kept: ^Q D on the marker line = marker
+  start; text typed there appends to the last text line. Smoke test 6
+  guards it (screen-stream check — the saved file alone hid the bug).
 
 ## Known issues / notes (not yet fixed)
 

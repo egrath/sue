@@ -618,3 +618,28 @@ Verification:
 Commits this session (chronological): 107f585 (flags revert + MARKERS),
 d1df652 (option parser + -s fix), 5abefce (MARKERS/getopt cleanup),
 70c3444 ([EOF] guards + binary I/O).
+
+Session 13 addendum (user-reported: writing behind the [EOF] marker):
+- Repro: cursor down to the marker line, type "A", ^Q S, ^Q D -> cursor
+  behind [EOF]; typing shows "[[[[[[EOF]" garbage.
+- Root cause: line_y()'s forward scan loop was the ONE scan in the
+  codebase without a txt_end bound (only the start position was
+  checked). On the marker line the scan walks '[','E','O','F',']' and
+  stops at the first padding newline BEHIND the marker; text_move()
+  puts the gap there, text_ins() then writes into the sentinel padding
+  (no txt_end concept there either). ASan could never see this: the
+  padding is inside the malloc'd block.
+- Empirical proof via pty screen capture: old binary renders "A[[EOF]"
+  (the gap opens inside the marker string); fixed binary renders
+  "AX[EOF]" with the cursor clamped at the marker start.
+- Fix (WordStar semantics, user-approved): "(txt_ptr < txt_end)" added
+  to line_y()'s loop condition + belt-and-braces post-loop clamp like
+  move_y(). ^Q D on the marker line = marker start; typing appends to
+  the last text line; normal-line ^Q D unchanged ("hello world" + ^Q D
+  + "!" -> "hello world!").
+- Detection lesson: the saved file alone stays clean (save truncates at
+  the marker) - the SCREEN stream is the evidence. Smoke test 6 added:
+  replays the repro and asserts both the saved bytes AND no "[["
+  (split-marker) occurrence in the pty stream; verified it FAILS on
+  the pre-fix binary and passes on the fixed one. Suite is now 6 tests.
+- Both builds warning-free; smoke 6/6.

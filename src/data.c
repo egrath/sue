@@ -258,7 +258,10 @@ int line_y (int col)		/* Column # to move cursor to */
 	/* Do column count from line beginning */
 	if (txt_ptr < txt_end)
 	{
-		for ( ; (i < col) && (*txt_ptr != '\n') ; txt_ptr++)
+		/* txt_ptr < txt_end also bounds the loop: the scan must
+		 * never walk into the [EOF] marker (e.g. ^Q D on the
+		 * marker line) - the cursor stays at the marker start. */
+		for ( ; (i < col) && (*txt_ptr != '\n') && (txt_ptr < txt_end) ; txt_ptr++)
 		{
 			if (*txt_ptr == '\t')
 			{
@@ -277,6 +280,10 @@ int line_y (int col)		/* Column # to move cursor to */
 			{
 				ii = 0;
 			}
+		}
+		if (txt_ptr > txt_end)	/* Belt & braces, like move_y() */
+		{
+			txt_ptr = txt_end;
 		}
 		if (i > col)
 		{

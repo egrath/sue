@@ -95,6 +95,33 @@ TERM=xterm expect -c "
 	&& { echo "ok   - F1 ignored in filename prompt"; PASS=$((PASS+1)); } \
 	|| { echo "FAIL - F1 ignored in filename prompt"; FAIL=$((FAIL+1)); }
 
+# 6: ^Q D on the [EOF] marker line must clamp the cursor at the marker
+#    start, never move it behind the marker (a split marker renders as
+#    "[[EOF]" - the saved file alone can hide this, so check the screen)
+printf 'abc\n' > "$T/6.txt"
+TERM=xterm expect -c "
+	log_file $T/6.log
+	set timeout 15
+	spawn $SUE $T/6.txt
+	sleep 1
+	send \"\\030\\030\\030\"	;# ^X ^X ^X  down to the marker line
+	sleep 1
+	send \"A\"
+	sleep 1
+	send \"\\021s\"		;# ^Q S  beginning of line
+	send \"\\021d\"		;# ^Q D  end of line
+	sleep 1
+	send \"X\"
+	sleep 1
+	send \"\\013s\"
+	sleep 1
+	send \"\\013q\"
+	expect { eof {} timeout { exit 1 } }
+" > /dev/null 2>&1
+[ "$(hex $T/6.txt)" = "6162630a4158" ] && ! grep -q '\[\[' "$T/6.log" \
+	&& { echo "ok   - ^Q D clamps at the [EOF] marker"; PASS=$((PASS+1)); } \
+	|| { echo "FAIL - ^Q D clamps at the [EOF] marker"; FAIL=$((FAIL+1)); }
+
 rm -rf "$T"
 echo "smoke tests: $PASS passed, $FAIL failed"
 [ $FAIL = 0 ]
