@@ -268,6 +268,29 @@ Verification:
       requested from user. (User later verified the DOS version works on
       real DOS.)
 
+== 2026-11-20 - Session 11: Makefile CC override fix ==
+
+User request: the Makefile had a logical error - the ULTRIX branch set
+CC = gcc, but a later unconditional "CC = cc" clobbered it back (the
+assignment block sat after the uname detection, left over from the original
+layout). Also re-reported: the wrefresh/wattrset/wclrtoeol implicit-
+declaration warnings - those were already fixed by 582fad5 (cursesX.h
+restored); the diagnostics came from a build of the pre-582fad5 tree.
+
+Implementation:
+- Makefile: CC = cc moved BEFORE the uname detection block; the ifeq
+  override (CC = gcc + -DULTRIX) now wins. The stale "Uncomment the
+  following lines" comment removed.
+- AGENTS.md/session.txt updated.
+
+Verification:
+- [x] make -n: normal build uses cc, no -DULTRIX.
+- [x] make -n UNAME=ULTRIX: gcc + -DULTRIX in the compile lines.
+- [x] Full macOS rebuild: zero warnings; smoke tests 5/5.
+- ULTRIX rebuild with current HEAD pending on the maintainer's machine
+  (the reported warnings are expected to be gone - cursesX.h declares
+  the three functions).
+
 == 2026-11-20 - Session 10: ULTRIX build fixes ==
 
 User request (ULTRIX verified on real hardware): (1) Makefile should detect
