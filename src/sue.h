@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <curses.h>
-#include <term.h>
 #include <signal.h>
 
 /* ===================== GLOBAL DEFINES =================== */
@@ -21,7 +20,9 @@
 #define	PROMPT_VIDEO	A_BOLD		/* Prompts	*/
 #define	BLOCK_VIDEO		A_BOLD		/* Block text	*/
 
+#ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
+#endif
 
 #define NULLCHARPTR (char *) 0
 
@@ -63,6 +64,10 @@
 #define	LF	0x0A
 
 #define	CASE_INVERT	0x1E		/* Control-^ command key */
+
+#ifndef PATH_MAX
+#define PATH_MAX 260
+#endif
 
 #ifndef ACS_HLINE
 # define ACS_HLINE '-'
@@ -178,7 +183,7 @@ enum directions
 
 enum filemodes
 {
-	UNIX, MSDOS, MACINTOSH
+	MODE_UNIX, MODE_MSDOS, MODE_MACINTOSH
 };
 extern	int	autofilemode;
 

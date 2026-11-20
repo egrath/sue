@@ -1,0 +1,42 @@
+#
+# Makefile.wcc - OpenWatcom build for DOS (DOS/4GW, 32-bit flat)
+#
+# Usage: source ~/opt/openwatcom/env.txt && wmake -f Makefile.wcc
+#
+# Requires PDCurses built for DOS/4GW (MODEL=f) in ~/opt/pdcurses.
+#
+
+SRCDIR   = src
+BUILDDIR = build.dos
+PDCURSES = $(%HOME)/opt/pdcurses
+
+CC      = wcc386
+LINK    = wlink
+CFLAGS  = -bt=dos4g -mf -dDOS -wx -zq -oneatx -i=$(PDCURSES) -i=$(SRCDIR)
+LDFLAGS = op q sys dos4g
+
+TARGET  = $(BUILDDIR)/sue.exe
+OBJS    = $(BUILDDIR)/command.obj $(BUILDDIR)/data.obj $(BUILDDIR)/display.obj &
+	$(BUILDDIR)/funcs.obj $(BUILDDIR)/sue.obj
+
+$(TARGET) : $(OBJS)
+	$(LINK) $(LDFLAGS) n $@ f {$(OBJS)} l $(PDCURSES)/dos/pdcurses.lib
+
+clean : .SYMBOLIC
+	-rm -f $(BUILDDIR)/*.obj $(BUILDDIR)/sue.exe
+
+$(BUILDDIR)/command.obj : $(SRCDIR)/command.c $(SRCDIR)/sue.h
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) $(SRCDIR)/command.c -fo=$@
+$(BUILDDIR)/data.obj : $(SRCDIR)/data.c $(SRCDIR)/sue.h
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) $(SRCDIR)/data.c -fo=$@
+$(BUILDDIR)/display.obj : $(SRCDIR)/display.c $(SRCDIR)/sue.h
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) $(SRCDIR)/display.c -fo=$@
+$(BUILDDIR)/funcs.obj : $(SRCDIR)/funcs.c $(SRCDIR)/sue.h $(SRCDIR)/version.h
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) $(SRCDIR)/funcs.c -fo=$@
+$(BUILDDIR)/sue.obj : $(SRCDIR)/sue.c $(SRCDIR)/sue.h $(SRCDIR)/version.h
+	@mkdir -p $(BUILDDIR)
+	$(CC) $(CFLAGS) $(SRCDIR)/sue.c -fo=$@

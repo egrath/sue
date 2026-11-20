@@ -8,7 +8,7 @@
 #
 #--------------------- Compiler Flags ---------------------------
 CFLAGS = -O2 -std=c89 -Wpedantic -Wall -Werror
-EFLAGS = -D_DEFAULT_SOURCE
+EFLAGS = -DUNIX -D_DEFAULT_SOURCE
 LFLAGS = -lncurses
 #
 # Uncomment the following lines for the standard C compiler:

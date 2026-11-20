@@ -297,7 +297,9 @@ void key_scan (void)
  * alarm() handlers for the timed help screens.
  * signal() requires a void (*)(int) function; the help
  * routines themselves take no arguments.
+ * (Only used on UNIX - DOS shows the help screens at once.)
  */
+#ifdef UNIX
 static void alarm_quick_hlp (int sig)
 {
 	(void) sig;		/* Unused */
@@ -313,6 +315,7 @@ static void alarm_onscr_hlp (int sig)
 	(void) sig;		/* Unused */
 	onscr_hlp ();
 }
+#endif
 
 /* --------------------------------------
  * Quick (^Q-) commands
@@ -323,20 +326,27 @@ void q_key (void)
 	int	old_x;
 	char	*temp_ptr;
 
+#ifdef UNIX
 	if (helplines)
 	{
 		signal (SIGALRM, alarm_quick_hlp);
 		alarm (2);
 	}
+#endif
 	keyin = wait_key ();
 	if (helplines)
 	{
+#ifdef UNIX
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
 			keyin = wait_key ();	/* ..so get input again */
 		}
+#else
+		do_help (QUICK, helpwin);	/* No alarm() on DOS: show at once */
+		wrefresh (helpwin);
+#endif
 	}
 	if ((keyin < 255) && (keyin >= '@'))
 	{
@@ -411,20 +421,27 @@ void k_key (void)
 {
 	int	keyin;
 
+#ifdef UNIX
 	if (helplines)
 	{
 		signal (SIGALRM, alarm_block_hlp);
 		alarm (2);
 	}
+#endif
 	keyin = wait_key ();
 	if (helplines)
 	{
+#ifdef UNIX
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
 			keyin = wait_key ();	/* ..so get input again */
 		}
+#else
+		do_help (BLOCK, helpwin);	/* No alarm() on DOS: show at once */
+		wrefresh (helpwin);
+#endif
 	}
 	if ((keyin < 255) && (keyin >= '@'))
 	{
@@ -520,20 +537,27 @@ void o_key (void)
 {
 	int	keyin;
 
+#ifdef UNIX
 	if (helplines)
 	{
 		signal (SIGALRM, alarm_onscr_hlp);
 		alarm (2);
 	}
+#endif
 	keyin = wait_key ();
 	if (helplines)
 	{
+#ifdef UNIX
 		if (alarm (0) == 0)		/* Clock expired */
 		{
 			wrefresh (helpwin);
 			wrefresh (promptwin);
 			keyin = wait_key ();	/* ..so get input again */
 		}
+#else
+		do_help (ONSCREEN, helpwin);	/* No alarm() on DOS: show at once */
+		wrefresh (helpwin);
+#endif
 	}
 	if ((keyin < 255) && (keyin >= '@'))
 	{

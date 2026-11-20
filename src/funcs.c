@@ -180,13 +180,13 @@ void info_func (void)
 
 	switch (filemode)
 	{
-	case UNIX:
+	case MODE_UNIX:
 		strcpy (modestr, "Unix");
 		break;
-	case MSDOS:
+	case MODE_MSDOS:
 		strcpy (modestr, "MSDOS");
 		break;
-	case MACINTOSH:
+	case MODE_MACINTOSH:
 		strcpy (modestr, "Macintosh");
 		break;
 	default :
@@ -632,7 +632,7 @@ void reform (void)
 void sabort (int sig)
 {
 	char *homeptr;
-	char savname[PATH_MAX + 32];
+	char savname[TXTNAME_SIZE];
 	int n;
 	FILE *probe;
 
@@ -644,12 +644,25 @@ void sabort (int sig)
 		perror ("SUE signal");
 	}
 
-	/* Look for user's home directory */
+	/* Look for a directory to save the work in */
+#ifdef UNIX
 	if ((homeptr = getenv ("HOME")) == (char *) NULL ||
-		strlen (homeptr) > PATH_MAX - 32)
+		strlen (homeptr) > TXTNAME_SIZE - 32)
 	{
 		homeptr = "/tmp";	/* not good, better than nothing */
 	}
+#endif
+#ifdef DOS
+	homeptr = getenv ("TEMP");
+	if (homeptr == (char *) NULL)
+	{
+		homeptr = getenv ("TMP");
+	}
+	if (homeptr == (char *) NULL || strlen (homeptr) > TXTNAME_SIZE - 32)
+	{
+		homeptr = ".";		/* current directory */
+	}
+#endif
 
 	/* Build a unique filename that is not in use (replaces tempnam()) */
 	for (n = 0; n < 1000; n++)
@@ -675,14 +688,22 @@ void sabort (int sig)
 	fprintf (stderr, "SUE: ");	/* Display signal received */
 	switch (sig)
 	{
+#ifdef UNIX
 	case SIGHUP:
 		fprintf (stderr, "Hangup");
 		break;
-	case SIGINT:
-		fprintf (stderr, "Interrupt");
-		break;
 	case SIGQUIT:
 		fprintf (stderr, "Quit");
+		break;
+	case SIGSYS:
+		fprintf (stderr, "Bad system call");
+		break;
+	case SIGBUS:
+		fprintf (stderr, "Bus error");
+		break;
+#endif
+	case SIGINT:
+		fprintf (stderr, "Interrupt");
 		break;
 	case SIGTERM:
 		fprintf (stderr, "Terminate");
@@ -690,27 +711,17 @@ void sabort (int sig)
 	case SIGSEGV:
 		fprintf (stderr, "Segment violation");
 		break;
-	case SIGBUS:
-		fprintf (stderr, "Bus error");
-		break;
 	case SIGILL:
 		fprintf (stderr, "Illegal instruction");
-		break;
-	case SIGSYS:
-		fprintf (stderr, "Bad system call");
 		break;
 	}
 	fprintf (stderr, " signal received, attempting to save your work...");
 
-	if (sig == SIGSYS || sig == SIGILL || sig == SIGBUS ||
-		sig == SIGSEGV)
 	/* Do a little sanity checking before attempting save */
+	if ((gap_beg > txt_end) || (gap_beg < txt_beg) ||
+		(gap_end > txt_end) || (gap_end < txt_beg))
 	{
-		if ((gap_beg > txt_end) || (gap_beg < txt_beg) ||
-			(gap_end > txt_end) || (gap_end < txt_beg))
-		{
-			gap_beg = gap_end = (txt_beg + (txt_end - txt_beg) / 2);
-		}
+		gap_beg = gap_end = (txt_beg + (txt_end - txt_beg) / 2);
 	}
 
 	if (save_fname ())
@@ -719,11 +730,13 @@ void sabort (int sig)
 	}
 	/* Note: 'vi' uses /usr/preserve/[username] directory & sends mail */
 
+#ifdef UNIX
 	if (sig == SIGSYS || sig == SIGILL || sig == SIGBUS ||
 		sig == SIGSEGV)
 	{
 		kill (0, sig);	/* try for core image too */
 	}
+#endif
 	exit (1);
 }
 
@@ -846,11 +859,11 @@ int save (char *s_name, char *s_type)
 	{
 		if (*ptr == '\n')				/* May have to xlate */
 		{
-			if (filemode != UNIX)
+			if (filemode != MODE_UNIX)
 			{
 				fputc ('\r', s_file);
 			}
-			if (filemode != MACINTOSH)	/* \r for MACINTOSH,			*/
+			if (filemode != MODE_MACINTOSH)	/* \r for MACINTOSH,			*/
 			{
 				fputc ('\n', s_file);	/* \n for Unix, \r\n for MSDOS	*/
 			}
@@ -890,7 +903,7 @@ int load (char *l_name)
 	FILE	*l_file;
 	int	c;
 	int	j;
-	enum filemodes mode = UNIX;
+	enum filemodes mode = MODE_UNIX;
 	char *old_beg;
 
 	if ((l_file = fopen (l_name, "r")) == (FILE *) NULL)
@@ -923,12 +936,12 @@ int load (char *l_name)
 					*gap_beg = '\n';	/* Xlate \r to \n and \r\n to \n\n */
 					if (c == '\n')		/* Hit a \r\n */
 					{
-						mode = MSDOS;
+						mode = MODE_MSDOS;
 						gap_beg--;		/* Avoid \n\n */
 					}
 					else				/* Hit text\rtext */
 					{
-						mode = MACINTOSH;
+						mode = MODE_MACINTOSH;
 					}
 				}
 				if (*gap_beg == '\n')
@@ -966,15 +979,15 @@ void set_file_mode (void)
 	switch (keyin)
 	{
 	case 'U':
-		filemode = UNIX;
+		filemode = MODE_UNIX;
 		autofilemode = 0;
 		break;
 	case 'D':
-		filemode = MSDOS;
+		filemode = MODE_MSDOS;
 		autofilemode = 0;
 		break;
 	case 'M':
-		filemode = MACINTOSH;
+		filemode = MODE_MACINTOSH;
 		autofilemode = 0;
 		break;
 	case ' ':
@@ -1486,11 +1499,17 @@ void do_shell (void)
 	int		result;
 	int		tempsize;
 	char	commands[256];
+#ifdef UNIX
 	char	pipebuf[1024];
-	char	*usershell;
 	FILE	*fileptr;
+#endif
+	char	*usershell;
 
+#ifdef UNIX
 	usershell = getenv ("SHELL");
+#else
+	usershell = getenv ("COMSPEC");
+#endif
 
 	if (usershell == (char *) NULL)
 	{
@@ -1509,7 +1528,11 @@ void do_shell (void)
 	wattrset (editwin, STATATTR | A_BOLD);
 	wmove (editwin, 1, 0);
 	wclrtoeol (editwin);
+#ifdef UNIX
 	waddstr (editwin, "Hit ENTER for interactive shell, append \">\" for shell input");
+#else
+	waddstr (editwin, "Hit ENTER for interactive shell");
+#endif
 	wrefresh (editwin);
 	wattrset (editwin, A_NORMAL);
 	disp_mode = dpage;
@@ -1540,13 +1563,20 @@ void do_shell (void)
 	else
 	{
 		/* No $SHELL, no response */
+#ifdef UNIX
 		strcpy (commands, "/bin/sh");
+#else
+		strcpy (commands, "command.com");
+#endif
 	}
 
+#ifdef UNIX
 	setuid (getuid ());	/* Set to real uid, gid */
 	setgid (getgid ());
+#endif
 
 	/* If last character is ">" ... */
+#ifdef UNIX
 	if (strlen (respptr) > 0 &&
 		respptr[strlen (respptr) - 1] == '>')
 	{
@@ -1573,6 +1603,7 @@ void do_shell (void)
 		}
 	}
 	else
+#endif
 	{
 		endwin ();
 
@@ -1584,8 +1615,10 @@ void do_shell (void)
 
 		system (commands);	/* Shell out */
 
+#ifdef UNIX
 		setuid (geteuid ());	/* Restore effective uid, gid */
 		setgid (getegid ());
+#endif
 
 		if (strlen (respptr))
 		{

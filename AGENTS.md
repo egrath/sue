@@ -24,9 +24,11 @@ configuration. Added: line/column indicator in the status line.
 | `src/command.c` | Input dispatch: `key_scan` and the ^Q/^K/^O menus (`q_key`/`k_key`/`o_key`), SIGALRM trampolines for the timed help screens |
 | `src/sue.h` | Shared types, globals (`extern`), full C89 prototypes |
 | `src/version.h` | Version string |
+| `Makefile.wcc` | OpenWatcom build for DOS (DOS/4GW + PDCurses) |
 | `_original/sue07i.tgz` | Pristine 0.7i sources, reference only |
 
-Object files and the executable are built into `build/`.
+Object files and the executable are built into `build/` (UNIX) and
+`build.dos/` (DOS).
 
 ### Core data structure: gap buffer
 
@@ -39,27 +41,36 @@ marker and trailing newlines so all of the text can be treated as a string.
 
 ## Build
 
-- **One rule for all platforms**: plain `make` builds `build/sue`. There are
-  no per-platform targets or defines anymore.
-- Requirements: a C89 compiler and curses/ncurses (available on every target
-  platform).
+- **UNIX/macOS/Linux**: plain `make` builds `build/sue`.
+- **DOS** (OpenWatcom, DOS/4GW 32-bit flat, PDCurses):
+  `source ~/opt/openwatcom/env.txt && wmake -f Makefile.wcc`
+  builds `build.dos/sue.exe` (`wmake -f Makefile.wcc clean` cleans).
+- Requirements: a C89 compiler and curses (ncurses on UNIX, PDCurses on DOS —
+  `~/opt/pdcurses`, library `dos/pdcurses.lib`).
 - Flags: `-O2 -std=c89 -Wpedantic -Wall -Werror` — **zero warnings is a hard
   requirement**; do not weaken the flags to hide problems.
-- `EFLAGS` (currently `-D_DEFAULT_SOURCE`, needed by glibc under strict C89
-  for `getopt`/`popen`; ignored elsewhere) and `LFLAGS` (`-lncurses`) are the
-  override points for other targets, e.g. `make LFLAGS="-lpdcurses"` for a
-  future DOS/Windows PDCurses port or `make LFLAGS="-lncurses -static"` for a
-  static Linux build.
+- `EFLAGS` (currently `-DUNIX -D_DEFAULT_SOURCE`) and `LFLAGS` (`-lncurses`)
+  are the override points for other targets.
 - `make clean` empties `build/` but keeps the directory; `make install`
   strips + moves the binary to `BINDIR`.
 - **Future targets: Windows, Macintosh, Linux, DOS** — and Solaris should
   "come free" if it compiles cleanly on the others. Add no per-platform
-  `#ifdef`s; feature flags only (`DEBUG`, `TRACE`, `LOOKBUSY`).
-- The unified build is verified on macOS; Linux is expected to work unchanged
-  but has not been verified on this machine.
+  `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and feature flags
+  (`DEBUG`, `TRACE`, `LOOKBUSY`).
+- The UNIX build is verified on macOS; the DOS build compiles and links on
+  the Watcom host but has not been run on real DOS/DOSBox yet.
 
 ## Conventions / hard rules
 
+- **DOS compatibility is mandatory for every change.** POSIX-only functions
+  (`alarm`, `kill`, `popen`, `setuid`/`setgid`, `SIGHUP`/`SIGQUIT`/`SIGSYS`/
+  `SIGBUS`) must be guarded with `#ifdef UNIX`; DOS-specific code (COMSPEC,
+  TEMP/TMP save dir) with `#ifdef DOS`. Both builds (`make` and
+  `wmake -f Makefile.wcc`) must stay warning-free. Also mind the macro
+  namespaces: `<term.h>`/PDCurses define terminfo capability and `KEY_*`
+  macros, and the platform defines themselves (`-DUNIX`/`-dDOS`) — which is
+  why the `enum filemodes` members are `MODE_UNIX`/`MODE_MSDOS`/
+  `MODE_MACINTOSH`.
 - **Strict C89, no GNU extensions.** Function definitions in prototype form;
   all declarations at the top of a block.
 - Single-file helpers are `static` and kept out of `sue.h` (currently:
@@ -158,6 +169,16 @@ marker and trailing newlines so all of the text can be treated as a string.
   - usage/getopt unified: no-op -n dropped, usage shows [-bdmstu]
   Verified with an ASan/UBSan build (110000-line file, scripted sessions)
   plus the regular smoke tests.
+- 2026-11-20 — Added a DOS build (OpenWatcom `wcc386`/`wlink`, DOS/4GW
+  32-bit flat, PDCurses) via Makefile.wcc producing `build.dos/sue.exe`.
+  Platform code is guarded with `#ifdef UNIX` / `#ifdef DOS`: POSIX signals
+  beyond SIGINT/SIGTERM/SIGSEGV/SIGILL, the alarm-based timed help (DOS
+  shows the help screens at once instead), setuid/setgid, the popen import
+  branch (on DOS ">" is DOS redirection and passes through), SHELL vs
+  COMSPEC and HOME vs TEMP/TMP save dirs. PATH_MAX got an #ifndef fallback,
+  the unused <term.h> include was removed, the UNIX build defines -DUNIX,
+  and the enum filemodes members became MODE_UNIX/MODE_MSDOS/MODE_MACINTOSH
+  because -DUNIX collided with the old UNIX enumerator.
 - 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
   braces, always-braced bodies, space between function name and paren
   everywhere, floating `*` in return types, name-glued `*` in declarations).

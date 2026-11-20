@@ -252,7 +252,7 @@ int main (int argc, char *argv[])
 	opterr = 0;			/* Suppress getopt() error message */
 	bwopt = optresult = helplines = 0;	/* Option defaults */
 	autofilemode = 1;	/* Default to file mode autodetect */
-	filemode = UNIX;	/* Default to Unix file type */
+	filemode = MODE_UNIX;	/* Default to Unix file type */
 
 
 	/* Process command line options */
@@ -266,11 +266,11 @@ int main (int argc, char *argv[])
 			break;
 		case 'd':
 			autofilemode = 0;
-			filemode = MSDOS;
+			filemode = MODE_MSDOS;
 			break;
 		case 'm':
 			autofilemode = 0;
-			filemode = MACINTOSH;
+			filemode = MODE_MACINTOSH;
 			break;
 		case 's':
 			if (atoi (optarg) > 1)
@@ -295,7 +295,7 @@ int main (int argc, char *argv[])
 			break;
 		case 'u':
 			autofilemode = 0;
-			filemode = UNIX;
+			filemode = MODE_UNIX;
 			break;
 		default :
 			optresult++;
@@ -381,13 +381,15 @@ int main (int argc, char *argv[])
 
 	/* Trap signals to our exit routine that preserves user text */
 	signal (SIGINT,  sabort);
+#ifdef UNIX
 	signal (SIGHUP,  sabort);
 	signal (SIGQUIT, sabort);
+	signal (SIGSYS,  sabort);
+	signal (SIGBUS,  sabort);
+#endif
 	signal (SIGTERM, sabort);
 	signal (SIGSEGV, sabort);
-	signal (SIGBUS,  sabort);
 	signal (SIGILL,  sabort);
-	signal (SIGSYS,  sabort);
 
 	bufptr = malloc (0);		/* Initialize pointer for do_alloc() */
 

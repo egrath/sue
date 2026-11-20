@@ -207,6 +207,66 @@ Verification:
 - [x] make: zero warnings under -Werror; smoke test byte-perfect
 - [x] term.h collision check against the SDK header: none
 
+== 2026-11-20 — Session 5: DOS build (OpenWatcom / DOS4GW / PDCurses) ==
+
+User request: build for DOS with OpenWatcom (env: ~/opt/openwatcom/env.txt),
+PDCurses from ~/opt/pdcurses (-I ~/opt/pdcurses, link dos/pdcurses.lib),
+32-bit DOS/4GW, objects+exe in build.dos/, new Makefile.wcc. Guard UNIX-
+specific functions with #ifdef UNIX, DOS-specific with #ifdef DOS. From now
+on, DOS compatibility is mandatory for every change.
+
+Environment facts gathered first:
+- env.txt: WATCOM=~/opt/openwatcom, PATH += armo64 (macOS ARM64 host tools)
+  + binw, INCLUDE=${WATCOM}/h. Host = macOS, target = DOS via cross-compile.
+- PDCurses dos/Makefile.wcc: built with wcc386 -bt=dos4g -mf (MODEL=f,
+  32-bit flat) -> our flags must match; linker system is "dos4g"; wmake env
+  vars are spelled $(%NAME) (plain $(HOME) expanded to nothing - first build
+  failed on missing curses.h because of exactly that).
+- Watcom DOS headers: NO alarm/SIGALRM, no SIGHUP/SIGQUIT/SIGSYS/SIGBUS, no
+  setuid/setgid/getuid/getgid/kill, no popen/pclose (only _popen), no
+  PATH_MAX. HAVE: getopt(+globals), getpid, sleep, stat (sys/stat.h),
+  sys/types.h, FILENAME_MAX (stdio.h).
+- PDCurses defines every KEY_* macro the code uses -> no key guards needed.
+
+Implementation:
+- sue.h: <term.h> include removed (unused); #ifndef PATH_MAX fallback (260).
+- sue.c: SIGHUP/SIGQUIT/SIGSYS/SIGBUS signal() calls #ifdef UNIX.
+- funcs.c sabort(): save dir HOME->/tmp (UNIX) vs TEMP/TMP->"." (DOS),
+  savname uses TXTNAME_SIZE, POSIX-only switch cases guarded, crash-buffer
+  sanity check now unconditional (portable, safer), kill(0,sig) #ifdef UNIX.
+- funcs.c do_shell(): SHELL vs COMSPEC, setuid/setgid pairs #ifdef UNIX,
+  popen import branch #ifdef UNIX (on DOS ">" is DOS redirection and passes
+  through), "command.com" fallback, per-platform on-screen hint.
+- funcs.c tabset/... unchanged.
+- command.c q_key/k_key/o_key(): alarm+SIGALRM #ifdef UNIX; DOS shows the
+  menu help immediately instead (no alarm on DOS).
+- funcs.c textins/save/... + display.c unchanged.
+- Makefile: EFLAGS now -DUNIX -D_DEFAULT_SOURCE (guards active on UNIX).
+- Makefile.wcc: wcc386 -bt=dos4g -mf -dDOS -wx -zq -oneatx, wlink op q sys
+  dos4g, explicit per-object rules with @mkdir -p build.dos, clean target.
+- .gitignore: /build.dos/.
+- AGENTS.md: DOS build docs, mandatory DOS-compatibility convention, naming
+  note (term.h/PDCurses macro namespaces), decisions entry.
+
+Gotchas hit during implementation:
+- sabort() lives in funcs.c, not sue.c (edit retargeted).
+- -DUNIX collided with the enum filemodes member UNIX -> members renamed to
+  MODE_UNIX/MODE_MSDOS/MODE_MACINTOSH (context-targeted substitutions so
+  #ifdef UNIX lines and the "MSDOS" display string stayed untouched).
+- $(HOME) vs $(%HOME) in wmake (see above).
+- insert_newline almost became insert_line - term.h defines that as a
+  terminfo macro (caught in session 4, still relevant).
+
+Verification:
+- [x] make (UNIX, -DUNIX now defined): zero warnings; smoke test byte-perfect
+      ("hi\n" round-trip) - guards changed no UNIX behavior.
+- [x] wmake -f Makefile.wcc: zero warnings/errors after fixes;
+      build.dos/sue.exe = "MS-DOS executable, LE executable" (DOS/4GW 32-bit).
+- [x] Watcom warnings at -wx: only the DOS-unused debug_pr/pipebuf/fileptr
+      params -> silenced via #ifdef UNIX decls and (void) casts.
+- [x] Runtime on real DOS/DOSBox not possible from here - manual test pass
+      requested from user.
+
 == 2026-11-20 — Session 3: style rewrite to maintainer's coding style ==
 
 User request: reformat all code to their personal style. Example given:
