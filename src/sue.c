@@ -251,7 +251,11 @@ int main (int argc, char *argv[])
 	opterr = 0;			/* Suppress getopt() error message */
 	bwopt = optresult = helplines = 0;	/* Option defaults */
 	autofilemode = 1;	/* Default to file mode autodetect */
+#ifdef DOS
+	filemode = MODE_MSDOS;	/* Default to Dos file type */
+#else
 	filemode = MODE_UNIX;	/* Default to Unix file type */
+#endif
 
 
 	/* Process command line options */

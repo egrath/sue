@@ -57,6 +57,9 @@ marker and trailing newlines so all of the text can be treated as a string.
   "come free" if it compiles cleanly on the others. Add no per-platform
   `#ifdef`s beyond the platform pair (`UNIX`/`DOS`) and feature flags
   (`DEBUG`, `TRACE`, `LOOKBUSY`).
+- **New files are saved with the platform's line endings** (DOS: CRLF,
+  UNIX: LF); `-d`/`-m`/`-u` override, and loaded files keep their detected
+  endings (the file is never rewritten to a different style than it had).
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
 
@@ -179,6 +182,10 @@ marker and trailing newlines so all of the text can be treated as a string.
   the unused <term.h> include was removed, the UNIX build defines -DUNIX,
   and the enum filemodes members became MODE_UNIX/MODE_MSDOS/MODE_MACINTOSH
   because -DUNIX collided with the old UNIX enumerator.
+- 2026-11-20 — New files default to the platform's file mode: DOS builds
+  save with CRLF (MODE_MSDOS), UNIX builds with LF (MODE_UNIX); -d/-m/-u
+  override, and loaded files keep their detected endings (load() preserves
+  the style the file already had).
 - 2026-11-20 — Reformatted all sources to the maintainer's style (Allman
   braces, always-braced bodies, space between function name and paren
   everywhere, floating `*` in return types, name-glued `*` in declarations).

@@ -267,6 +267,30 @@ Verification:
 - [x] Runtime on real DOS/DOSBox not possible from here - manual test pass
       requested from user.
 
+== 2026-11-20 — Session 7: platform-default file mode ==
+
+User request: DOS version should default to DOS file mode (CRLF), UNIX
+version to UNIX file mode (LF). Easy via the existing -d/-u options' mode
+values as the startup default.
+
+Implementation:
+- sue.c main(): filemode default is now platform-dependent -
+  #ifdef DOS filemode = MODE_MSDOS #else MODE_UNIX #endif.
+- load()'s internal "mode = MODE_UNIX" init intentionally UNCHANGED: it is
+  the preserve-what-was-loaded path (a loaded LF-only file keeps LF even on
+  DOS; CRLF files round-trip as CRLF). Only NEW files get the platform
+  default. -d/-m/-u still override; the "option masks auto-detect for the
+  first load" quirk (autofilemode re-enable in load()) left as-is.
+
+Verification:
+- [x] make (UNIX, -DUNIX): zero warnings.
+- [x] Behavioral proof of the filemode path: "./build/sue -d /tmp/fm_d.txt"
+      -> "hi\r\n" (CRLF on a UNIX build via -d); "./build/sue /tmp/fm_u.txt"
+      -> "hi\n" (default LF). Same path the DOS default uses.
+- [x] wmake -f Makefile.wcc: zero warnings/errors.
+
+Commit: "Default file mode per platform (DOS: CRLF, UNIX: LF)".
+
 == 2026-11-20 — Session 6: F-key leftovers ==
 
 User request: check for F-key references (like "F1 or ^U to abort") - F-keys
