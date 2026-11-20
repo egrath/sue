@@ -1,16 +1,14 @@
 # SUE text editor
 
-SUE — the "Simple Unix Editor" — is a small full-screen text editor with
-WordStar-style keybindings, originally written 1992–1995 by Point to Point
+SUE b the "Simple Unix Editor" b is a small full-screen text editor with
+WordStar-style keybindings, originally written 1992b1995 by Point to Point
 Communications for old Unices (ULTRIX, AIX, SVR3/4). This fork modernizes the
-code (strict C89, warning-free) and brings it to modern systems — and back
+code (strict C89, warning-free) and brings it to modern systems b and back
 to DOS.
-
-![SUE running on ULTRIX](https://github.com/user-attachments/assets/8943d69c-95bb-4d81-bc1a-a78880458585)
 
 ## Features
 
-- WordStar-style keybindings — `^J` opens the built-in help screens
+- WordStar-style keybindings b `^J` opens the built-in help screens
 - Gap-buffer editing core, block operations, search & replace, paragraph
   reform, shell escape
 - UNIX/DOS/Macintosh line-ending handling: auto-detected when loading, new
