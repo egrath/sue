@@ -104,6 +104,18 @@ char *st1, *st2, *st3;
 	mvwprintw(statuswin, 0, col, st1, st2, st3);
 	wrefresh(statuswin);
 }
+
+/* ----------------------------------------------
+ * print line number and column in the status line
+ */
+void status_linecol ()
+{
+	char label_pos[16];
+
+	sprintf (label_pos, "L %-5d C %-5d", txt_x, txt_y);
+	statprint (COLS - 49, label_pos, NULL, NULL);
+}
+
 /* ---------------------------------------------
  * Redisplay status line
  */
@@ -132,6 +144,9 @@ void status_line()
 		status(0, "...\"%s\"", nameptr + 1, NULL);
 	else
 		status(0, "\"%s\"",txtname, NULL);
+
+	/* Show cursor position */
+	status_linecol ();
 
 	/* Show toggle status */
 	if (MRflag)
@@ -510,6 +525,9 @@ void	display()
 				dohelp(FKEYMENU, helpwin);
 		}
 	}
+	/* update cursor position in status line */
+	status_linecol ();
+
 	/* Restore cursor */
 	wmove(editwin, txt_x - scr_xbeg, txt_y - scr_ybeg);
 	/* Needed for earlier curses implementations: */
