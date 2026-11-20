@@ -9,10 +9,34 @@
 #include <ctype.h>
 #ifdef ULTRIX
 #include <cursesX.h>
-/* ULTRIX cursesX.h does not declare these basic routines */
-extern int wrefresh (WINDOW *);
+/* ULTRIX cursesX.h declares almost nothing: initscr/newwin/subwin/newpad,
+ * longname/erasechar/killchar, wgetch/newterm - plus macros. Everything
+ * else SUE calls is prototyped here. */
+extern int baudrate (void);
+extern int beep (void);
+extern int delwin (WINDOW *);
+extern int endwin (void);
+extern int idlok (WINDOW *, int);
+extern int keypad (WINDOW *, int);
+extern int mvwprintw (WINDOW *, int, int, ...);
+extern int noecho (void);
+extern int nonl (void);
+extern int overwrite (WINDOW *, WINDOW *);
+extern int raw (void);
+extern int touchwin (WINDOW *);
+extern int waddch (WINDOW *, chtype);
+extern int waddstr (WINDOW *, char *);
+extern int wattroff (WINDOW *, int);
+extern int wattron (WINDOW *, int);
 extern int wattrset (WINDOW *, int);
+extern int wclear (WINDOW *);
 extern int wclrtoeol (WINDOW *);
+extern int wdelch (WINDOW *);
+extern int wdeleteln (WINDOW *);
+extern int werase (WINDOW *);
+extern int winsertln (WINDOW *);
+extern int wmove (WINDOW *, int, int);
+extern int wrefresh (WINDOW *);
 #else
 #include <curses.h>
 #endif

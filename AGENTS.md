@@ -69,10 +69,12 @@ marker and trailing newlines so all of the text can be treated as a string.
 - **ULTRIX**: `make` detects the OS via `uname -s` and adds `-DULTRIX` —
   the build then uses DEC's extended curses (`cursesX.h`), emulates the
   extended key codes ULTRIX curses lacks (those switch cases stay dead),
-  runs monochrome (ULTRIX curses has no color API), and declares
-  `wrefresh`/`wattrset`/`wclrtoeol` itself — ULTRIX cursesX.h does not
-  provide prototypes for them. Sets `CC = gcc`.
-  Needs GNU make on ULTRIX. Verified by the maintainer on real hardware.
+  runs monochrome (ULTRIX curses has no color API), and carries a full
+  block of curses prototypes in `sue.h` — ULTRIX cursesX.h declares
+  almost nothing (only `initscr`/`newwin`/`subwin`/`newpad`,
+  `longname`/`erasechar`/`killchar`, `wgetch`/`newterm`, plus macros).
+  Sets `CC = gcc`. Needs GNU make on ULTRIX. Verified by the maintainer
+  on real hardware.
 - The UNIX build is verified on macOS; the DOS build compiles and links on
   the Watcom host but has not been run on real DOS/DOSBox yet.
 
@@ -207,7 +209,12 @@ marker and trailing newlines so all of the text can be treated as a string.
   on ULTRIX, exactly like the 1995 original. ULTRIX cursesX.h has no color
   API, so that build runs monochrome (like the 1995 original, which built
   ULTRIX without DOCOLOR). ULTRIX unistd.h does not declare getopt and its
-  variables, so sue.h declares them under #ifdef ULTRIX.
+  variables, so sue.h declares them under #ifdef ULTRIX. The maintainer
+  supplied the real cursesX.h: it declares almost nothing (initscr/newwin/
+  subwin/newpad, longname/erasechar/killchar, wgetch/newterm + macros), so
+  sue.h now carries the full prototype block for every curses routine SUE
+  calls - all standard curses signatures, compatible with the old-style
+  header declarations.
 - 2026-11-20 — ULTRIX cursesX.h also lacks prototypes for wrefresh/
   wattrset/wclrtoeol — sue.h declares them under #ifdef ULTRIX after the
   include (reported from the maintainer's real ULTRIX build; the same

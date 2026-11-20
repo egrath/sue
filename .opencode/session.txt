@@ -355,6 +355,17 @@ Verification:
       (the cursesX.h compile itself can only succeed on ULTRIX).
 - [x] DOS rebuild after the sue.c/sue.h changes: zero warnings, LE exe ok.
 
+Session 11 addendum (user supplied the real cursesX.h):
+- Confirms the analysis: cursesX.h declares ONLY initscr/newwin/subwin/
+  newpad/longname/erasechar/killchar/wgetch/newterm (+ stdscr macros and
+  KEY_* codes). It also #defines bool=char and reg=register (our code uses
+  neither identifier) and includes stdio/unctrl/termio itself.
+- sue.h prototype block expanded from the 3 reported to the FULL set of
+  curses routines SUE calls (~25, standard signatures, placed after the
+  include so WINDOW/chtype are known). mvwaddch/mvwdelch/getyx are macros
+  in the header - no prototypes needed for them.
+- Both builds re-verified: zero warnings, smoke 5/5.
+
 == 2026-11-20 - Session 9: ULTRIX target restored ==
 
 User request: the build process was verified on ULTRIX (real hardware);
