@@ -182,7 +182,7 @@ ts [-dmstu] [-sn] [-tn] [file]
 
 -d / -m / -u    force DOS / Macintosh / Unix line endings
 -sn             right margin n (0 = none - the default)
--t8             tab width (1..32; default 4)
+-t8             tab width (1..32; default 5)
 file            the file to edit (a new one is created on save)
 
 Options may be clustered (-dm). -s and -t take their value attached

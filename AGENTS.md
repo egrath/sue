@@ -178,6 +178,8 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — Default tab width is 5 (TABDEF), as WordStar had it;
+  -t and ^O T override per session.
 - 2026-11-21 — Tab ruler below the status line (branch "ruler"): the
   top bar is now two lines - the plain status line, then the ruler
   row, WordStar style: a dash in every column, '|' at the first

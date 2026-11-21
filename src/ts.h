@@ -80,7 +80,7 @@ extern int wrefresh (WINDOW *);
 
 #define NULLCHARPTR (char *) 0
 
-#define	TABDEF	4			/* default TAB width */
+#define	TABDEF	5			/* default TAB width (WordStar) */
 
 /* ASCII control characters: */
 #define CNTRL_AT 0x00

@@ -882,3 +882,6 @@ Session 22 addendum (ruler corrections from the maintainer):
   "V-------|-------|-------|...".
 - Docs synced: reference.txt "The screen" paragraph, AGENTS.md
   decisions entry, ruler_paint() doc block, ts.c comment.
+
+Session 22 addendum: default tab width 4 -> 5 (WordStar's value);
+TABDEF in ts.h, reference.txt updated.
