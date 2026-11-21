@@ -1028,3 +1028,10 @@ Session 26 addendum 2 (the indent-0 "line disappears" bug):
   branch died (above >= txt_beg + 1 always holds after the insert).
 - Verified: the fresh repro shows "abc" / "X"; the full matrix
   re-identical; make/gcccheck/wmake zero warnings; smoke 6/6.
+
+Session 26 closing: the user confirmed the auto-indent works as
+expected; the indent branch was fast-forward-merged to master
+(3a39960) and pushed. The dinsln display fix (07b799b, 3a39960),
+the move_y teleport fix and the auto-indent itself are on master.
+AGENTS.md "What this is" now lists the added features (status
+line RM, tab ruler, auto-indent, HOME/END).

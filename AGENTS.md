@@ -12,7 +12,8 @@ old Unices (ULTRIX, AIX, SVR3/4). This fork modernizes it to build warning-free
 with modern compilers (macOS clang, Linux gcc) while keeping behavior identical.
 
 Already removed vs. the original: F-key mode, novice mode, environment-variable
-configuration. Added: line/column indicator in the status line.
+configuration, color support. Added: line/column/RM indicator in the status
+line, the tab ruler below it, auto-indent on RETURN, HOME/END line keys.
 
 ## Source map
 
@@ -182,7 +183,7 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
-- 2026-11-21 — Auto-indent on RETURN (branch "indent"): the new line
+- 2026-11-21 — Auto-indent on RETURN: the new line
   starts at the same column as the current one - the leading
   whitespace run (spaces/tabs, byte-exact) is carried over; when the
   cursor sits inside the run, the after-cursor remainder is trimmed
@@ -201,7 +202,7 @@ cursor clamps at the marker start and nothing can be written behind it.
   their true strlen, table lines keep the hand alignment).
 - 2026-11-21 — Default tab width is 5 (TABDEF), as WordStar had it;
   -t and ^O T override per session.
-- 2026-11-21 — Tab ruler below the status line (branch "ruler"): the
+- 2026-11-21 — Tab ruler below the status line: the
   top bar is now two lines - the plain status line, then the ruler
   row, WordStar style: a dash in every column, '|' at the first
   column AFTER each tab stop (columns tabdef + 1, 2 * tabdef + 1,
