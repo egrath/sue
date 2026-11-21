@@ -264,8 +264,7 @@ void info_func (void)
 		strcpy (modestr, "??????");
 		break;
 	}
-	status (0, "TextStar version %s Copyright 1995 Point to Point", tsrev, NULL);
-	stat_print (COLS - 23, "Author: carson@ppci.com", NULL, NULL);
+	status (0, "TextStar, version %s", tsrev, NULL);
 	wmove (editwin, 0, 0);
 	wp4 ("           Editing: `%s` at line `%u` column `%u`\n", txtname, txt_x, txt_y);		/* show full name */
 	wp2 ("          Modified: `%s`\n", mod ? "Yes" : "No");
@@ -1453,11 +1452,11 @@ void toggle_help (void)
 	}
 	delwin (editwin);			/* Kill current curses windows */
 	delwin (promptwin);
-	editlines = LINES - helplines - 1;
+	editlines = LINES - helplines - 2;	/* Status line + ruler on top */
 	scr_xend = editlines;
 	/* Set up new windows: */
-	editwin   = newwin (editlines, COLS, helplines + 1, 0);	/* Next 2 overlap */
-	promptwin = newwin (1, COLS, helplines + 1, 0);
+	editwin   = newwin (editlines, COLS, helplines + 2, 0);	/* Next 2 overlap */
+	promptwin = newwin (1, COLS, helplines + 2, 0);
 	wattrset (promptwin, A_BOLD);
 	keypad (editwin, TRUE);		/* Interpret extended keycodes */
 	keypad (promptwin, TRUE);

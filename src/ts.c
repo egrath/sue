@@ -97,7 +97,8 @@ chtype	CNTLATTR;			/* Control characters */
 chtype	BLOCKATTR;			/* Block text */
 
 WINDOW	*editwin, *promptwin,	/* Curses windows */
-		*statuswin, *helpwin;
+		*statuswin, *helpwin,
+		*rulerwin;		/* Tab ruler below the status line */
 
 struct undelnode *undelptr;
 
@@ -387,10 +388,9 @@ int main (int argc, char *argv[])
 	}
 	if (optresult)
 	{
-		fprintf (stderr, "\nTextStar - a WordStar-style text editor, version %s", tsrev);
-		fprintf (stderr, "\nCopyright 1995 by Point to Point Communications\n");
+		fprintf (stderr, "\nTextStar, version %s", tsrev);
 		fprintf (stderr, "  Usage:\n");
-		fprintf (stderr, "    %s [-dmstu][-sn][-tn] [file]\n", argv[0]);
+		fprintf (stderr, "    %s [-dmu][-sn][-tn] [file]\n", argv[0]);
 		fprintf (stderr, "  Options:\n");
 		fprintf (stderr, "    -d  MSDOS file mode\n");
 		fprintf (stderr, "    -m  Macintosh file mode\n");
@@ -418,12 +418,13 @@ int main (int argc, char *argv[])
 	nonl ();		/* Pass ^M thru to TextStar as-is */
 	raw ();
 
-	editlines = LINES - helplines - 1;
+	editlines = LINES - helplines - 2;	/* Status line + ruler on top */
 
 	/* Set up 'curses' windows: */
 	statuswin = newwin (1, COLS, 0, 0);					/* Top line */
-	editwin   = newwin (editlines, COLS, helplines + 1, 0);	/* Next 2 overlap */
-	promptwin = newwin (1, COLS, helplines + 1, 0);
+	rulerwin  = newwin (1, COLS, 1, 0);					/* Tab ruler */
+	editwin   = newwin (editlines, COLS, helplines + 2, 0);	/* Next 2 overlap */
+	promptwin = newwin (1, COLS, helplines + 2, 0);
 
 	/* Monochrome video attributes for all platforms */
 	STATATTR   = STATUS_VIDEO;	/* A_UNDERLINE */
@@ -432,7 +433,7 @@ int main (int argc, char *argv[])
 	BLOCKATTR  = BLOCK_VIDEO;		/* A_BOLD */
 	CNTLATTR   = CONTROL_VIDEO;		/* A_UNDERLINE */
 
-	wattrset (statuswin, STATATTR);
+	/* The status line stays plain: the separator line is the ruler */
 	wattrset (promptwin, PROMPTATTR);
 	keypad (editwin, TRUE);		/* Interpret extended keycodes */
 	keypad (promptwin, TRUE);

@@ -4,6 +4,12 @@ TextStar - Command Reference
 A short reference to every TextStar command. See docs and the source
 for details; this file lists what to press and what happens.
 
+The screen: the top bar is the status line (file name, L/C/RM cursor
+position, MR/INS indicators) with a TAB RULER below it - dots with a
+'|' at every tab stop and a 'V' at the cursor's column. The ruler
+carries the separator line to the edit window and follows tab-width
+changes (^O T) and horizontal scrolling.
+
 Notation
 --------
 ^X      means: hold Ctrl and press X (so ^K S = Ctrl-K, then Ctrl-S

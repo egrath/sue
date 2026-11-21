@@ -199,7 +199,8 @@ extern	int		helplines;		/* Lines of help to display */
 extern	int		editlines;		/* Varies with helplines */
 
 extern	WINDOW	*editwin, *promptwin,	/* Curses windows */
-		*statuswin, *helpwin;
+		*statuswin, *helpwin,
+		*rulerwin;		/* Tab ruler below the status line */
 
 enum mvmode	/* Global flags for move_y() */
 {

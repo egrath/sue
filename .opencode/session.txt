@@ -835,3 +835,37 @@ User decisions after a walkthrough of the ^K I screen:
 Verified: zero baudrate references; both builds warning-free; smoke
 6/6; pty ^K I shows "Memory usage: n bytes m free" and "Terminal
 type", no "Baud rate".
+
+== 2026-11-21 - Session 22: tab ruler (branch "ruler") ==
+
+User request: two-line top bar - status line plus a ruler below it;
+the separator line moves from the status line onto the ruler; the
+ruler shows dots, '|' at every tab stop (follows ^O T) and a 'V' at
+the cursor's column. Help must appear BELOW the ruler.
+
+Implementation (branch "ruler", cut from master):
+- ts.c/ts.h: rulerwin window; editlines = LINES - helplines - 2;
+  statuswin at row 0 (plain now), rulerwin at row 1, editwin/
+  promptwin at helplines + 2; the statuswin STATATTR wattrset
+  removed (the separator line lives on the ruler now).
+- display.c: static ruler_paint() - paints all COLS cells
+  ('.'/'|'/V) with the underline attribute over the VISIBLE columns
+  (scr_ybeg-based, so horizontal scrolling keeps the stops true);
+  repaints only when txt_y/scr_ybeg/tabdef/COLS changed (static
+  trackers). Called from display() after status_linecol().
+- funcs.c: toggle_help geometry kept consistent (-2/+2).
+
+Verification lessons: expect log replays need a proper ANSI screen
+emulator (built screen_replay.py in the opencode temp dir: CUP, ED,
+EL, DECSTBM, IL/DL/SU/SD, CR/LF/BS). Caveats found: curses writes
+only CHANGED cells on incremental paints (the tab-4 -> tab-8 change
+is scattered single cells - a contiguous-pattern grep cannot see it;
+the 13-dot fragment in the stream was exactly that), and the final
+printf("\n") after endwin() shifts a replayed grid up one row.
+Verified: initial paint "V..|...|..." (tab 4, V at C 1); V follows
+the cursor while typing; ^O T 8 repaints the stops (scattered cells);
+the ^J help overlay paints at 1-based row 3 (0-based 2) - below the
+ruler. make zero warnings; smoke 6/6; wmake zero warnings.
+
+Also noted for the future: toggle_help()/helpwin is dead code (no
+key binding) - see the AGENTS.md decisions entry.

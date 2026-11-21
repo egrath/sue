@@ -704,6 +704,67 @@ static void disp_page (int x_top, int x_bot)
 	wrefresh (editwin);
 }
 /* #######################################################################
+ * static void ruler_paint (void)
+ * purpose:
+ *     Paint the tab ruler on screen row 1: a dot in every column, '|'
+ *     at every tab stop (every tabdef-th column) and a 'V' at the
+ *     cursor's column. The row carries the underline attribute - it is
+ *     the separator line between the top bar and the edit window.
+ *     Shows the VISIBLE columns (starting at scr_ybeg), so the tab
+ *     stops stay at their true positions under horizontal scrolling.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     None; reads scr_ybeg, tabdef, txt_y (and COLS).
+ * notes:
+ *     Repaints only when one of its inputs changed since the last
+ *     paint - the ruler is skipped entirely on pure vertical moves
+ *     of the edit screen.
+ * ####################################################################### */
+static void ruler_paint (void)
+{
+	static int last_y = -1;
+	static int last_beg = -1;
+	static int last_tab = -1;
+	static int last_cols = -1;
+	int c;
+
+	if (txt_y == last_y && scr_ybeg == last_beg &&
+		tabdef == last_tab && COLS == last_cols)
+	{
+		return;
+	}
+	last_y = txt_y;
+	last_beg = scr_ybeg;
+	last_tab = tabdef;
+	last_cols = COLS;
+
+	wmove (rulerwin, 0, 0);
+	wclrtoeol (rulerwin);
+	wattrset (rulerwin, STATATTR);	/* Underline = the separator line */
+	for (c = 0; c < COLS; c++)
+	{
+		int	tc;				/* The text column shown here */
+		char ch;
+
+		tc = scr_ybeg + c;
+		if (tc == txt_y)
+		{
+			ch = 'V';		/* The cursor position indicator */
+		}
+		else if (tc % tabdef == 0)
+		{
+			ch = '|';		/* Tab stop */
+		}
+		else
+		{
+			ch = '.';
+		}
+		waddch (rulerwin, (chtype) ch);
+	}
+	wrefresh (rulerwin);
+}
+/* #######################################################################
  * void display (void)
  * purpose:
  *     The global screen update, called from the main loop. Reads
@@ -820,6 +881,9 @@ void display (void)
 
 	/* update cursor position in status line */
 	status_linecol ();
+
+	/* keep the tab ruler in sync (row 1) */
+	ruler_paint ();
 
 	/* Restore cursor */
 	wmove (editwin, txt_x - scr_xbeg, txt_y - scr_ybeg);

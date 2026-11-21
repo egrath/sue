@@ -178,6 +178,20 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — Tab ruler below the status line (branch "ruler"): the
+  top bar is now two lines - the plain status line, then the ruler
+  row (dots, '|' at every tabdef-th column, 'V' at the cursor's
+  column) carrying the underline that separates the top bar from the
+  edit window; the status line itself is plain now. The ruler shows
+  the visible columns (scr_ybeg..) so tab stops stay true under
+  horizontal scrolling, and repaints only when txt_y/scr_ybeg/tabdef/
+  COLS changed. editlines = LINES - helplines - 2 everywhere (the
+  edit window starts at row 2; the ^J help overlay - the only live
+  help path - lands below the ruler). Found on the way:
+  toggle_help() has NO caller and helpwin is never assigned - the
+  persistent-help-window paths are dead code (kept, geometry made
+  consistent; a future cleanup or key binding is a separate
+  decision).
 - 2026-11-21 — No right margin by default: rt_marg = 0 means "no
   margin" - the old `if (rt_marg < 2) rt_marg = COLS - 5` fallback in
   main() is gone (a programmer's editor wraps nothing unless asked).
