@@ -813,3 +813,7 @@ case); reworded to "attached values, file last".
 
 AGENTS.md source map lists docs/reference.txt; README links it.
 No code changes.
+
+Session 18 addendum: AGENTS.md source map now states that
+docs/reference.txt must be kept current when commands are added or
+changed.
