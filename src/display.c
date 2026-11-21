@@ -194,8 +194,9 @@ void stat_print (int col, char *st1, char *st2, char *st3)
 /* #######################################################################
  * static void status_linecol (void)
  * purpose:
- *     Refresh only the "L n C n" cursor-position fragment of the
- *     status line (at column COLS - 49).
+ *     Refresh the "L n C n RM n" fragment of the status line (at
+ *     column COLS - 56): cursor line, cursor column and the right
+ *     margin. No margin set (rt_marg = 0) shows as "RM -".
  * returns:
  *     Nothing.
  * parameters:
@@ -206,10 +207,19 @@ void stat_print (int col, char *st1, char *st2, char *st3)
  * ####################################################################### */
 static void status_linecol (void)
 {
-	char label_pos[32];
+	char label_pos[40];
+	char rm_label[8];
 
-	sprintf (label_pos, "L %-5d C %-5d", txt_x, txt_y);
-	stat_print (COLS - 49, label_pos, NULL, NULL);
+	if (rt_marg > 0)
+	{
+		sprintf (rm_label, "%d", rt_marg);
+	}
+	else
+	{
+		strcpy (rm_label, "-");	/* No right margin set */
+	}
+	sprintf (label_pos, "L %-5d C %-5d RM %-6s", txt_x, txt_y, rm_label);
+	stat_print (COLS - 56, label_pos, NULL, NULL);
 }
 
 /* #######################################################################
@@ -258,15 +268,28 @@ void status_line (void)
 {
 	char	*nameptr;
 
-	/* Find last '/' */
-	if ((nameptr = strrchr (txtname, '/')) != NULLCHARPTR)
+	/* Show the file name only - strip any directory part (on DOS both
+	 * '/' and '\' separate directories). */
+	nameptr = strrchr (txtname, '/');
+#ifdef DOS
 	{
-		status (0, "...\"%s\"", nameptr + 1, NULL);
+		char	*dosptr = strrchr (txtname, '\\');
+
+		if (dosptr != NULLCHARPTR && dosptr > nameptr)
+		{
+			nameptr = dosptr;
+		}
+	}
+#endif
+	if (nameptr != NULLCHARPTR)
+	{
+		nameptr++;
 	}
 	else
 	{
-		status (0, "\"%s\"", txtname, NULL);
+		nameptr = txtname;
 	}
+	status (0, "%s", nameptr, NULL);
 
 	/* Show cursor position */
 	status_linecol ();

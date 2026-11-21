@@ -41,7 +41,7 @@ produces `build.dos/ts.exe`. Requires PDCurses built for DOS/4GW in
     ts [-dmstu] [-sn] [-tn] [file]
 
 - `-d` / `-m` / `-u` force DOS/Macintosh/Unix line endings
-- `-sn` set the right margin to n
+- `-sn` set the right margin to n (0 = no margin; default: no margin)
 - `-tn` set the tab width to n (1..32)
 
 New files are saved with the platform's line endings; loaded files keep the

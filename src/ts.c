@@ -282,18 +282,18 @@ void edit_init (char *v_name)
  *     Program entry point. Initializes the global pointer/size pairs,
  *     parses the command line with the built-in parser, sets up curses
  *     (windows, monochrome attributes, extended keys, signal traps),
- *     sizes the right margin and calls edit_init(). Then runs the main
- *     edit loop: display() + key_scan() forever - key_scan dispatches
- *     every keystroke to the command handlers; the loop is only left
- *     via edit_exit() from inside a command.
+ *     calls edit_init() and runs the main edit loop: display() +
+ *     key_scan() forever - key_scan dispatches every keystroke to the
+ *     command handlers; the loop is only left via edit_exit() from
+ *     inside a command.
  * returns:
  *     Never returns normally. exit(1) on a usage error, exit(3) on a
  *     terminal below 80 columns.
  * parameters:
  *     int argc, char *argv[]: as usual. Options may be clustered and
  *     take attached values only: -d/-m/-u file mode, -s78 right
- *     margin, -t8 tab width; the first non-option argument is the
- *     file to edit.
+ *     margin (0 = none, the default), -t8 tab width; the first
+ *     non-option argument is the file to edit.
  * notes:
  *     The option parser is built in deliberately: the Watcom clib
  *     getopt() hangs on an empty command line under DOS, and ULTRIX's
@@ -346,7 +346,9 @@ int main (int argc, char *argv[])
 				{
 					int value = atoi (arg + 1);
 
-					if (arg[1] == '\0' || value <= 1)
+					/* A digit string must follow the 's'
+					 * (rejection of -s, -sx); 0 = no margin */
+					if (!isdigit (arg[1]) || value < 0)
 					{
 						optresult++;
 					}
@@ -392,7 +394,7 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "  Options:\n");
 		fprintf (stderr, "    -d  MSDOS file mode\n");
 		fprintf (stderr, "    -m  Macintosh file mode\n");
-		fprintf (stderr, "    -sn set right margin to n\n");
+		fprintf (stderr, "    -sn set right margin to n (0 = none)\n");
 		fprintf (stderr, "    -tn set tab spacing to n\n");
 		fprintf (stderr, "    -u  Unix file mode\n\n");
 		exit (1);
@@ -434,10 +436,7 @@ int main (int argc, char *argv[])
 	wattrset (promptwin, PROMPTATTR);
 	keypad (editwin, TRUE);		/* Interpret extended keycodes */
 	keypad (promptwin, TRUE);
-	if (rt_marg < 2)
-	{
-		rt_marg = COLS - 5;		/* Set default right margin */
-	}
+	/* rt_marg stays 0 (no margin) unless -sn was given */
 
 	/* Trap signals to our exit routine that preserves user text */
 	signal (SIGINT,  ts_abort);

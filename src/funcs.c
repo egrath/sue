@@ -637,14 +637,17 @@ void tab_set (void)
 /* #######################################################################
  * void rm_set (void)
  * purpose:
- *     The ^O R "set right margin" command: prompt for a value > 1.
- * The margin drives ^B reformatting and the word wrap in add_text().
+ *     The ^O R "set right margin" command: prompt for a value; 0
+ *     switches the margin off (no wrapping), any other value sets the
+ *     column the margin applies to. The margin drives ^B reformatting
+ *     and the word wrap in add_text().
  * returns:
  *     Nothing.
  * parameters:
  *     None; writes rt_marg.
  * notes:
- *     No repaint needed - the margin only affects future typing.
+ *     No repaint needed - the margin only affects future typing. The
+ *     status line shows the setting as "RM -" when off.
  * ####################################################################### */
 void rm_set (void)
 {
@@ -654,7 +657,7 @@ void rm_set (void)
 	sprintf (pbuf, "Right margin [%d]: ", rt_marg);
 	if (prompt_st (pbuf, "", respptr, 3) > 0)
 	{
-		if ((sscanf (respptr, "%d", &c) == 1) && (c > 1))
+		if ((sscanf (respptr, "%d", &c) == 1) && (c >= 0))	/* 0 = no margin */
 		{
 			rt_marg = c;
 		}
@@ -673,7 +676,8 @@ void rm_set (void)
  *     (their leading whitespace eaten) and re-broken at the right
  *     margin, breaking before the word that would cross it. The final
  *     newline of the text is never joined away - the [EOF] marker
- *     stays on its own line.
+ *     stays on its own line. With no right margin (rt_marg = 0) there
+ *     is nothing to reformat towards and the command returns at once.
  * returns:
  *     Nothing; the cursor ends after the last reformed line.
  * parameters:
@@ -689,7 +693,8 @@ void reform (void)
 	char	*tmp_ptr;
 	long	col_cnt;
 
-	if (MRflag)				/* Margin released */
+	if (MRflag || rt_marg == 0)	/* Margin released or no margin set:
+				 * nothing to reformat towards */
 	{
 		return;
 	}
@@ -1679,7 +1684,8 @@ void repaint (void)
  * notes:
  *     The word wrap shares reform()'s break-at-space logic but only
  *     for the freshly typed character; when no space is found nothing
- *     wraps (nowrap). Control characters count as one column only
+ *     wraps (nowrap). With no right margin (rt_marg = 0) the wrap
+ *     never triggers. Control characters count as one column only
  *     when cntlflag is on - otherwise the cursor does not advance.
  *     A NUL (^P ^@) is rejected: it would break find().
  * ####################################################################### */
@@ -1754,7 +1760,7 @@ void add_text (int ch)
 					gap_end++;						/* Overwrite */
 				}
 				txt_y++;
-				if (!MRflag && (txt_y > rt_marg))	/* Need to wordwrap? */
+				if (!MRflag && rt_marg > 0 && (txt_y > rt_marg))	/* Wordwrap? */
 				{
 					txt_ptr = gap_beg;
 					while ((*txt_ptr != ' ') &&	/* Find 1st SP or CR */

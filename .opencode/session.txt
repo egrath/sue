@@ -764,3 +764,30 @@ Proof it is comments-only: the five .o files are BYTE-IDENTICAL to the
 pre-rework build (cmp against /tmp/obj_base copies). Both builds zero
 warnings, smoke 6/6. 91 #-bordered blocks = 85 functions + 6 file
 banners (grep check). No // comments anywhere.
+
+== 2026-11-21 - Session 17: no default margin + RM display + plain filename ==
+
+User requests:
+1. Status line: show the file NAME only, unquoted (was ...\"name\" or
+   \"name\"). DOS paths: last '/' OR '\\' is the separator.
+2. No right margin by default (rt_marg = 0): the COLS - 5 fallback in
+   main() removed - a programmer's editor wraps nothing unless asked.
+   -s0 / ^O R 0 = off; -s1 / ^O R 1 legal (honest value); -sn/^O R n
+   as before. Status line: "L n C n RM n" (RM - when off), label
+   column moved to COLS - 56, value padded %-6s (no stale digits).
+   reform() no-ops without a margin; add_text()'s wrap is guarded.
+
+Regression found by the new verification: the first draft of the -s
+check (value < 0 replacing value <= 1) let "-sx" parse as "-s0"
+(atoi("x") = 0) and swallow the x - the old check had caught that
+incidentally. Fixed with "!isdigit (arg[1])": -s/-sx/-s. now give the
+usage error, -s0/-s1/-s99 boot. (The test batch hung on "./build/ts
+-sx < /dev/null" - curses getch spins on EOF stdin; known artifact.)
+
+Verified:
+- [x] make + wmake -f Makefile.wcc zero warnings; smoke 6/6.
+- [x] pty: RM - by default; ^O R 15 -> RM 15; ^O R 0 -> RM - again;
+      -s78 shows RM 78 and wraps (lines 75 + 69).
+- [x] pty: rm78.txt unquoted, no "..." prefix, no stale quotes.
+- [x] -s0/-s1/-s99 boot; -sx and bare -s usage error.
+- [x] reform: file untouched without margin; reflows at -s15.

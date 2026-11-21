@@ -177,6 +177,19 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — No right margin by default: rt_marg = 0 means "no
+  margin" - the old `if (rt_marg < 2) rt_marg = COLS - 5` fallback in
+  main() is gone (a programmer's editor wraps nothing unless asked).
+  -s0 and ^O R 0 switch the margin off; -s1/^O R 1 are legal (honest
+  value, degenerate wrapping); -s requires a digit string after the
+  s (!isdigit rejected - the old value <= 1 check incidentally caught
+  -sx, and the first draft of the widened check let "-sx" parse as
+  "-s0" and swallow the x). reform() returns at once without a
+  margin, add_text()'s word wrap never triggers (rt_marg > 0 guard).
+  The status line's position fragment is now "L n C n RM n" (column
+  COLS - 56, value padded %-6s), showing "-" when no margin is set.
+  File names in the status line are shown unquoted, basename only
+  (DOS: the last '/' OR '\\' separates).
 - 2026-11-20 — Project renamed SUE -> TextStar; the binary is `ts`
   (classic Unix form: the file with main() is named after the program,
   so sue.c -> ts.c and sue.h -> ts.h). User-visible strings carry the
