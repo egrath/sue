@@ -1622,30 +1622,132 @@ void del_line (void)
 	}
 }
 /* #######################################################################
+ * int split_line (int keep_cursor)
+ * purpose:
+ *     Split the line at the cursor with auto-indent: the new line
+ *     starts at the same column as the current one - the leading
+ *     whitespace run (spaces/tabs, byte-exact) is carried over; when
+ *     the cursor sits inside the run, the after-cursor remainder is
+ *     trimmed so the new line starts at exactly the old line's
+ *     column. Used by RETURN (key_scan) and ^N (insert_newline).
+ * returns:
+ *     1 when the split was done; 0 when the gap had no room for
+ *     newline + indent (tpa_err()'d, nothing changed).
+ * parameters:
+ *     int keep_cursor: 0 = the cursor moves to the end of the new
+ *     line's indent (RETURN); 1 = the cursor stays at the split point
+ *     (the end of the line above, ^N).
+ * notes:
+ *     Sets mod = TRUE on success but does NOT set disp_mode - the
+ *     callers choose (dinsln for RETURN, dpage for ^N, whose cursor
+ *     position the dinsln fast path does not expect).
+ * ####################################################################### */
+int split_line (int keep_cursor)
+{
+	char	*line_beg;	/* The line's first character */
+	char	*gap_old;	/* gap_beg at scan time */
+	char	*p, *q;
+	int	indent;
+	int	i;
+	int	old_y;
+
+	line_beg = start_line (gap_end);
+	gap_old = gap_beg;
+	p = line_beg;
+	indent = 0;
+	while (p < txt_end && *p != '\n' && (*p == ' ' || *p == '\t'))
+	{
+		indent++;
+		if (p == gap_old)
+		{		/* The cursor char is next */
+			p = gap_end;
+		}
+		else
+		{
+			p++;
+		}
+	}
+
+	/* Newline plus indent in one all-or-nothing space check - no
+	 * half-inserted split. */
+	if (gap_beg + indent + 1 >= gap_end)
+	{
+		tpa_err ();
+		return (0);
+	}
+
+	old_y = txt_y;
+	*++gap_beg = '\n';
+
+	/* Copy the indent bytes after the newline: same walk, same gap
+	 * jump; the destination stays below gap_end (the space is
+	 * reserved above). */
+	q = line_beg;
+	i = indent;
+	while (i-- > 0)
+	{
+		*++gap_beg = *q;
+		if (q == gap_old)
+		{
+			q = gap_end;
+		}
+		else
+		{
+			q++;
+		}
+	}
+
+	/* Trim the whitespace the after-cursor text still carries (the
+	 * rest of the run, already in the indent): the new line starts
+	 * at exactly the old line's column. Bounded by the scan end -
+	 * trailing blanks on ordinary lines are never touched. */
+	while (gap_end < p && (*gap_end == ' ' || *gap_end == '\t'))
+	{
+		gap_end++;
+	}
+
+	txt_x++;
+	txt_y = column (gap_end);
+	mod = TRUE;
+
+	if (keep_cursor)
+	{
+		/* ^N: the cursor returns to the split point - the end of
+		 * the line above (on the inserted newline): the gap
+		 * moves back over the indent + the newline (a pure gap
+		 * move, the logical text unchanged). */
+		i = indent + 1;
+		while (i-- > 0)
+		{
+			*--gap_end = *gap_beg--;
+		}
+		txt_x--;
+		txt_y = old_y;
+	}
+	return (1);
+}
+/* #######################################################################
  * void insert_newline (void)
  * purpose:
- *     Insert an empty line BEFORE the cursor line (^N): take one byte
- *     from the gap's end and fill it with a newline. Named
- *     insert_newline (not insert_line) because <term.h> defines an
- *     insert_line curses capability macro.
+ *     Insert a line break at the cursor (^N): the text after the
+ *     cursor moves to a new line, which is auto-indented like with
+ *     RETURN (split_line). The cursor stays at the split point - the
+ *     end of the line above. Named insert_newline (not insert_line)
+ *     because <term.h> defines an insert_line curses capability
+ *     macro.
  * returns:
  *     Nothing.
  * parameters:
  *     None.
  * notes:
- *     Needs one free gap byte; tpa_err() when the gap is exhausted.
+ *     Needs room for the newline plus the indent in the gap;
+ *     tpa_err() when the gap is exhausted.
  * ####################################################################### */
 void insert_newline (void)
 {
-	if (gap_beg + 1 < gap_end)
+	if (split_line (1))
 	{
-		*--gap_end = '\n';
 		disp_mode = dpage;
-		mod = TRUE;
-	}
-	else
-	{
-		tpa_err ();
 	}
 }
 /* #######################################################################

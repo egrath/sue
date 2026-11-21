@@ -73,7 +73,10 @@ RETURN          Newline. Auto-indent: the new line starts at the same
                 column as the current one - its leading spaces/tabs are
                 carried over (byte-exact); inside the indentation, the
                 remainder is not duplicated
-^N              Insert an empty line before the cursor line
+^N              Line break at the cursor: the text after the cursor
+                moves to a new line, auto-indented like with RETURN;
+                the cursor stays at the split point (the end of the
+                line above)
 TAB             Tab; expands to spaces on screen, stored as one TAB
 ^P              Enter the NEXT key as a literal control code
                 Example: ^P M puts a real carriage return (0x0D)

@@ -1035,3 +1035,32 @@ expected; the indent branch was fast-forward-merged to master
 the move_y teleport fix and the auto-indent itself are on master.
 AGENTS.md "What this is" now lists the added features (status
 line RM, tab ruler, auto-indent, HOME/END).
+
+== 2026-11-21 - Session 27: ^N auto-indented (option A) ==
+
+User report: ^N at the beginning of an indented line's text moved the
+text down WITHOUT the indent. Decision (discussed): option (A) - ^N
+behaves like the auto-indented RETURN, keeping the WordStar split-at-
+cursor semantics (option (B), "insert an empty line before the
+cursor line", would have changed the mid-line behavior fundamentally;
+the old doc block wrongly claimed (B) anyway while the 1995 code did
+the split).
+
+Refactor: the RETURN case's split logic extracted into the shared
+int split_line (int keep_cursor) (funcs.c, documented): the scan,
+the all-or-nothing gap-space check, the newline, the indent copy
+(the gap-jumping walk), the bounded trim, txt_x++/txt_y = column
+(gap_end), mod = TRUE. keep_cursor = 0: RETURN (disp_mode = dinsln
+set by the caller). keep_cursor = 1: the cursor returns to the
+split point - the gap steps back over the indent + the newline
+(the standard byte-shift idiom, the logical text unchanged),
+txt_x--, txt_y = the saved old column; disp_mode = dpage (the
+dinsln fast path assumes the cursor on the new line). The RETURN
+case shrank to the split_line (0) call + dinsln.
+
+Verified: the user's scenario (^N at the beginning of the text of
+an indented line): the split line = whitespace-only, the new line =
+indent + "line 4"; the mid-line ^N ("     lin|e 4" -> "     lin" /
+"     e 4"); the RETURN matrix byte-identical (mid-text, trailing
+spaces, inside-the-run); make/gcccheck/wmake zero warnings; smoke
+6/6.

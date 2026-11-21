@@ -330,6 +330,7 @@ extern void block_funcs (int funcno);
 extern void toggle_help (void);
 extern void rep_find (void), case_invert (void);
 extern void del_word (void), del_line (void), insert_newline (void);
+extern int split_line (int keep_cursor);
 extern void repaint (void), add_text (int ch), del_left (void);
 extern int text_ins (char *ins_beg, char *ins_end,
 	enum directions direction);

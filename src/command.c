@@ -283,82 +283,9 @@ void key_scan (void)
 		{
 			break;
 		}
+		if (split_line (0))
 		{
-			char	*line_beg;	/* The line's first character */
-			char	*gap_old;	/* gap_beg at scan time */
-			char	*p, *q;
-			int	indent;
-			int	i;
-
-			/* Auto-indent: the new line starts at the same
-			 * column as the current one - the leading
-			 * whitespace run (spaces/tabs, byte-exact) is
-			 * carried over. The walk jumps the gap. */
-			line_beg = start_line (gap_end);
-			gap_old = gap_beg;
-			p = line_beg;
-			indent = 0;
-			while (p < txt_end && *p != '\n' &&
-				(*p == ' ' || *p == '\t'))
-			{
-				indent++;
-				if (p == gap_old)
-				{		/* The cursor char is next */
-					p = gap_end;
-				}
-				else
-				{
-					p++;
-				}
-			}
-
-			/* Newline plus indent in one all-or-nothing
-			 * space check - no half-inserted split. */
-			if (gap_beg + indent + 1 < gap_end)
-			{
-				*++gap_beg = '\n';
-
-				/* Copy the indent bytes after the
-				 * newline: same walk, same gap jump;
-				 * the destination stays below gap_end
-				 * (the space is reserved above). */
-				q = line_beg;
-				i = indent;
-				while (i-- > 0)
-				{
-					*++gap_beg = *q;
-					if (q == gap_old)
-					{
-						q = gap_end;
-					}
-					else
-					{
-						q++;
-					}
-				}
-
-				/* Trim the whitespace the after-cursor
-				 * text still carries (the rest of the
-				 * run, already in the indent): the new
-				 * line starts at exactly the old
-				 * line's column. Bounded by the scan
-				 * end - trailing blanks on ordinary
-				 * lines are never touched. */
-				while (gap_end < p && (*gap_end == ' ' ||
-					*gap_end == '\t'))
-				{
-					gap_end++;
-				}
-
-				txt_x++;
-				txt_y = column (gap_end);
-				disp_mode = dinsln;
-				mod = TRUE;
-			}
-			else
-			{
-				tpa_err ();
-			}
+			disp_mode = dinsln;
 		}
 		break;
 

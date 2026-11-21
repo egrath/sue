@@ -183,6 +183,13 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — ^N is auto-indented like RETURN: the split logic moved
+  into the shared split_line (keep_cursor) helper (funcs.c) - the
+  scan, the all-or-nothing space check, the newline, the indent copy
+  and the bounded trim; RETURN passes keep_cursor = 0 (the cursor to
+  the new line, dinsln repaint), ^N passes 1 (the cursor stays at
+  the split point - the end of the line above; the gap steps back
+  over the indent + the newline, dpage repaint).
 - 2026-11-21 — Auto-indent on RETURN: the new line
   starts at the same column as the current one - the leading
   whitespace run (spaces/tabs, byte-exact) is carried over; when the
