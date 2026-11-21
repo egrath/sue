@@ -817,3 +817,21 @@ No code changes.
 Session 18 addendum: AGENTS.md source map now states that
 docs/reference.txt must be kept current when commands are added or
 changed.
+
+== 2026-11-21 - Session 19: info screen - baud rate out, memory model documented ==
+
+User decisions after a walkthrough of the ^K I screen:
+- Remove the "Baud rate" line: a baudrate() curses call, pure
+  serial-terminal-era heritage - nothing in TextStar branches on it.
+  The ULTRIX gap-fill prototype in ts.h went with it (last call site).
+- Document the memory model instead of changing it (the TPA design
+  stays): docs/reference.txt now explains that the working buffer is
+  fixed for the session (new file ~99,970 bytes; loaded file: size +
+  100,000), insertions refuse with "Out of memory!", save+reload
+  (^K S, ^K L) re-sizes to file-on-disk + 100,000, ^K R must fit the
+  existing gap. The "used/free" figures: text bytes held vs gap
+  remaining (1 spare byte always kept).
+
+Verified: zero baudrate references; both builds warning-free; smoke
+6/6; pty ^K I shows "Memory usage: n bytes m free" and "Terminal
+type", no "Baud rate".

@@ -140,6 +140,14 @@ Settings and screen
 ^O L    Repaint the screen
 ^K I    Info screen: version, file, cursor, memory usage, terminal
 
+Memory model: the working buffer is fixed for the session - a new
+file holds about 99,970 bytes, a loaded file its size plus 100,000.
+When the free space is used up, insertions are refused with "Out of
+memory!" (nothing is corrupted). Save and load the file again
+(^K S, ^K L) to continue with fresh space: the buffer is then sized
+to the file on disk plus 100,000. ^K R must fit the existing free
+space.
+
 Help
 ----
 ^J      Help. The main menu offers: ^Q quick commands, ^K block and

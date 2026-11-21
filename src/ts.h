@@ -35,7 +35,6 @@
 /* ULTRIX cursesX.h declares almost nothing: initscr/newwin/subwin/newpad,
  * longname/erasechar/killchar, wgetch/newterm - plus macros. Everything
  * else TextStar calls is prototyped here. */
-extern int baudrate (void);
 extern int beep (void);
 extern int delwin (WINDOW *);
 extern int endwin (void);

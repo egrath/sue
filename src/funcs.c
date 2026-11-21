@@ -238,8 +238,8 @@ void exit_func (void)
  * purpose:
  *     The ^K I info screen: version/copyright, edited file with cursor
  *     position, modified flag, file mode, margins, tab width, control-
- *     character display, memory usage (text bytes vs free gap), baud
- *     rate and terminal type. Waits for any key and repaints.
+ *     character display, memory usage (text bytes vs free gap), and
+ *     terminal type. Waits for any key and repaints.
  * returns:
  *     Nothing.
  * parameters:
@@ -275,7 +275,6 @@ void info_func (void)
 	wp2 ("Control characters: `%s`\n", cntlflag ? "On" : "Off");
 	wp3 ("      Memory usage: `%u` bytes `%u` free\n",
 	     gap_beg - txt_beg + txt_end - gap_end, gap_end - gap_beg - 1);
-	wp2 ("         Baud rate: `%d`\n", baudrate ());
 	wp2 ("     Terminal type: `%s`\n", longname ());
 	wattrset (editwin, PROMPTATTR);
 	wp1 ("    Strike any key: ");
