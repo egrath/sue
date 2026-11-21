@@ -912,3 +912,13 @@ menu): HOME moves V from column 8 to 1; END from 8 to 19 (end of an
 18-char line); the bracket line's CUP is \x1b[9;12H = (80-58)/2 -
 exactly centered; no "HOME" text left in any help screen. make +
 wmake zero warnings; smoke 6/6.
+
+Session 23 addendum (leftover underline on the status line):
+- prompt_st()'s "restore" re-applied STATATTR (the underline) to the
+  status window - correct when the status line carried the separator
+  line, stale since the ruler moved that line to the ruler row.
+  After ANY prompt_st (e.g. ^K S name prompt canceled with ^U) the
+  next status_line() repaint drew the first line underlined.
+- Fixed: the restore is now wattrset (statuswin, A_NORMAL). The only
+  other statuswin attribute pair (replace()'s bold on/off) was
+  already clean. Verified: no underline SGR in the ^K S /^U pty run.

@@ -398,7 +398,7 @@ int prompt_st (char *st1, char *st2, char *inputst, int inlen)
 	wattron (statuswin, A_BOLD);
 	status (0, "BS or DEL erase, ^P enters control codes", NULL, NULL);
 	stat_print (COLS - 12, "^U to abort", NULL, NULL);
-	wattrset (statuswin, STATATTR);
+	wattrset (statuswin, A_NORMAL);	/* The status line is plain */
 
 	prompt (0, st1, st2, NULL, NULL);			/* Prompt user */
 	wattrset (promptwin, 0);			/* Don't hilite user text */
