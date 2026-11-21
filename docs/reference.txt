@@ -5,10 +5,11 @@ A short reference to every TextStar command. See docs and the source
 for details; this file lists what to press and what happens.
 
 The screen: the top bar is the status line (file name, L/C/RM cursor
-position, MR/INS indicators) with a TAB RULER below it - dots with a
-'|' at every tab stop and a 'V' at the cursor's column. The ruler
-carries the separator line to the edit window and follows tab-width
-changes (^O T) and horizontal scrolling.
+position, MR/INS indicators) with a TAB RULER below it - WordStar
+style: dashes, a '|' at the first column AFTER every tab stop (so
+with tab 8 it starts with 8 dashes, then 7 between bars) and a 'V'
+at the cursor's column. The ruler follows tab-width changes (^O T)
+and horizontal scrolling.
 
 Notation
 --------

@@ -180,9 +180,12 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 - 2026-11-21 — Tab ruler below the status line (branch "ruler"): the
   top bar is now two lines - the plain status line, then the ruler
-  row (dots, '|' at every tabdef-th column, 'V' at the cursor's
-  column) carrying the underline that separates the top bar from the
-  edit window; the status line itself is plain now. The ruler shows
+  row, WordStar style: a dash in every column, '|' at the first
+  column AFTER each tab stop (columns tabdef + 1, 2 * tabdef + 1,
+  ... - with tab 8 it starts with 8 dashes, then 7 between bars;
+  the bar is never the first character) and a 'V' at the cursor's
+  column. No underline - the ruler is plain (the first draft had it
+  underlined as the "separator line"; removed). The ruler shows
   the visible columns (scr_ybeg..) so tab stops stay true under
   horizontal scrolling, and repaints only when txt_y/scr_ybeg/tabdef/
   COLS changed. editlines = LINES - helplines - 2 everywhere (the

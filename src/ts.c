@@ -433,7 +433,7 @@ int main (int argc, char *argv[])
 	BLOCKATTR  = BLOCK_VIDEO;		/* A_BOLD */
 	CNTLATTR   = CONTROL_VIDEO;		/* A_UNDERLINE */
 
-	/* The status line stays plain: the separator line is the ruler */
+	/* The status line is plain; the ruler below it is plain too */
 	wattrset (promptwin, PROMPTATTR);
 	keypad (editwin, TRUE);		/* Interpret extended keycodes */
 	keypad (promptwin, TRUE);

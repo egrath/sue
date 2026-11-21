@@ -706,10 +706,12 @@ static void disp_page (int x_top, int x_bot)
 /* #######################################################################
  * static void ruler_paint (void)
  * purpose:
- *     Paint the tab ruler on screen row 1: a dot in every column, '|'
- *     at every tab stop (every tabdef-th column) and a 'V' at the
- *     cursor's column. The row carries the underline attribute - it is
- *     the separator line between the top bar and the edit window.
+ *     Paint the tab ruler on screen row 1, WordStar style: a dash in
+ *     every column, '|' at the first column AFTER each tab stop and a
+ *     'V' at the cursor's column. Tab stops are where a TAB lands the
+ *     cursor: columns tabdef + 1, 2 * tabdef + 1, ... (so with tab 8
+ *     the ruler starts with 8 dashes, then 7 between the bars - the
+ *     bar can never be the first character of the ruler).
  *     Shows the VISIBLE columns (starting at scr_ybeg), so the tab
  *     stops stay at their true positions under horizontal scrolling.
  * returns:
@@ -741,7 +743,6 @@ static void ruler_paint (void)
 
 	wmove (rulerwin, 0, 0);
 	wclrtoeol (rulerwin);
-	wattrset (rulerwin, STATATTR);	/* Underline = the separator line */
 	for (c = 0; c < COLS; c++)
 	{
 		int	tc;				/* The text column shown here */
@@ -752,13 +753,13 @@ static void ruler_paint (void)
 		{
 			ch = 'V';		/* The cursor position indicator */
 		}
-		else if (tc % tabdef == 0)
+		else if (tc > 1 && (tc - 1) % tabdef == 0)
 		{
-			ch = '|';		/* Tab stop */
+			ch = '|';		/* First column after a tab stop */
 		}
 		else
 		{
-			ch = '.';
+			ch = '-';
 		}
 		waddch (rulerwin, (chtype) ch);
 	}

@@ -869,3 +869,16 @@ ruler. make zero warnings; smoke 6/6; wmake zero warnings.
 
 Also noted for the future: toggle_help()/helpwin is dead code (no
 key binding) - see the AGENTS.md decisions entry.
+
+Session 22 addendum (ruler corrections from the maintainer):
+- The bar was off by one: '|' belongs at the FIRST column AFTER each
+  tab stop (tabdef + 1, 2 * tabdef + 1, ...), not on the stop itself
+  - with tab 8: 8 dashes, then 7 between bars; the bar is never the
+  first character. Formula: tc > 1 && (tc - 1) % tabdef == 0.
+- Underline removed (the ruler is plain - the "separator line" idea
+  dropped), dots replaced by dashes (WordStar style).
+- Emulator fix: curses uses VPA (CSI d) / CHA (CSI G) - added to
+  screen_replay.py; the tab-8 grid now reconstructs exactly:
+  "V-------|-------|-------|...".
+- Docs synced: reference.txt "The screen" paragraph, AGENTS.md
+  decisions entry, ruler_paint() doc block, ts.c comment.
