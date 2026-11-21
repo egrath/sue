@@ -1,5 +1,2 @@
-/build/
-/build.dos/
-
-/build.dos/
-*.err
+test.txt
+TEST.TXT
