@@ -849,11 +849,25 @@ void display (void)
 	case dinsln:  			/* Insert new line or redisplay from ln. above */
 		wmove (editwin, txt_x - scr_xbeg, 0);
 		winsertln (editwin);
-		if (txt_x > scr_xbeg)	/* Nothing above to redraw at row 0 */
 		{
-			dsp_line (gap_beg, txt_x - scr_xbeg);
+			char	*p;		/* The new line's first character */
+
+			p = start_line (gap_end);
+			if (txt_x > scr_xbeg)	/* Nothing above at row 0 */
+			{
+				if (p > txt_beg + 1)	/* A real line above */
+				{
+					dsp_line (start_line (p - 1),
+						txt_x - scr_xbeg);
+				}
+				else	/* Only the anchor above: erase it */
+				{
+					wmove (editwin, txt_x - scr_xbeg - 1, 0);
+					wclrtoeol (editwin);
+				}
+			}
+			dsp_line (p, txt_x - scr_xbeg + 1);
 		}
-		dsp_line (gap_end, txt_x - scr_xbeg + 1);
 		wrefresh (editwin);
 		break;
 

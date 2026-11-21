@@ -991,3 +991,23 @@ Verified (all four gates: make, gcccheck, wmake, smoke 6/6):
 - inside the run "  |  x" -> "  " / "    x" (no double indent)
 - BOL of "    x" -> "" / "    x"
 - ^S x4 at C1: V stays at 1 (the teleport fixed)
+
+Session 26 addendum (the "first line lost" display bug):
+- User report: new file, TAB, text, ENTER -> the cursor lands
+  correctly but the first line shows nothing.
+- The BUFFER was correct (the saved "\tx\n\t\n" proved it) - the bug
+  was the dinsln repaint: it painted the new line from gap_end
+  (correct in 1995: with a plain RETURN the new line's first char
+  WAS gap_end) - with auto-indent the new line starts at the INDENT,
+  before gap_end, so the paint rendered nothing; and the line-above
+  paint (dsp_line (gap_beg, ...)) started at the last indent byte -
+  on line 2 - erasing line 1's tail (the "x" vanished).
+- Fix: dinsln paints both lines from their LINE STARTS:
+  p = start_line (gap_end); the new line from p; the line above from
+  start_line (p - 1) - guarded: when p == txt_beg + 1 only the
+  anchor is above (start_line (txt_beg) would step out of the
+  buffer) -> plain wmove/wclrtoeol erase.
+- Verified: the repro replay shows line 1 = "     x" (the expanded
+  tab + x), the cursor at L2 C6, the ruler's V at 6; the whole
+  scenario matrix re-run with identical buffer results; make/
+  gcccheck/wmake zero warnings; smoke 6/6.
