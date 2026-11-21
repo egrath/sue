@@ -943,3 +943,51 @@ DOS/Watcom gate.
 
 Verified: make 0 warnings; make gcccheck 0 warnings; wmake 0
 warnings; smoke 6/6.
+
+== 2026-11-21 - Session 26: auto-indent on RETURN (branch "indent") ==
+
+User request (the "alternative school" from the discussion): the new
+line starts at exactly the current line's start column - the leading
+whitespace run (spaces/tabs, byte-exact) carried over regardless of
+the cursor position. Branch "indent" cut from master.
+
+NOTE: the working tree already contained an applied draft of my
+FIRST plan sketch (hand-applied, comments matched my wording) - with
+the three bugs the refined plan had identified: the p -= indent
+rewind across the gap jump (invalid pointer arithmetic), the
+gap-jump check off by one (p == gap_beg after p++ reads the first
+FREE byte next), and the trim unbounded (would eat trailing
+whitespace on ordinary lines). Replaced with the corrected
+implementation: the scan/copy walk jumps at gap_old -> gap_end
+(the inclusive gap model), the copy re-walks from the saved line
+start, the trim is bounded by the scan end.
+
+Implementation (key_scan's RETURN case, ~60 lines with comments):
+- scan the run: line_beg = start_line (gap_end); walk blank bytes,
+  jumping gap_old -> gap_end
+- all-or-nothing space check: gap_beg + indent + 1 < gap_end
+- *++gap_beg = '\n', then copy the indent bytes (same walk/jump)
+- trim the after-cursor remainder: while (gap_end < p && blank)
+  gap_end++ - bounded by the scan end, so trailing blanks on
+  ordinary lines are NEVER touched
+- txt_x++, txt_y = column (gap_end) (the cursor after the indent,
+  TAB expansion respected), disp_mode = dinsln, mod = TRUE
+
+BUG FOUND ON THE WAY (pre-existing, fixed): move_y()'s backward
+branch was skipped at the boundary (gap_beg <= txt_beg) but the
+function FELL THROUGH to the clamp + text_move() with the STALE
+txt_ptr (left over from the last paint - the [EOF]-line position):
+^S at the top/left teleported the cursor (the ruler showed V jump
+from column 1 to 4/6!). Fixed: moveback with no room returns early
+(column (gap_end)); the doc block notes it.
+
+Verified (all four gates: make, gcccheck, wmake, smoke 6/6):
+- "    this is a test" + RETURN -> line 2 = "    " byte-exact
+  (note: the new-file warning swallows the first SPACE - the 3-space
+  result in the first run was that pre-existing warnflag2 behavior)
+- "\t\t  xy" + RETURN -> "\t\t  " byte-exact
+- trailing spaces: "x   " + RETURN -> preserved (the trim bound)
+- mid-text "    thi|" -> "    thi" / "    s is a test"
+- inside the run "  |  x" -> "  " / "    x" (no double indent)
+- BOL of "    x" -> "" / "    x"
+- ^S x4 at C1: V stays at 1 (the teleport fixed)

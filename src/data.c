@@ -477,14 +477,20 @@ static char test (char n, enum mvmode mode)
  * notes:
  *     A word starts at a non-space/punctuation character preceded by
  *     one. The backward scan also stops at txt_beg + 1 so the cursor
- *     stays on the first text line.
+ *     stays on the first text line. A backward move at the very start
+ *     returns early - without it, text_move() would run on the STALE
+ *     txt_ptr and teleport the cursor (the ^S-at-top bug).
  * ####################################################################### */
 int move_y (enum mvdir direction, enum mvmode mode)
 {
 	char	n;
 
-	if ((direction == moveback) && gap_beg > txt_beg)
+	if (direction == moveback)
 	{
+		if (gap_beg <= txt_beg)	/* No room left: the cursor stays */
+		{
+			return (column (gap_end));
+		}
 		n = 1;
 		txt_ptr = gap_beg;
 		if (*txt_ptr == '\n')

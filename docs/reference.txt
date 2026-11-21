@@ -67,9 +67,12 @@ Backspace or Del
 
 Text entry
 ----------
-Just type       Characters are inserted at the cursor (or overwrite
-                when insert mode is off, ^V toggles it)
-RETURN          Newline (joins as text, wraps like any character)
+Just type       Characters are inserted at the cursor (or overwrite when
+                insert mode is off, ^V toggles it)
+RETURN          Newline. Auto-indent: the new line starts at the same
+                column as the current one - its leading spaces/tabs are
+                carried over (byte-exact); inside the indentation, the
+                remainder is not duplicated
 ^N              Insert an empty line before the cursor line
 TAB             Tab; expands to spaces on screen, stored as one TAB
 ^P              Enter the NEXT key as a literal control code

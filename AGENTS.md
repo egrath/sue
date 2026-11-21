@@ -182,6 +182,16 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — Auto-indent on RETURN (branch "indent"): the new line
+  starts at the same column as the current one - the leading
+  whitespace run (spaces/tabs, byte-exact) is carried over; when the
+  cursor sits inside the run, the after-cursor remainder is trimmed
+  (not duplicated). One all-or-nothing gap-space check guards the
+  whole split; indent 0 = the old plain split. Found on the way:
+  move_y()'s backward branch skipped at the boundary but FELL
+  THROUGH to text_move() with the stale txt_ptr - ^S at the
+  top/left teleported the cursor to the stale position (caught by
+  the auto-indent tests); fixed with an early return.
 - 2026-11-21 — HOME = start of line (^Q S), END = end of line
   (^Q D) as direct keys; HOME no longer opens the ^Q menu (the
   "HOME-" prompt variant and the ^J-menu HOME alias are gone, the
