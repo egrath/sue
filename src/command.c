@@ -86,6 +86,14 @@ void key_scan (void)
 		txt_y = move_y (movefwd, moveword);
 		break;
 
+	case KEY_HOME:					/* Home = start of line (^Q S) */
+		txt_y = line_y (1);
+		break;
+
+	case KEY_END:					/* End = end of line (^Q D) */
+		txt_y = line_y (9999);
+		break;
+
 	/* --------- SCROLLING --------- */
 
 	case CNTRL_Z: 			/* Forward line */
@@ -163,7 +171,6 @@ void key_scan (void)
 		switch (ch)
 		{
 		case CNTRL_Q:
-		case KEY_HOME:
 			quick_hlp ();
 			break;
 
@@ -191,15 +198,7 @@ void key_scan (void)
 	/* --------- EXTENSIONS --------- */
 
 	case CNTRL_Q:				/* "Quick" commands */
-	case KEY_HOME:
-		if (ch == CNTRL_Q)
-		{
-			warning ("^Q-");
-		}
-		else
-		{
-			warning ("HOME-");
-		}
+		warning ("^Q-");
 		q_key ();
 		break;
 

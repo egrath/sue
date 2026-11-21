@@ -903,7 +903,7 @@ void display (void)
 #define CP3 "   `^X`    `^A`=word   `^R`=page back  `^G`=char right   `^L`=find or replace next      "
 #define CP4 "or `arrow`    left   `^C`=page fwd   `^T`=word right   `^B`=reform paragraph          "
 #define CP5 "  `keys`                           `^Y`=whole line   `^^`=change case               "
-#define CP6 "        [ MENU KEYS: `^K or ESC`=block/file, `^Q or HOME`=quick, `^O`=onscreen ]    "
+#define CP6 "[ MENU KEYS: `^K or ESC`=block/file, `^Q`=quick, `^O`=onscreen ]"
 
 /* Quick help screen */
 #define CQ0 "     QUICK MOVEMENT            SEARCHING                 DELETING             "
@@ -912,7 +912,7 @@ void display (void)
 #define CQ3 " `^Q-S`=go to start of line                                                     "
 #define CQ4 " `^Q-D`=go to end of line                                                       "
 #define CQ5 " `^Q-I`=go to line number                                                       "
-#define CQ6 "        [ `HOME` key may be substituted for `control-Q` ]                         "
+#define CQ6 "                                                                                "
 
 /* Block help screen */
 #define CB0 "      SAVE/EXIT                 BLOCKS                    FILES               "
@@ -921,7 +921,7 @@ void display (void)
 #define CB3 " `^K-Q`=quit                `^K-Y`=erase  `^K-H`=hide     `^K-N`=change file name     "
 #define CB4 " `^K-D`=save & load new     `^K-W`=write to file        `^K-I`=file information   "
 #define CB5 " `^K-!`=shell escape        `^K-R`=read in a file                                 "
-#define CB6 "        [ `ESC` key may be substituted for `control-K` ]                          "
+#define CB6 "[ `ESC` key may be substituted for `control-K` ]"
 
 /* Onscreen help screen */
 #define CO0 "              MARGINS & TABS                          SCREEN DISPLAY          "
@@ -983,6 +983,52 @@ void xw_printw (WINDOW *xwindow, char *string1, ...)
 	}
 
 	wattrset (xwindow, A_NORMAL);
+}
+/* #######################################################################
+ * static void help_line (WINDOW *hwindow, int row, char *hline)
+ * purpose:
+ *     Paint one help-screen line: clear the row, then print the line
+ *     centered - lines starting with '[' are centered within the
+ *     help block (their true width), the table lines at the standard
+ *     HWIDTH block offset.
+ * returns:
+ *     Nothing.
+ * parameters:
+ *     WINDOW *hwindow: the window to paint into.
+ *     int row: 0-based row in that window.
+ *     char *hline: the text (NULL is ignored).
+ * notes:
+ *     The bracket lines carry no hand padding; their real width is
+ *     strlen() minus the backquotes (xw_printw consumes those as
+ *     highlight toggles).
+ * ####################################################################### */
+static void help_line (WINDOW *hwindow, int row, char *hline)
+{
+	int	off;
+	int	width;
+	char	*p;
+
+	if (hline == NULL)
+	{
+		return;
+	}
+	off = HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0;
+	if (hline[0] == '[')
+	{
+		width = strlen (hline);
+		for (p = hline; *p != '\0'; p++)
+		{
+			if (*p == '`')
+			{
+				width--;
+			}
+		}
+		off += (HWIDTH - width) / 2;
+	}
+	wmove (hwindow, row, 0);
+	wclrtoeol (hwindow);
+	wmove (hwindow, row, off);
+	xw_printw (hwindow, hline, NULL, NULL, NULL);
 }
 /* #######################################################################
  * void do_help (enum helptype helprequest, WINDOW *hwindow)
@@ -1060,37 +1106,13 @@ void do_help (enum helptype helprequest, WINDOW *hwindow)
 		touchwin (hwindow);
 	}
 
-	wmove (hwindow, 0, 0);
-	wclrtoeol (hwindow);
-	wmove (hwindow, 0, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-	xw_printw (hwindow, hline0, NULL, NULL, NULL);
-	wmove (hwindow, 1, 0);
-	wclrtoeol (hwindow);
-	wmove (hwindow, 1, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-	xw_printw (hwindow, hline1, NULL, NULL, NULL);
-	if (hline2 != NULL)
-	{
-		wmove (hwindow, 2, 0);
-		wclrtoeol (hwindow);
-		wmove (hwindow, 2, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xw_printw (hwindow, hline2, NULL, NULL, NULL);
-		wmove (hwindow, 3, 0);
-		wclrtoeol (hwindow);
-		wmove (hwindow, 3, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xw_printw (hwindow, hline3, NULL, NULL, NULL);
-		wmove (hwindow, 4, 0);
-		wclrtoeol (hwindow);
-		wmove (hwindow, 4, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xw_printw (hwindow, hline4, NULL, NULL, NULL);
-		wmove (hwindow, 5, 0);
-		wclrtoeol (hwindow);
-		wmove (hwindow, 5, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xw_printw (hwindow, hline5, NULL, NULL, NULL);
-		wmove (hwindow, 6, 0);
-		wclrtoeol (hwindow);
-		wmove (hwindow, 6, HWIDTH < COLS ? (COLS - HWIDTH) / 2 : 0);
-		xw_printw (hwindow, hline6, NULL, NULL, NULL);
-	}
+	help_line (hwindow, 0, hline0);
+	help_line (hwindow, 1, hline1);
+	help_line (hwindow, 2, hline2);
+	help_line (hwindow, 3, hline3);
+	help_line (hwindow, 4, hline4);
+	help_line (hwindow, 5, hline5);
+	help_line (hwindow, 6, hline6);
 
 	helpstate = helprequest;	/* Global flag */
 

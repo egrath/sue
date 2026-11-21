@@ -16,7 +16,7 @@ Notation
 ^X      means: hold Ctrl and press X (so ^K S = Ctrl-K, then Ctrl-S
         or plain "s" - case does not matter inside a menu).
         The arrow, page and insert keys work wherever their control
-        equivalent is listed. HOME may replace ^Q, ESC may replace ^K.
+        equivalent is listed. ESC may replace ^K.
 
 General
 -------
@@ -42,6 +42,15 @@ Scrolling
 
 The cursor keeps its column when moving through lines; TAB stops and
 short lines are handled automatically.
+
+Quick menu (^Q)
+---------------
+^Q S or HOME   Cursor to the start of the line
+^Q D or END    Cursor to the end of the line
+^Q R or PgUp   Cursor to the start of the file
+^Q C or PgDn   Cursor to the end of the file
+^Q I           Go to a line number (prompted)
+^Q Y           Delete to the end of the line
 
 Deletion and undo
 -----------------

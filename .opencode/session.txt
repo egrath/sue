@@ -885,3 +885,30 @@ Session 22 addendum (ruler corrections from the maintainer):
 
 Session 22 addendum: default tab width 4 -> 5 (WordStar's value);
 TABDEF in ts.h, reference.txt updated.
+
+== 2026-11-21 - Session 23: HOME/END keys, centered help brackets ==
+
+User request: HOME = ^Q S (start of line), END = ^Q D (end of line);
+HOME no longer opens the ^Q menu; the "[ HOME key may be substituted
+for control-Q ]" quick-help line removed; the main help's bracket
+line reworded (no "or HOME"); help bracket lines always centered.
+
+Implementation:
+- key_scan: KEY_HOME -> line_y (1), KEY_END -> line_y (9999) as main
+  keys; the KEY_HOME cases in the ^Q dispatch and the ^J menu switch
+  removed; warning ("HOME-") branch gone.
+- ts.h: KEY_END added to the ULTRIX emulation block (#ifndef-guarded
+  - inert if DEC's cursesX.h defines it).
+- do_help: new static help_line() paints each line (NULL-guarded),
+  bracket lines centered dynamically - width = strlen minus the
+  backquotes (xw_printw consumes those as highlight toggles; the
+  first CUP check landed 3 columns left until that was accounted
+  for). Table lines keep their hand alignment. CP6/CB6 stripped of
+  hand padding; CQ6 blanked.
+
+Verification pty (xterm SS3 sequences - ESC O H / ESC O F; ESC [ H /
+ESC [ F are cursor-addressing, NOT keys, and get eaten by the ESC
+menu): HOME moves V from column 8 to 1; END from 8 to 19 (end of an
+18-char line); the bracket line's CUP is \x1b[9;12H = (80-58)/2 -
+exactly centered; no "HOME" text left in any help screen. make +
+wmake zero warnings; smoke 6/6.

@@ -136,6 +136,9 @@ extern int wrefresh (WINDOW *);
 # define KEY_SUSPEND 0776
 # define KEY_HELP 0772
 # define KEY_SFIND 0773
+# ifndef KEY_END			/* Home/End line keys */
+#  define KEY_END 0552
+# endif
 # define wechochar(win, ch) (waddch (win, ch), wrefresh (win))
 #endif
 

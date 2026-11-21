@@ -178,6 +178,13 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — HOME = start of line (^Q S), END = end of line
+  (^Q D) as direct keys; HOME no longer opens the ^Q menu (the
+  "HOME-" prompt variant and the ^J-menu HOME alias are gone, the
+  "[ HOME key may be substituted for control-Q ]" help line
+  removed). Help bracket lines ([ MENU KEYS ... ]) are centered
+  dynamically in do_help() (helper help_line(): bracket lines by
+  their true strlen, table lines keep the hand alignment).
 - 2026-11-21 — Default tab width is 5 (TABDEF), as WordStar had it;
   -t and ^O T override per session.
 - 2026-11-21 — Tab ruler below the status line (branch "ruler"): the
