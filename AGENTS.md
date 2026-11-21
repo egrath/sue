@@ -183,6 +183,16 @@ cursor clamps at the marker start and nothing can be written behind it.
 
 ## Decisions log
 
+- 2026-11-21 — Margin marks in the ruler (WordStar 4 style): 'L' at
+  the left margin, 'R' at the right margin (only when set). The
+  left margin is now a variable (int lt_marg, from the #define
+  LTMARG 1, compile-time fixed - the future left-margin feature
+  only adds setters; when it becomes runtime-settable, its setter
+  must add it to ruler_paint()'s change tracking). The mark
+  precedence in the ruler: V > R > L > | > '-'. The status line's
+  position fragment is back to "L n C n" - the RM display there
+  was removed again (the ruler's R mark shows the margin live;
+  ^K I keeps the numeric fallback).
 - 2026-11-21 — ^N is auto-indented like RETURN: the split logic moved
   into the shared split_line (keep_cursor) helper (funcs.c) - the
   scan, the all-or-nothing space check, the newline, the indent copy

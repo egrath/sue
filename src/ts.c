@@ -32,7 +32,8 @@ int scr_ybeg, scr_yend;			/* Horizontal screen limits */
 int scr_xbeg, scr_xend;			/* Vertical      "     "    */
 int txt_x, txt_y;				/* Text line and col number */
 
-int rt_marg = 0;				/* Right margin */
+int rt_marg = 0;				/* Right margin (0 = none) */
+int lt_marg = LTMARG;				/* Left margin (compile-time fixed) */
 
 /*	Text is stored in the editor as 2 sequential areas with a
  *	GAP between.  It is into this GAP that inserts are made (thereby

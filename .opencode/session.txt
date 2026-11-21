@@ -1064,3 +1064,29 @@ indent + "line 4"; the mid-line ^N ("     lin|e 4" -> "     lin" /
 "     e 4"); the RETURN matrix byte-identical (mid-text, trailing
 spaces, inside-the-run); make/gcccheck/wmake zero warnings; smoke
 6/6.
+
+== 2026-11-21 - Session 28: ruler margin marks (L/R), status line simplified ==
+
+User request (WordStar 4.0 style): the ruler shows an 'L' at the
+left margin and an 'R' at the right margin. The left margin becomes
+a variable (int lt_marg, from #define LTMARG 1) - compile-time
+fixed for now, ready for the future left-margin feature. The RM
+display in the status line was removed again (the user's interrupted
+message resolved): the ruler's R mark shows the margin live, ^K I
+keeps the numeric fallback - the status line is back to
+"L n C n" (at COLS - 49, the rm_label block from the gcc-16 round
+evaporated with it).
+
+Changes:
+- ts.h: #define LTMARG 1; extern int lt_marg. ts.c: int lt_marg =
+  LTMARG.
+- display.c ruler_paint(): the L/R mark branches (the precedence
+  V > R > L > | > '-'), the change tracker gained rt_marg; the doc
+  block documents the marks + the precedence + the future-setter
+  note (the lt_marg setter must join the tracking).
+- status_linecol(): reverted to the plain "L %-5d C %-5d".
+
+Verified: the pty (tab 5, ^O R 10): the status = "L 1 C 4" (no RM);
+the ruler = "L--V-|---R|----|..." (the L at 1, the V at the cursor
+4, the stop at 6, the R at 10, the stop at 11...). make/gcccheck/
+wmake zero warnings; smoke 6/6.

@@ -82,6 +82,9 @@ extern int wrefresh (WINDOW *);
 
 #define	TABDEF	5			/* default TAB width (WordStar) */
 
+#define	LTMARG	1			/* left margin column (fixed at
+					compile time for now) */
+
 /* ASCII control characters: */
 #define CNTRL_AT 0x00
 #define	CNTRL_A	0x01
@@ -157,7 +160,8 @@ extern	int scr_xend;	/* last text row */
 extern	int txt_x;		/* Current cursor row */
 extern	int txt_y;		/*   "       "    column */
 
-extern	int rt_marg;	/* Current right margin */
+extern	int rt_marg;	/* Right margin (0 = none) */
+extern	int lt_marg;	/* Left margin column (compile-time fixed) */
 
 extern	char	*gap_beg, *gap_end;	/* The gap: text before the cursor ends
 					 * at gap_beg, text after the cursor

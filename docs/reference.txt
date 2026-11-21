@@ -4,12 +4,13 @@ TextStar - Command Reference
 A short reference to every TextStar command. See docs and the source
 for details; this file lists what to press and what happens.
 
-The screen: the top bar is the status line (file name, L/C/RM cursor
-position, MR/INS indicators) with a TAB RULER below it - WordStar
+The screen: the top bar is the status line (file name, the L/C cursor
+position, MR/INS indicators) with a TAB RULER below it - WordStar 4
 style: dashes, a '|' at the first column AFTER every tab stop (so
-with tab 8 it starts with 8 dashes, then 7 between bars) and a 'V'
-at the cursor's column. The ruler follows tab-width changes (^O T)
-and horizontal scrolling.
+with tab 8 it starts with 8 dashes, then 7 between bars), an 'L' at
+the left margin, an 'R' at the right margin (when one is set) and a
+'V' at the cursor's column. The ruler follows tab-width (^O T) and
+margin (^O R) changes and horizontal scrolling.
 
 Notation
 --------

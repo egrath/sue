@@ -194,9 +194,9 @@ void stat_print (int col, char *st1, char *st2, char *st3)
 /* #######################################################################
  * static void status_linecol (void)
  * purpose:
- *     Refresh the "L n C n RM n" fragment of the status line (at
- *     column COLS - 56): cursor line, cursor column and the right
- *     margin. No margin set (rt_marg = 0) shows as "RM -".
+ *     Refresh the "L n C n" fragment of the status line (at column
+ *     COLS - 49): the cursor line and column. Margin information
+ *     lives in the ruler's L/R marks instead.
  * returns:
  *     Nothing.
  * parameters:
@@ -207,19 +207,10 @@ void stat_print (int col, char *st1, char *st2, char *st3)
  * ####################################################################### */
 static void status_linecol (void)
 {
-	char label_pos[40];
-	char rm_label[16];		/* room for any int */
+	char label_pos[32];
 
-	if (rt_marg > 0)
-	{
-		sprintf (rm_label, "%d", rt_marg);
-	}
-	else
-	{
-		strcpy (rm_label, "-");	/* No right margin set */
-	}
-	sprintf (label_pos, "L %-5d C %-5d RM %-6s", txt_x, txt_y, rm_label);
-	stat_print (COLS - 56, label_pos, NULL, NULL);
+	sprintf (label_pos, "L %-5d C %-5d", txt_x, txt_y);
+	stat_print (COLS - 49, label_pos, NULL, NULL);
 }
 
 /* #######################################################################
@@ -708,20 +699,25 @@ static void disp_page (int x_top, int x_bot)
  * purpose:
  *     Paint the tab ruler on screen row 1, WordStar style: a dash in
  *     every column, '|' at the first column AFTER each tab stop and a
- *     'V' at the cursor's column. Tab stops are where a TAB lands the
- *     cursor: columns tabdef + 1, 2 * tabdef + 1, ... (so with tab 8
- *     the ruler starts with 8 dashes, then 7 between the bars - the
- *     bar can never be the first character of the ruler).
+ *     'V' at the cursor's column, plus the margin marks: 'L' at the
+ *     left margin (lt_marg, fixed at compile time) and 'R' at the
+ *     right margin (rt_marg, only when a margin is set). The mark
+ *     precedence: V > R > L > | > '-'. Tab stops are where a TAB
+ *     lands the cursor: columns tabdef + 1, 2 * tabdef + 1, ... (so
+ *     with tab 8 the ruler starts with 8 dashes, then 7 between the
+ *     bars - the bar can never be the first character of the ruler).
  *     Shows the VISIBLE columns (starting at scr_ybeg), so the tab
  *     stops stay at their true positions under horizontal scrolling.
  * returns:
  *     Nothing.
  * parameters:
- *     None; reads scr_ybeg, tabdef, txt_y (and COLS).
+ *     None; reads scr_ybeg, tabdef, txt_y, lt_marg, rt_marg (and
+ *     COLS).
  * notes:
  *     Repaints only when one of its inputs changed since the last
  *     paint - the ruler is skipped entirely on pure vertical moves
- *     of the edit screen.
+ *     of the edit screen. When lt_marg ever becomes runtime-
+ *     settable, its setter must add it to the change tracking.
  * ####################################################################### */
 static void ruler_paint (void)
 {
@@ -729,10 +725,12 @@ static void ruler_paint (void)
 	static int last_beg = -1;
 	static int last_tab = -1;
 	static int last_cols = -1;
+	static int last_marg = -1;
 	int c;
 
 	if (txt_y == last_y && scr_ybeg == last_beg &&
-		tabdef == last_tab && COLS == last_cols)
+		tabdef == last_tab && COLS == last_cols &&
+		rt_marg == last_marg)
 	{
 		return;
 	}
@@ -740,6 +738,7 @@ static void ruler_paint (void)
 	last_beg = scr_ybeg;
 	last_tab = tabdef;
 	last_cols = COLS;
+	last_marg = rt_marg;
 
 	wmove (rulerwin, 0, 0);
 	wclrtoeol (rulerwin);
@@ -753,13 +752,21 @@ static void ruler_paint (void)
 		{
 			ch = 'V';		/* The cursor position indicator */
 		}
+		else if (rt_marg > 0 && tc == rt_marg)
+		{
+			ch = 'R';		/* The right margin mark */
+		}
+		else if (tc == lt_marg)
+		{
+			ch = 'L';		/* The left margin mark */
+		}
 		else if (tc > 1 && (tc - 1) % tabdef == 0)
 		{
 			ch = '|';		/* First column after a tab stop */
 		}
 		else
 		{
-			ch = '-';
+			ch = '-';		/* Ruler fill */
 		}
 		waddch (rulerwin, (chtype) ch);
 	}
