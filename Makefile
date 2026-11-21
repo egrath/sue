@@ -36,9 +36,18 @@ OBJS = ${BUILDDIR}/command.o ${BUILDDIR}/data.o ${BUILDDIR}/display.o \
 # EFLAGS and LFLAGS are the override points for other targets,
 # e.g. make LFLAGS="-lpdcurses" for a DOS/Windows PDCurses port.
 
-.PHONY : ts clean install
+.PHONY : ts clean install gcccheck
 
 ts	: ${TARGET}
+
+# Pedantic second opinion: Homebrew GCC 16 is often more pedantic
+# than clang. Syntax/warning gate only - no objects, no binary.
+gcccheck :
+	gcc-16 -c ${CFLAGS} -Wextra ${EFLAGS} ${SRCDIR}/ts.c -o /dev/null
+	gcc-16 -c ${CFLAGS} -Wextra ${EFLAGS} ${SRCDIR}/data.c -o /dev/null
+	gcc-16 -c ${CFLAGS} -Wextra ${EFLAGS} ${SRCDIR}/display.c -o /dev/null
+	gcc-16 -c ${CFLAGS} -Wextra ${EFLAGS} ${SRCDIR}/funcs.c -o /dev/null
+	gcc-16 -c ${CFLAGS} -Wextra ${EFLAGS} ${SRCDIR}/command.c -o /dev/null
 
 ${TARGET}	: ${OBJS}
 	${CC} ${CFLAGS} -o ${TARGET} ${OBJS} ${LFLAGS}

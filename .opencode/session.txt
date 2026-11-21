@@ -922,3 +922,24 @@ Session 23 addendum (leftover underline on the status line):
 - Fixed: the restore is now wattrset (statuswin, A_NORMAL). The only
   other statuswin attribute pair (replace()'s bold on/off) was
   already clean. Verified: no underline SGR in the ^K S /^U pty run.
+
+== 2026-11-21 - Session 24: gcc-16 as the second compiler ==
+
+User report/request: GCC 16 (gcc-16, Homebrew GCC 16.2.0) reports
+warnings clang does not; always verify with both compilers.
+
+Findings (both real, both fixed):
+- display.c status_linecol(): rm_label[8] could not hold %d of an
+  arbitrary int (11 bytes worst case) - now [16]. (-Wformat-overflow)
+- ts.c main(): bufptr = malloc(0) (the "give free() a pointer" idiom)
+  replaced by bufptr = NULL - free (NULL) is legal, do_alloc ()
+  allocates fresh before freeing. (-Walloc-size, needs -Wextra)
+
+Workflow: new Makefile target "gcccheck" - compiles all five sources
+with gcc-16 -c -std=c89 -Wpedantic -Wall -Wextra to /dev/null (no
+artifacts). AGENTS.md hard rule: every change verified with make
+(clang) AND make gcccheck (gcc-16), zero warnings on both, plus the
+DOS/Watcom gate.
+
+Verified: make 0 warnings; make gcccheck 0 warnings; wmake 0
+warnings; smoke 6/6.

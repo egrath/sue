@@ -451,7 +451,8 @@ int main (int argc, char *argv[])
 	signal (SIGSEGV, ts_abort);
 	signal (SIGILL,  ts_abort);
 
-	bufptr = malloc (0);		/* Initialize pointer for do_alloc() */
+	bufptr = NULL;			/* do_alloc() frees the old buffer first */
+					/* (free (NULL) is legal - a no-op)     */
 
 	prompt (1, "", NULL, NULL, NULL);	/* Must do this so that newwin()'s auto-clear */
 						/* function doesn't clear text on first */

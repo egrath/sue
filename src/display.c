@@ -208,7 +208,7 @@ void stat_print (int col, char *st1, char *st2, char *st3)
 static void status_linecol (void)
 {
 	char label_pos[40];
-	char rm_label[8];
+	char rm_label[16];		/* room for any int */
 
 	if (rt_marg > 0)
 	{
