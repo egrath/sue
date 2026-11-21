@@ -388,10 +388,10 @@ int main (int argc, char *argv[])
 	}
 	if (optresult)
 	{
-		fprintf (stderr, "\nTextStar, version %s", tsrev);
-		fprintf (stderr, "  Usage:\n");
-		fprintf (stderr, "    %s [-dmu][-sn][-tn] [file]\n", argv[0]);
-		fprintf (stderr, "  Options:\n");
+		fprintf (stderr, "\nTextStar, version %s\n\n", tsrev);
+		fprintf (stderr, "usage:\n");
+		fprintf (stderr, "    %s [-dmu][-sn][-tn] [file]\n\n", argv[0]);
+		fprintf (stderr, "options:\n");
 		fprintf (stderr, "    -d  MSDOS file mode\n");
 		fprintf (stderr, "    -m  Macintosh file mode\n");
 		fprintf (stderr, "    -sn set right margin to n (0 = none)\n");
