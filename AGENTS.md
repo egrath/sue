@@ -26,6 +26,7 @@ configuration. Added: line/column indicator in the status line.
 | `src/ts.h` | Shared types, globals (`extern`), full C89 prototypes |
 | `src/version.h` | Version string |
 | `Makefile.wcc` | OpenWatcom build for DOS (DOS/4GW + PDCurses) |
+| `docs/reference.txt` | User-facing command reference (all keys and menus) |
 | `_original/sue07i.tgz` | Pristine 0.7i sources, reference only |
 
 Object files and the executable are built into `build/` (UNIX) and

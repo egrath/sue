@@ -46,3 +46,5 @@ produces `build.dos/ts.exe`. Requires PDCurses built for DOS/4GW in
 
 New files are saved with the platform's line endings; loaded files keep the
 endings detected from their content.
+
+A complete command reference lives in `docs/reference.txt`.

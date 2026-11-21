@@ -791,3 +791,25 @@ Verified:
 - [x] pty: rm78.txt unquoted, no "..." prefix, no stale quotes.
 - [x] -s0/-s1/-s99 boot; -sx and bare -s usage error.
 - [x] reform: file untouched without margin; reflows at -s15.
+
+== 2026-11-21 - Session 18: docs/reference.txt command reference ==
+
+User request: a short reference of what every command does (^K x and
+friends), with examples where needed, in docs/reference.txt.
+
+Content (straight from the documented sources - key_scan/q_key/k_key/
+o_key and the help-screen texts): notation, general behavior (warning
+keys, SPACE cancels menus), cursor movement, scrolling, deletion and
+undo, text entry (^P/^N/TAB/^^), find/replace with a worked example,
+reformatting and the margin semantics (no default margin, RM -
+display), block operations with a worked copy example, file commands
+and file modes, ^O settings, ^K I info, ^K ! shell escape, the
+TSsaved. crash-save behavior and the command line (attached values).
+
+One draft error caught on review: the cluster example implied
+"-t8myfile.txt" would be ambiguous - it is actually a usage error
+(the non-digit tail after the attached value reaches the default
+case); reworded to "attached values, file last".
+
+AGENTS.md source map lists docs/reference.txt; README links it.
+No code changes.

@@ -1,0 +1,174 @@
+TextStar - Command Reference
+============================
+
+A short reference to every TextStar command. See docs and the source
+for details; this file lists what to press and what happens.
+
+Notation
+--------
+^X      means: hold Ctrl and press X (so ^K S = Ctrl-K, then Ctrl-S
+        or plain "s" - case does not matter inside a menu).
+        The arrow, page and insert keys work wherever their control
+        equivalent is listed. HOME may replace ^Q, ESC may replace ^K.
+
+General
+-------
+Any key clears a warning shown at the right edge; RETURN or SPACE
+acknowledge it. SPACE cancels a two-key menu without doing anything.
+Unknown command keys beep ("Unknown command").
+
+Cursor movement
+---------------
+^E or Up        Cursor up one line
+^X or Down      Cursor down one line
+^S or Left      Cursor left one character
+^D or Right     Cursor right one character
+^A              Word left
+^F              Word right
+
+Scrolling
+---------
+^W              Scroll screen down one line (text moves down)
+^Z              Scroll screen up one line
+^R or PgUp      Page back
+^C or PgDn      Page forward
+
+The cursor keeps its column when moving through lines; TAB stops and
+short lines are handled automatically.
+
+Deletion and undo
+-----------------
+Backspace or Del
+                Delete the character to the LEFT of the cursor
+^G              Delete the character UNDER the cursor. The final
+                newline of the text cannot be deleted - the [EOF]
+                marker always stays on its own line
+^T              Delete the word to the right (stops at punctuation)
+^Y              Delete the whole line the cursor is on
+^U              Undo: restore the last deleted text. Repeat to go
+                further back. Deleted text is only forgotten when
+                memory ran out AND you answered Y to "delete anyway"
+
+Text entry
+----------
+Just type       Characters are inserted at the cursor (or overwrite
+                when insert mode is off, ^V toggles it)
+RETURN          Newline (joins as text, wraps like any character)
+^N              Insert an empty line before the cursor line
+TAB             Tab; expands to spaces on screen, stored as one TAB
+^P              Enter the NEXT key as a literal control code
+                Example: ^P M puts a real carriage return (0x0D)
+                into the text. ^@ (NUL) cannot be entered
+^^              Invert the case of the character under the cursor
+                and advance (Ctrl-^)
+
+Find and replace
+----------------
+^Q F            Find: asks for a string, finds the first occurrence
+                after the cursor. Case-independent
+^Q A            Change: like ^Q F, then asks "Change to:". At each
+                match: Y = change, N = skip, * = change all the
+                rest, ^U = abort
+^L              Repeat the last find or replace
+
+Example - change every "foo" to "bar":
+        ^Q F  foo RETURN        (finds the first one)
+        ^Q A  bar RETURN  *     (replaces all from there on)
+
+The search finds text on later lines; the screen centers on each hit.
+
+Reformatting and margins
+------------------------
+^B              Reformat (re-flow) the paragraph from the cursor to
+                the next hard CR (end of paragraph) or end of text:
+                lines are joined and re-broken just before the right
+                margin. Needs a margin to be set and a space to break
+                at; does nothing when margin release is on
+
+Right margin (RM):
+- No margin is set by default: long lines are never wrapped - right
+  for source code.
+- ^O R or -sn sets it to n columns (word wrap for typed text and ^B
+  reformatting); 0 switches it off again.
+- The status line shows the setting: "L 12 C 40 RM 78", or "RM -"
+  when no margin is set.
+
+Block operations
+----------------
+A block is the text between the begin and end markers; it is shown
+highlighted.
+
+^K B    Mark the beginning of the block at the cursor
+^K K    Mark the end of the block at the cursor
+^K H    Hide (clear) the block markers
+^K V    Move the block to the cursor position
+^K C    Copy the block to the cursor position
+^K Y    Delete the block (undoable with ^U)
+^K W    Write the block to a file (existing file: Overwrite/Append)
+^K R    Read a file into the text at the cursor
+
+Example - copy a function to the top of the file:
+        cursor to "static int foo"   ^K B
+        cursor past its closing "}"  ^K K
+        cursor to the target line    ^K C
+
+Files
+-----
+^K S    Save the text and keep editing (asks for a name when there
+        is none yet)
+^K D    Save, then load another file
+^K L    Load another file without saving (asks when modified)
+^K N    Set or change the file name
+^K X    Save and exit
+^K Q    Quit WITHOUT saving (asks when modified)
+^K F    Change the file mode: U = Unix (LF), D = MSDOS (CRLF),
+        M = Macintosh (CR). New files get the platform's default
+        mode; on the first load the mode is detected from the file
+        (unless -d/-m/-u was given)
+
+Line endings in memory are always LF; save() translates per filemode.
+Text is 7-bit: bytes >= 0x80 are stripped on load.
+
+Settings and screen
+-------------------
+^O D    Toggle display of control characters (shown as underlined
+        @letter; also shows the hard-CR "<" flag at the line end)
+^O X    Margin release toggle (MR): typing ignores the margin, ^B
+        refuses to reformat
+^O R    Set the right margin (0 = none - see above)
+^O T    Set the hard TAB width (2..32)
+^O L    Repaint the screen
+^K I    Info screen: version, file, cursor, memory usage, terminal
+
+Help
+----
+^J      Help. The main menu offers: ^Q quick commands, ^K block and
+        file commands, ^O onscreen commands, RETURN back to text.
+        With the persistent help window on, the ^Q/^K/^O menus show
+        their help there; on UNIX it disappears after 2 seconds when
+        a menu key is not struck
+
+Shell escape
+------------
+^K !    Ask for a shell command and run it (empty command = a full
+        shell; $SHELL on UNIX, COMSPEC on DOS). "exit" or ^D returns.
+        On UNIX, "> file" after the command inserts the file at the
+        cursor. Example:  ^K !  date RETURN
+
+Emergency save
+--------------
+On signals (kill, terminal loss, crashes) TextStar tries to save the
+whole text as "TSsaved.<pid>[.n]" in your HOME directory (UNIX) or
+TEMP/TMP directory (DOS) and tells you the name before exiting.
+
+Command line
+------------
+ts [-dmstu] [-sn] [-tn] [file]
+
+-d / -m / -u    force DOS / Macintosh / Unix line endings
+-sn             right margin n (0 = none - the default)
+-t8             tab width (1..32; default 4)
+file            the file to edit (a new one is created on save)
+
+Options may be clustered (-dm). -s and -t take their value attached
+(-s78, -t8); the file name comes last as a separate argument.
