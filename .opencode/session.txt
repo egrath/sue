@@ -1011,3 +1011,20 @@ Session 26 addendum (the "first line lost" display bug):
   tab + x), the cursor at L2 C6, the ruler's V at 6; the whole
   scenario matrix re-run with identical buffer results; make/
   gcccheck/wmake zero warnings; smoke 6/6.
+
+Session 26 addendum 2 (the indent-0 "line disappears" bug):
+- User report: fresh editor, text WITHOUT leading whitespace, ENTER
+  -> the line disappears.
+- Root cause (the previous dinsln fix's remaining hole): for the
+  indent-0 case the new line's start p == gap_end (start_line stops
+  at the inserted newline immediately), so start_line (p - 1) =
+  start_line (gap_end - 1) walked the last FREE GAP byte and landed
+  back at gap_end - the paint erased line 1's row and painted
+  nothing ("abc" gone).
+- Fix: above = (p == gap_end) ? gap_beg : p - 1 - the char before
+  the new line's start is the inserted newline, physically at p - 1
+  only when the cursor is mid-line; at BOL the free gap is between
+  and the inserted newline is at gap_beg. The anchor-guard/else
+  branch died (above >= txt_beg + 1 always holds after the insert).
+- Verified: the fresh repro shows "abc" / "X"; the full matrix
+  re-identical; make/gcccheck/wmake zero warnings; smoke 6/6.

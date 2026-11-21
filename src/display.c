@@ -851,20 +851,19 @@ void display (void)
 		winsertln (editwin);
 		{
 			char	*p;		/* The new line's first character */
+			char	*above;		/* The line above's last char + 1 */
 
 			p = start_line (gap_end);
 			if (txt_x > scr_xbeg)	/* Nothing above at row 0 */
 			{
-				if (p > txt_beg + 1)	/* A real line above */
-				{
-					dsp_line (start_line (p - 1),
-						txt_x - scr_xbeg);
-				}
-				else	/* Only the anchor above: erase it */
-				{
-					wmove (editwin, txt_x - scr_xbeg - 1, 0);
-					wclrtoeol (editwin);
-				}
+				/* The char before the new line's start is
+				 * the inserted newline - unless the
+				 * cursor sits at the new line's start
+				 * (then the free gap is between them
+				 * and the inserted newline is gap_beg;
+				 * p - 1 would walk the free gap). */
+				above = (p == gap_end) ? gap_beg : p - 1;
+				dsp_line (start_line (above), txt_x - scr_xbeg);
 			}
 			dsp_line (p, txt_x - scr_xbeg + 1);
 		}
